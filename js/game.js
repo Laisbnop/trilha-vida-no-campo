@@ -841,15 +841,11 @@
     const sp = who === 'narr' ? { name: '', look: null } : who, pc = $('portrait');
     $('dlg-who').textContent = sp.name; $('dlg-who').hidden = !sp.name;
     pc.hidden = !sp.look;
-    if (sp.portrait) {
-      const src = Sprites.PORTRAITS[sp.portrait](expr || 'neutro');
+    if (sp.look || sp.portrait) {
+      const make = Sprites.PORTRAITS[sp.portrait] || Sprites.PORTRAITS._reserva, src = make(expr || 'neutro');
       if (pc.width !== src.width) { pc.width = src.width; pc.height = src.height; }
-      pc.dataset.expr = expr || 'neutro'; pc.classList.add('square');
+      pc.dataset.expr = expr || 'neutro'; pc.dataset.who = Sprites.PORTRAITS[sp.portrait] ? sp.portrait : '_reserva'; pc.classList.add('square');
       const g = pc.getContext('2d'); g.clearRect(0, 0, pc.width, pc.height); g.drawImage(src, 0, 0);
-    } else if (sp.look) {
-      if (pc.width !== 24) { pc.width = 24; pc.height = 20; }
-      delete pc.dataset.expr; pc.classList.remove('square');
-      const g = pc.getContext('2d'); g.clearRect(0, 0, pc.width, pc.height); Sprites.draw(g, sp.look, 0, -3);
     }
     $('dlg-text').classList.toggle('narr', who === 'narr');
   }
@@ -859,20 +855,25 @@
     return new Promise(resolve => {
       const [expr, rest] = splitExpr(String(text)); text = fmt(rest); setSpeaker(who, expr);
       $('dlg-choices').replaceChildren(); $('dlg-form').hidden = true; $('dlg-more').hidden = false;
-      const box = $('dlg-text'); let n = 0;
-      clearInterval(typer);
-      const finish = () => { clearInterval(typer); typer = 0; box.textContent = text; };
-      typer = setInterval(() => { n += 2; box.textContent = text.slice(0, n); if (n >= text.length) finish(); }, 16);
-      onAdvance = () => { if (typer) finish(); else { onAdvance = null; resolve(); } };
+      const box = $('dlg-text'), myRun = dlgRun; let n = 0;
+      clearInterval(typer); box.textContent = ''; shownRun = myRun;
+      const finish = () => { clearInterval(typer); typer = 0; if (dlgRun === myRun) box.textContent = text; };
+      typer = setInterval(() => { if (dlgRun !== myRun) return finish(); n += 2; box.textContent = text.slice(0, n); if (n >= text.length) finish(); }, 16);
+      onAdvance = () => { if (dlgRun !== myRun) return; if (typer) finish(); else { onAdvance = null; resolve(); } };
     });
   }
   /* Pergunta com opções, sem precisar avançar o texto antes. */
   /* Confirmação Sim/Não: E e Esc valem "Não". */
-  function ask(text, labels) { setSpeaker('narr'); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(text); $('dlg-form').hidden = true; return choose(labels, labels.findIndex(l => /^Não\b/.test(l))); }
+  function ask(text, labels) { return choose(labels, labels.findIndex(l => /^Não\b/.test(l)), { who: 'narr', text }); }
   /* cancel = índice da opção que E/Esc escolhem (ou -1: escolha obrigatória, sem atalho). */
   let cancelChoice = null;
-  function choose(labels, cancel = -1) {
+  /* prompt = { who, text }: quem pergunta e o quê. Sem prompt, as opções só podem
+     aparecer depois de uma fala desta mesma conversa (nunca com o conteúdo da anterior). */
+  function choose(labels, cancel = -1, prompt = null) {
     return new Promise(resolve => {
+      if (prompt) { const [expr, rest] = splitExpr(String(prompt.text)); setSpeaker(prompt.who, expr); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(rest); shownRun = dlgRun; }
+      else if (shownRun !== dlgRun) { setSpeaker('narr'); clearInterval(typer); typer = 0; $('dlg-text').textContent = ''; }
+      $('dlg-form').hidden = true;
       onAdvance = null; $('dlg-more').hidden = true;
       const box = $('dlg-choices'); box.replaceChildren();
       const pick = i => { cancelChoice = null; box.replaceChildren(); resolve(i); };
@@ -884,7 +885,7 @@
   /* Pede um nome curto (galinha, bicho). Valida como os outros nomes; vazio usa o padrão. */
   function askText(who, text, fallback) {
     return new Promise(resolve => {
-      setSpeaker(who); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(text);
+      { const [expr, rest] = splitExpr(String(text)); setSpeaker(who, expr); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(rest); shownRun = dlgRun; }
       onAdvance = null; $('dlg-more').hidden = true; $('dlg-choices').replaceChildren();
       const form = $('dlg-form'), input = $('dlg-input'), msg = $('dlg-msg'); form.hidden = false; input.value = ''; input.placeholder = fallback; msg.textContent = ''; input.focus();
       input.oninput = () => { const r = cleanName(input.value, 'pet'); if (r.value !== input.value) input.value = r.value; msg.textContent = r.msg; };
@@ -893,11 +894,20 @@
   }
   $('dlg-form').addEventListener('submit', e => e.preventDefault());     // nunca recarrega a página, mesmo com Enter repetido
   $('dialog').addEventListener('click', e => { if (!e.target.closest('button, input, form') && onAdvance) onAdvance(); });
+  /* Cada conversa tem um número. Ao começar e ao terminar, a caixa é limpa (nome,
+     retrato, texto, opções), e falas, digitação ou cliques atrasados de uma conversa
+     antiga não conseguem mexer na seguinte. Só uma conversa por vez. */
+  let dlgRun = 0, shownRun = -1;
+  function clearDialog() {
+    clearInterval(typer); typer = 0; onAdvance = null; cancelChoice = null;
+    $('dlg-who').textContent = ''; $('dlg-who').hidden = true; $('portrait').hidden = true;
+    $('dlg-text').textContent = ''; $('dlg-choices').replaceChildren(); $('dlg-form').hidden = true; $('dlg-more').hidden = true;
+  }
   async function run(flow) {
     if (busy) return;
-    busy = true; $('dialog').hidden = false; $('dock').hidden = true;
+    busy = true; dlgRun++; clearDialog(); $('dialog').hidden = false; $('dock').hidden = true;
     try { await flow(); }
-    finally { busy = false; onAdvance = null; cancelChoice = null; $('dialog').hidden = true; $('dock').hidden = false; save(); renderHud(); renderHotbar(); }
+    finally { busy = false; dlgRun++; clearDialog(); $('dialog').hidden = true; $('dock').hidden = false; save(); renderHud(); renderHotbar(); }
   }
   async function sayAll(who, lines) { for (const l of lines) await say(who, l); }
   function toast(text) { const t = el('div', 'toast', text); $('toasts').append(t); while ($('toasts').children.length > 4) $('toasts').firstChild.remove(); setTimeout(() => t.remove(), 2300); }
@@ -999,7 +1009,7 @@
       if (turn) {
         const q = QUESTS[turn], items = (q.reward && q.reward.items) || {};
         if (!Object.keys(items).every(k => canAdd(k, items[k]))) return say('narr', 'Sua mochila está cheia. Abra espaço para receber a recompensa e fale de novo.');
-        await sayAll(who, q.done || ['Agradeço muito!']);
+        await sayAll(who, (q.done || ['Agradeço muito!']).map(l => (/^\[/.test(l) ? l : '[contente]' + l)));
         if (q.reward && q.reward.hen) await newHen(who);
         completeQuest(turn);
         return;
@@ -1014,16 +1024,17 @@
         return say('narr', `Missão aceita: ${q.title}. ${q.desc} Recompensa: ${rewardText(q.reward)}.`);
       }
       // no Armazém, Dona Celeste atende no balcão
-      if (v.id === 'celeste' && map.id === 'loja' && await choose(['Comprar e vender', 'Conversar']) === 0) { setTimeout(() => openModal('loja'), 0); return; }
+      if (v.id === 'celeste' && map.id === 'loja' && await choose(['Comprar e vender', 'Conversar'], -1, { who, text: '[contente]Bem-vind{g:o|a|e} ao Armazém, {nome}! Vai levar alguma coisa ou só veio conversar?' }) === 0) { setTimeout(() => openModal('loja'), 0); return; }
       // 3) cena de amizade (uma vez, com 3 corações)
       if (v.scene && hearts(v.id) >= 3 && !S.scenes[v.id]) {
         const sc = v.scene, n = sc.n || 1;
-        if (canAdd(sc.item, n)) { await sayAll(who, sc.lines); S.scenes[v.id] = true; gain(sc.item, n); return; }
+        if (canAdd(sc.item, n)) { await sayAll(who, sc.lines.map(l => (/^\[/.test(l) ? l : '[contente]' + l))); S.scenes[v.id] = true; gain(sc.item, n); return; }
       }
       // 4) presente, se há um produto na mão
       const it = equipped();
-      if (GIFT_RULES[v.id]) { if (it && !ITEMS[it.id].kind && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`]) === 1) return giftRuled(v, who, it.id); }
-      else if (it && !ITEMS[it.id].kind && !S.daily.gift[v.id] && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`]) === 1) return give(v, who, it.id);
+      const giftPrompt = () => ({ who, text: v.id === 'lucio' ? '[neutro]Hum? Diga.' : '[neutro]Oi, {nome}! O que manda?' });
+      if (GIFT_RULES[v.id]) { if (it && !ITEMS[it.id].kind && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`], -1, giftPrompt()) === 1) return giftRuled(v, who, it.id); }
+      else if (it && !ITEMS[it.id].kind && !S.daily.gift[v.id] && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`], -1, giftPrompt()) === 1) return give(v, who, it.id);
       // 5) conversa: a primeira do dia aumenta a amizade
       const pending = qActive().find(id => (QUESTS[id].to || QUESTS[id].giver) === v.id && !QUESTS[id].selfDone);
       if (!S.daily.talk[v.id]) {
@@ -1143,7 +1154,7 @@
     const kind = v.love.includes(id) ? 'love' : v.like.includes(id) ? 'like' : v.dislike.includes(id) ? 'dislike' : 'neutral';
     removeItem(id, 1); S.daily.gift[v.id] = true; S.known[v.id][id] = kind;
     addFriend(v.id, FRIEND[kind]);
-    await say(who, v.gift[kind]);
+    await say(who, (kind === 'love' || kind === 'like' ? '[contente]' : '') + v.gift[kind]);
     if (kind === 'love') toast(`${v.name} adorou!`);
   }
 
@@ -1223,7 +1234,7 @@
     const p = S.pet;
     if (!p || !p.sp || p.state === 'home' || S.day < PET_DAY || p.offered === S.day) return false;
     p.offered = S.day; save();
-    const bia = villagerById('bia'), who = { name: bia.name, look: bia.look }, cat = p.sp === 'gato';
+    const bia = villagerById('bia'), who = speaker(bia), cat = p.sp === 'gato';
     run(async () => {
       await say('narr', 'Alguém bate à porta logo cedo. É Bia, com uma cestinha forrada nos braços.');
       if (p.state === 'deferred') await say(who, `Bom dia, {nome}! Voltei, como prometi. ${cat ? 'O gatinho' : 'O filhote'} ainda está esperando uma casa...`);
@@ -1716,7 +1727,7 @@
   window.__trilha = {
     get S() { return S; }, get P() { return P; }, get map() { return map; }, get hover() { return hover; }, get near() { return hover && hover.ok ? hover : null; }, get busy() { return blocked(); }, get hens() { return hens; }, save,
     cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), openMap, fit, petEvent, cleanName, textWidth,
-    villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i),
+    villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
   };
 

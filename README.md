@@ -243,6 +243,26 @@ Seis moradores, cada um com rotina, personalidade e gostos: Dona Celeste
 - com 1 coração surge o pedido pessoal de cada um; com 3, uma pequena cena e um presente;
 - as falas mudam conforme a amizade. Não há romance.
 
+### Retratos e diálogos
+
+Cada morador tem retrato próprio de rosto e ombros, numa grade nativa de 64×64
+pixels, desenhado por código no mesmo acabamento do de Lúcio, com expressão
+neutra e contente (só olhos, sobrancelhas e boca mudam):
+
+- **Dona Celeste:** coque grisalho com fita vermelha, brincos e blusa terracota;
+- **Seu Honório:** careca, sobrancelhas grisalhas grossas e franzidas, camisa marrom de gola;
+- **Bia:** ruiva de rabo de cavalo com fita vermelha, sardas e jardineira verde;
+- **Tomé:** cabelo castanho na altura do queixo, franja e camisa verde-musgo;
+- **Iara:** cachos pretos até os ombros, blusa lilás e tinta na bochecha.
+
+O retrato aparece na caixa de diálogo em escala inteira (2× no computador, 1×
+no celular), sem suavização, e é o mesmo do painel de Amizades. Se faltar um
+retrato, aparece uma silhueta neutra, nunca o rosto de outro morador.
+
+Cada conversa fixa o interlocutor ao começar e limpa nome, retrato, texto e
+opções ao abrir e ao fechar. Escolhas que abrem a conversa (loja, presente)
+mostram a fala e o rosto de quem pergunta. Narração aparece sem nome nem retrato.
+
 ## Missões
 
 As primeiras ensinam jogando: chegar à vila, a primeira plantação, a primeira

@@ -22,7 +22,7 @@ body {
   line-height: 1.15;
 }
 [hidden] { display: none !important; }
-.pixel { image-rendering: pixelated; image-rendering: crisp-edges; }
+.pixel { image-rendering: pixelated; }
 
 .screen { max-width: 900px; margin: 0 auto; padding: 14px; }
 
@@ -307,10 +307,11 @@ body.playing { overflow: hidden; height: 100%; }
 .paper .btn { display: block; margin: 10px auto 0; }
 
 /* ---------- retratos próprios (Lúcio) ---------- */
-.portrait.square { height: 80px; }
-.friend-top canvas.portrait-pic { width: 56px; height: 56px; background: #2a3a5a; }
+.portrait.square { width: 132px; height: 132px; padding: 0; box-sizing: border-box; image-rendering: pixelated; background: linear-gradient(#f2dfb4, #d9bd86); border: 2px solid #fff; }
+.dialog:has(.portrait.square:not([hidden])) { min-height: 136px; }
+.friend-top canvas.portrait-pic { width: 64px; height: 64px; image-rendering: pixelated; background: #2a3a5a; }
 .gift-week { color: var(--gold); }
-@media (max-width: 640px) { .portrait.square { height: 60px; } }
+@media (max-width: 640px) { .portrait.square { width: 68px; height: 68px; } .dialog:has(.portrait.square:not([hidden])) { min-height: 112px; } }
 #map-canvas { max-height: 74vh; width: auto; max-width: 100%; margin: 0 auto; }
 .map-frame { display: flex; justify-content: center; }
 
@@ -404,7 +405,7 @@ body.playing { overflow: hidden; height: 100%; }
 .friend-list li.friend { display: flex; gap: 10px; align-items: center; background: #fff2d4; border: 2px solid #c89a60; border-radius: 6px; padding: 6px 8px; cursor: pointer; }
 .friend-list li.friend.sel { border-color: #e0a020; box-shadow: 0 0 0 2px #f0c040; background: #fff8e0; }
 .friend-list li canvas { width: 40px; height: 54px; flex: none; image-rendering: pixelated; background: #9ac87a; border: 2px solid #5a2e14; border-radius: 4px; }
-.friend-list li canvas.portrait-pic { width: 54px; height: 54px; background: #6a5a7a; }
+.friend-list li canvas.portrait-pic { width: 64px; height: 64px; image-rendering: pixelated; background: #6a5a7a; }
 .fl-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .fl-txt b { color: #7a3a14; font-weight: normal; font-family: var(--px); font-size: 10px; }
 .fbar { height: 6px; background: #e8d2a0; border: 2px solid #a87038; border-radius: 3px; overflow: hidden; width: 120px; }
