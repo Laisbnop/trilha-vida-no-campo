@@ -266,3 +266,10 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `js/game.js` | Salvamento, criação, ferramentas, fazenda, moradores, missões e painéis |
 
 Toda a arte é desenhada por código, sem imagens de terceiros.
+
+## Atualizações e cache
+
+O arquivo `_headers` pede ao Cloudflare Pages que o navegador sempre confira se
+há versão nova (`Cache-Control: no-cache`), e o `index.html` carrega os arquivos
+com `?v=` (troque o número a cada versão). Assim, quem já jogou recebe a
+atualização sem precisar limpar o cache.
