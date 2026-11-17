@@ -1094,12 +1094,6 @@ const World = (() => {
     const L = v.light;
     if (L && L.glow > 0) (map.lights || []).forEach(l => { if (l.kind === 'win') { ctx.fillStyle = `rgba(255,214,130,${L.glow})`; ctx.fillRect(l.x, l.y, l.w, l.h); } });
     if (L && L.a > 0.003) { ctx.restore(); applyLight(ctx, map, cam, L, t); ctx.save(); ctx.translate(-cam.x, -cam.y); }
-    (v.markers || []).forEach(mk => {                         // seta amarela do destino da missão, quicando
-      const x = Math.round(mk.x), y = Math.round(mk.y) - (Math.floor(t / 250) % 2) * 3;
-      ctx.fillStyle = OUT; ctx.fillRect(x - 4, y - 16, 9, 9); for (let i = 0; i < 7; i++) ctx.fillRect(x - 7 + i, y - 8 + i, 15 - i * 2, 1);
-      ctx.fillStyle = '#ffd75e'; ctx.fillRect(x - 3, y - 15, 7, 8); for (let i = 0; i < 5; i++) ctx.fillRect(x - 5 + i, y - 7 + i, 11 - i * 2, 1);
-      ctx.fillStyle = '#fff6c0'; ctx.fillRect(x - 2, y - 14, 2, 5);
-    });
     (v.floats || []).forEach(f => { const k = (t - f.t0) / 700; if (k < 0 || k > 1) return; ctx.globalAlpha = 1 - k; ctx.drawImage(icon(f.icon), Math.round(f.x) - 8, Math.round(f.y - 24 - k * 14)); ctx.globalAlpha = 1; });
     ctx.restore();
   }

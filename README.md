@@ -140,8 +140,8 @@ Interiores: a **casa** (cama, baú e guarda-roupa), o **Armazém** e o
 nome, casa, galinheiro, cercado, roça, lago, Vila Acapulco, Armazém, praça, casas
 dos moradores, bosque, estradas, a sua posição e o destino da missão
 acompanhada, com legenda. O tempo para enquanto ele está aberto, e ele não
-teleporta. No cenário, uma seta amarela aponta o destino (ou a porta que leva até
-ele). No Diário, "Mostrar no mapa" escolhe qual missão acompanhar.
+teleporta. O cenário não tem setas: para saber aonde ir, use o Diário (F) ou o
+mapa (M). No Diário, "Acompanhar" escolhe a missão mostrada no objetivo e no mapa.
 
 **Galinheiro passo a passo:** Bia entrega 5 de ração. Siga a estrada que desce da
 porteira até o fim, vire à esquerda e entre pela porta vermelha. Clique no
