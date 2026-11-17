@@ -46,10 +46,17 @@
     refreshForage(s);
     return s;
   }
+  /* Frutos e flores da serra, sorteados a cada dia. */
+  function refreshMountain(s) {
+    let sd = (s.seed + s.day * 104729) >>> 0; const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
+    s.nature.mforage = {};
+    World.SERRA.forage.forEach((_, i) => { if (rnd() < 0.55) s.nature.mforage[i] = ['amora', 'flor', 'amora'][Math.floor(rnd() * 3)]; });
+  }
   function refreshForage(s) {
     let sd = (s.seed + s.day * 7919) >>> 0; const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
     s.nature.forage = {};
     World.FORAGE.forEach((_, i) => { if (rnd() < 0.6) s.nature.forage[i] = ['amora', 'cogumelo', 'flor', 'flor'][Math.floor(rnd() * 4)]; });
+    refreshMountain(s);
   }
 
   /* Aparência e nome de um jogo de versão anterior, quando dá para aproveitar. */
@@ -301,17 +308,20 @@
     const pts = [start, ...e[1]]; let d = wrap ? 1e9 : (tm - e[0]) * 18;
     for (let i = 1; i < pts.length; i++) {
       const dx = pts[i][0] - pts[i - 1][0], dy = pts[i][1] - pts[i - 1][1], len = Math.hypot(dx, dy);
-      if (d < len) return { where: 'fora', x: pts[i - 1][0] + dx * d / len, y: pts[i - 1][1] + dy * d / len, moving: true, dir: Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up') };
+      if (d < len) return { where: v.map || 'fora', x: pts[i - 1][0] + dx * d / len, y: pts[i - 1][1] + dy * d / len, moving: true, dir: Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up') };
       d -= len;
     }
-    const last = pts[pts.length - 1]; return { where: 'fora', x: last[0], y: last[1], dir: 'down' };
+    const last = pts[pts.length - 1]; return { where: v.map || 'fora', x: last[0], y: last[1], dir: 'down' };
   }
+  /* Lúcio só tem o nome conhecido depois da primeira conversa. */
+  const shownName = v => (v.id === 'lucio' && !(S.lucio && S.lucio.met) ? 'homem da serra' : v.name);
+  const speaker = v => ({ name: v.id === 'lucio' && !S.lucio.met ? 'Homem da serra' : v.name, look: v.look, portrait: v.portrait });
   function actors() {
     const tm = S.time + clockAcc / 700, list = [];
     VILLAGERS.forEach(v => {
       const p = villagerAt(v, tm);
       if (p.where !== map.id) return;
-      list.push({ id: v.id, v, name: v.name, look: v.look, x: p.x, y: p.y, dir: p.dir, moving: p.moving, reach: p.where === 'loja' ? 40 : 22, bubble: questMark(v) ? '!' : null });
+      list.push({ id: v.id, v, name: shownName(v), look: v.look, x: p.x, y: p.y, dir: p.dir, moving: p.moving, reach: p.where === 'loja' ? 40 : 22, bubble: questMark(v) ? '!' : null });
     });
     return list;
   }
@@ -328,6 +338,10 @@
     if (!s.pet) s.pet = { sp: null, state: 'pending', name: '', offered: 0 };
     if (s.letterSeen === undefined) s.letterSeen = !!s.intro;           // quem já jogava não vê a cena de abertura de novo
     if (s.track === undefined) s.track = null;
+    VILLAGERS.forEach(v => { if (typeof s.friends[v.id] !== 'number') s.friends[v.id] = 0; if (!s.known[v.id]) s.known[v.id] = {}; });
+    /* Lúcio: conversa, presentes (dia, semana e aniversário), tenda, missões e cenas */
+    s.lucio = Object.assign({ met: false, permit: false, gifts: { week: -1, n: 0 }, bday: 0, tentUp: false, found: false, fireScene: false, iara: false, last: -1, again: 0 }, s.lucio);
+    if (!s.nature.mforage) refreshMountain(s);
     s.nature.cleared = s.nature.cleared || {};
     if (!s.stumps) {                                    // alguns tocos em grama livre, longe da casa
       let sd = s.seed >>> 0, placed = 0; const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -382,6 +396,7 @@
     const wrap = $('scene-wrap'); wrap.classList.add('fade'); busy = true;
     setTimeout(() => { enterMap(to, x, y, dir); save(); wrap.classList.remove('fade'); busy = false; renderHud(); }, 220);
   }
+  const keepsakeVisible = () => qActive().includes('lembranca') && !S.lucio.found;
   const blocked = () => busy || !$('modal').hidden || !$('summary').hidden || !$('mapview').hidden || !$('letter').hidden || screen !== 'game';
 
   /* =====================================================
@@ -476,8 +491,8 @@
     const cam = World.camera(map, P.x, P.y), ctx = c.getContext('2d');
     const me = { look: S.look, x: P.x, y: P.y, dir: P.dir, moving: P.moving, tool: P.tool, hop: P.hop && t < P.hop ? -Math.abs(Math.sin((P.hop - t) / 80)) * 4 : 0 };
     const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
-    const mk = trackedMarker();
-    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, tint: tint(), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], markers: mk ? [mk] : [] });
+    const mk = trackedMarker(), lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
+    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, tint: tint(), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], markers: mk ? [mk] : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible() });
   }
   /* Barras de resistência dos objetos com dano parcial (o dano fica salvo). */
   function bars() {
@@ -544,6 +559,13 @@
       const [hx, hy] = World.SPOT.hat, hr = [hx - 8, hy - 12, 16, 14];
       if (S.nature.hat && inRect(hr, wx, wy)) return { label: 'Pegar o chapéu velho', rect: hr, act: () => { if (gain('chapeu_tome')) { S.nature.hat = false; save(); } } };
     }
+    if (map.id === 'montanha') {
+      if (keepsakeVisible()) { const [x, y] = World.SERRA.keepsake, r = [x - 8, y - 10, 16, 12]; if (inRect(r, wx, wy)) return { label: 'Pegar o apito de madeira', rect: r, act: () => { if (gain('apito')) { S.lucio.found = true; save(); } } }; }
+      for (let n = 0; n < World.SERRA.forage.length; n++) {
+        const id = S.nature.mforage[n], [x, y] = World.SERRA.forage[n], r = [x - 8, y - 12, 16, 14];
+        if (id && inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[id].name.toLowerCase(), rect: r, act: () => { if (gain(id)) { delete S.nature.mforage[n]; bang(x, y - 6, 'leaf'); save(); } } };
+      }
+    }
     for (const o of map.objs) {
       const r = o.hit || [o.x - 10, o.y - 20, 20, 22];
       if (inRect(r, wx, wy)) { const a = objAction(o); if (a) return Object.assign({ rect: r }, a); }
@@ -608,8 +630,13 @@
   function objAction(o) {
     const it = equipped(), id = it && it.id;
     switch (o.kind) {
-      case 'door': return { label: o.label, act: () => { const m = World.get(o.to); travel(o.to, m.spawn.x, m.spawn.y, 'up'); } };
-      case 'exit': return { label: 'Sair', act: () => { const d = World.get('fora').doors[map.id]; travel('fora', d.x, d.y, 'down'); } };
+      case 'door':
+        if (o.to === 'tenda' && !S.lucio.permit) return { label: S.lucio.met ? 'Tenda de Lúcio — pedir para entrar' : 'Tenda', act: () => askTent(o.to) };
+        return { label: o.to === 'tenda' ? 'Entrar na tenda de Lúcio' : o.label, act: () => { const m = World.get(o.to); travel(o.to, m.spawn.x, m.spawn.y, 'up'); } };
+      case 'exit': return { label: o.label || 'Sair', act: () => { const par = map.parent || 'fora', d = World.get(par).doors[map.id]; travel(par, d.x, d.y, 'down'); } };
+      case 'lona': return lonaAction();
+      case 'fire': return qActive().includes('fogo') ? { label: 'Sentar junto ao fogo', act: fireScene }
+        : { label: 'Fogueira', act: () => run(() => say('narr', S.time >= 1020 || S.time < 360 ? 'O fogo estala baixinho. Os troncos em volta estão gastos de tanto servir de banco.' : 'Cinzas frias dentro de um círculo de pedras. À noite, aqui tem fogo.')) };
       case 'text': return { label: o.label, act: () => run(() => say('narr', o.text)) };
       case 'sign': return { label: o.label, act: () => run(() => say('narr', `Na placa, pintado à mão: "{fazenda}". Embaixo, em letras menores: terra do Vô ${AVO}. A ${VILA} fica a leste, seguindo a estrada.`)) };
       case 'bed': return { label: 'Dormir', act: bed };
@@ -696,16 +723,27 @@
      DIÁLOGO
      ===================================================== */
   let onAdvance = null, typer = 0;
-  function setSpeaker(who) {
+  /* Retrato do diálogo. Quem tem retrato próprio (Lúcio) usa a expressão pedida. */
+  function setSpeaker(who, expr) {
     const sp = who === 'narr' ? { name: '', look: null } : who, pc = $('portrait');
     $('dlg-who').textContent = sp.name; $('dlg-who').hidden = !sp.name;
     pc.hidden = !sp.look;
-    if (sp.look) { const g = pc.getContext('2d'); g.clearRect(0, 0, pc.width, pc.height); Sprites.draw(g, sp.look, 0, -3); }
+    if (sp.portrait) {
+      if (pc.width !== 32) { pc.width = 32; pc.height = 32; }
+      pc.dataset.expr = expr || 'neutro'; pc.classList.add('square');
+      const g = pc.getContext('2d'); g.clearRect(0, 0, 32, 32); g.drawImage(Sprites.PORTRAITS[sp.portrait](expr || 'neutro'), 0, 0);
+    } else if (sp.look) {
+      if (pc.width !== 24) { pc.width = 24; pc.height = 20; }
+      delete pc.dataset.expr; pc.classList.remove('square');
+      const g = pc.getContext('2d'); g.clearRect(0, 0, pc.width, pc.height); Sprites.draw(g, sp.look, 0, -3);
+    }
     $('dlg-text').classList.toggle('narr', who === 'narr');
   }
+  /* "[contente]Texto" → expressão + texto. */
+  const splitExpr = t => { const m = /^\[(neutro|desconfiado|contente|emocionado)\]/.exec(t); return m ? [m[1], t.slice(m[0].length)] : [null, t]; };
   function say(who, text) {
     return new Promise(resolve => {
-      text = fmt(text); setSpeaker(who);
+      const [expr, rest] = splitExpr(String(text)); text = fmt(rest); setSpeaker(who, expr);
       $('dlg-choices').replaceChildren(); $('dlg-form').hidden = true; $('dlg-more').hidden = false;
       const box = $('dlg-text'); let n = 0;
       clearInterval(typer);
@@ -714,6 +752,8 @@
       onAdvance = () => { if (typer) finish(); else { onAdvance = null; resolve(); } };
     });
   }
+  /* Pergunta com opções, sem precisar avançar o texto antes. */
+  function ask(text, labels) { setSpeaker('narr'); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(text); $('dlg-form').hidden = true; return choose(labels); }
   function choose(labels) {
     return new Promise(resolve => {
       onAdvance = null; $('dlg-more').hidden = true;
@@ -775,7 +815,7 @@
     if (g.deliver && !Object.keys(g.deliver).every(k => count(k) >= g.deliver[k])) return false;
     return true;
   }
-  const qProgress = id => { const g = QUESTS[id].goal, st = S.quests[id] || { n: {} }; return [...Object.keys(g.count || {}).map(k => `${COUNT_LABEL[k]}: ${Math.min(st.n[k] || 0, g.count[k])}/${g.count[k]}`), ...Object.keys(g.deliver || {}).map(k => `${ITEMS[k].name}: ${Math.min(count(k), g.deliver[k])}/${g.deliver[k]}`)].join(' · '); };
+  const qProgress = id => { const g = QUESTS[id].goal, st = S.quests[id] || { n: {} }; return [...(QUESTS[id].need && !st.mat ? Object.keys(QUESTS[id].need).map(k => `${ITEMS[k].name} na mochila: ${Math.min(count(k), QUESTS[id].need[k])}/${QUESTS[id].need[k]}`) : []), ...Object.keys(g.count || {}).map(k => `${COUNT_LABEL[k]}: ${Math.min(st.n[k] || 0, g.count[k])}/${g.count[k]}`), ...Object.keys(g.deliver || {}).map(k => `${ITEMS[k].name}: ${Math.min(count(k), g.deliver[k])}/${g.deliver[k]}`)].join(' · '); };
   const rewardText = r => [r.coins && `${r.coins} moedas`, ...Object.keys(r.items || {}).map(k => `${r.items[k]} ${ITEMS[k].name}`), r.hen && 'uma galinha', r.friend && 'amizade'].filter(Boolean).join(', ');
   /* Conclui uma única vez: retira os itens entregues e dá a recompensa. */
   function completeQuest(id) {
@@ -813,9 +853,14 @@
     return toPerson();
   }
   /* Ponto no mapa externo que representa um lugar (interiores = a porta do prédio). */
+  /* Ponto na tela do mapa: a serra fica em cima, alinhada com a trilha; a fazenda e a vila embaixo.
+     Interiores = a porta do prédio (ou da tenda). */
+  const MAP_SX = 499, MAP_FY = World.SERRA.h;
   function outdoorPoint(mapId, x, y) {
-    if (mapId === 'fora') return { x, y };
-    const d = World.get('fora').doors[mapId]; return d ? { x: d.x, y: d.y - 20 } : null;
+    if (mapId === 'fora') return { x, y: y + MAP_FY };
+    if (mapId === 'montanha') return { x: x + MAP_SX, y };
+    const par = World.get(mapId).parent || 'fora', d = World.get(par).doors[mapId];
+    return d ? outdoorPoint(par, d.x, d.y - 20) : null;
   }
   /* Seta no cenário: no destino, ou na porta/saída que leva até ele. */
   function trackedMarker() {
@@ -834,7 +879,9 @@
      ===================================================== */
   function talkTo(v) {
     run(async () => {
-      const who = { name: v.name, look: v.look };
+      const who = speaker(v);
+      if (v.id === 'lucio' && !S.lucio.met) return meetLucio(v);
+      if (v.id === 'lucio' && qActive().includes('fogo') && fireWindow() === 0) return fireScene();
       // 1) entrega de missão
       const turn = qActive().find(id => { const q = QUESTS[id]; return !q.selfDone && (q.to || q.giver) === v.id && qReady(id); });
       if (turn) {
@@ -857,22 +904,128 @@
       // no Armazém, Dona Celeste atende no balcão
       if (v.id === 'celeste' && map.id === 'loja' && await choose(['Comprar e vender', 'Conversar']) === 0) { setTimeout(() => openModal('loja'), 0); return; }
       // 3) cena de amizade (uma vez, com 3 corações)
-      if (hearts(v.id) >= 3 && !S.scenes[v.id]) {
+      if (v.scene && hearts(v.id) >= 3 && !S.scenes[v.id]) {
         const sc = v.scene, n = sc.n || 1;
         if (canAdd(sc.item, n)) { await sayAll(who, sc.lines); S.scenes[v.id] = true; gain(sc.item, n); return; }
       }
       // 4) presente, se há um produto na mão
-      const it = equipped(), giftable = it && !ITEMS[it.id].kind && !S.daily.gift[v.id];
-      if (giftable && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`]) === 1) return give(v, who, it.id);
+      const it = equipped();
+      if (GIFT_RULES[v.id]) { if (it && !ITEMS[it.id].kind && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`]) === 1) return giftRuled(v, who, it.id); }
+      else if (it && !ITEMS[it.id].kind && !S.daily.gift[v.id] && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`]) === 1) return give(v, who, it.id);
       // 5) conversa: a primeira do dia aumenta a amizade
       const pending = qActive().find(id => (QUESTS[id].to || QUESTS[id].giver) === v.id && !QUESTS[id].selfDone);
       if (!S.daily.talk[v.id]) {
         S.daily.talk[v.id] = true; addFriend(v.id, FRIEND.talk);
-        const tier = Math.min(2, Math.floor(hearts(v.id) / 2));
-        await say(who, v.talk[tier][S.day % v.talk[tier].length]);
-      } else await say(who, v.again);
+        if (v.talk.length === 4) await say(who, bandLine(v));
+        else { const tier = Math.min(2, Math.floor(hearts(v.id) / 2)); await say(who, v.talk[tier][S.day % v.talk[tier].length]); }
+      } else if (Array.isArray(v.again)) { const L = S.lucio; L.again = (L.again + 1) % v.again.length; await say(who, v.again[L.again]); }
+      else await say(who, v.again);
+      if (v.id === 'iara' && S.lucio.met && !S.lucio.iara) await iaraOnLucio(who);
       if (pending) await say('narr', `Missão em andamento com ${v.name}: ${QUESTS[pending].desc} (${qProgress(pending) || 'em andamento'})`);
     });
+  }
+  /* Fala por faixa de amizade (0 · 1–2 · 3–4 · 5 corações), sem repetir a anterior. */
+  function bandLine(v) {
+    const h = hearts(v.id), band = h === 0 ? 0 : h <= 2 ? 1 : h <= 4 ? 2 : 3, lines = v.talk[band], L = S.lucio;
+    let i = (S.day * 3 + band) % lines.length;
+    if (L.last === band * 10 + i) i = (i + 1) % lines.length;
+    L.last = band * 10 + i;
+    return lines[i];
+  }
+  async function meetLucio(v) {
+    const unknown = speaker(v);
+    await say('narr', 'Ao lado de uma tenda remendada, um homem de cabelo e barba grisalhos separa folhas sobre uma pedra. Ele levanta os olhos devagar.');
+    await say(unknown, v.meet[0]);
+    const c = await choose(['Sou {g:o neto|a neta|da família} do seu ' + AVO + '. Estou cuidando de {fazenda}.', 'Só estava conhecendo a trilha.']);
+    S.lucio.met = true; S.daily.talk.lucio = true; addFriend('lucio', FRIEND.talk); save();
+    const who = speaker(v);
+    if (c === 0) {
+      await say(who, '[neutro]Do ' + AVO + '... Ele subia aqui pra comprar erva comigo. Pagava sempre a mais e fingia que tinha errado a conta.');
+      await say(who, '[neutro]Lúcio. Moro aqui. Se precisar de folha pra chá ou de saber se vai chover, pergunta.');
+    } else await say(who, '[neutro]A trilha é boa. Lúcio, meu nome. Pode conhecer. Só deixe minhas coisas onde estão.');
+    toast('Você conheceu Lúcio. A tenda dele agora aparece no mapa.');
+  }
+  /* Semana: dias 1–7, 8–14, 15–21 e 22–28 de cada estação (a semana vira nos dias 1, 8, 15 e 22). */
+  const weekOf = d => Math.floor((d - 1) / 7);
+  const isBirthday = v => { const c = calendar(); return v.birthday && SEASONS.indexOf(c.season) === v.birthday.season && c.day === v.birthday.day; };
+  const giftKind = (v, id) => (v.love.includes(id) ? 'love' : v.like.includes(id) ? 'like' : v.dislike.includes(id) ? 'dislike' : 'neutral');
+  /* Presentes com limites próprios (Lúcio): 1 por dia, 2 por semana e um extra no aniversário, com pontos x8. */
+  async function giftRuled(v, who, id) {
+    const R = GIFT_RULES[v.id], L = S.lucio, name = ITEMS[id].name, c = calendar();
+    if (await ask(`Presentear ${v.name} com ${name}?`, ['Sim, presentear', 'Não']) !== 0) return say('narr', `Você guarda ${name.toLowerCase()} na mochila.`);
+    if (L.gifts.week !== weekOf(S.day)) L.gifts = { week: weekOf(S.day), n: 0 };
+    const kind = giftKind(v, id);
+    if (isBirthday(v) && L.bday !== c.year) {
+      const pts = FRIEND[kind] * R.birthdayMult;
+      removeItem(id, 1); L.bday = c.year; S.known[v.id][id] = kind; addFriend(v.id, pts); save();
+      await say(who, v.bdayGift[kind === 'dislike' ? 'bad' : kind === 'neutral' ? 'neutral' : 'good']);
+      toast(`Presente de aniversário: amizade ${pts > 0 ? '+' : ''}${pts}`);
+      return;
+    }
+    if (S.daily.gift[v.id]) return say(who, v.limit.day);
+    if (L.gifts.n >= R.perWeek) return say(who, v.limit.week);
+    removeItem(id, 1); S.daily.gift[v.id] = true; L.gifts.n++; S.known[v.id][id] = kind; addFriend(v.id, FRIEND[kind]); save();
+    await say(who, v.gift[kind]);
+    if (kind === 'love') toast(`${v.name} adorou!`);
+  }
+  async function iaraOnLucio(who) {
+    await sayAll(who, IARA_LUCIO.lines);
+    const c = await choose(IARA_LUCIO.choices);
+    await say(who, IARA_LUCIO.answers[c]);
+    S.lucio.iara = true; save();
+  }
+  /* Janela da cena da fogueira: -1 cedo demais, 0 na hora (18h–22h), 1 tarde demais. */
+  const fireWindow = () => (S.time < 1080 ? -1 : S.time > 1320 ? 1 : 0);
+  function fireScene() {
+    run(async () => {
+      if (!qActive().includes('fogo')) return;
+      const w = fireWindow(), v = villagerById('lucio'), who = speaker(v);
+      if (w < 0) return say('narr', 'Lúcio disse "quando escurecer". Volte à fogueira entre 18h e 22h.');
+      if (w > 0) return say('narr', 'Ficou tarde: a fogueira virou brasa e Lúcio cochila encostado no tronco. A conversa fica para amanhã, quando escurecer.');
+      if (!canAdd('muda_goiaba')) return say('narr', 'Sua mochila está cheia. Abra um espaço antes de sentar com Lúcio.');
+      await say('narr', 'A fogueira estala. Lúcio empurra uma batata-doce para o seu lado com um graveto.');
+      await say(who, '[contente]Chegou na hora. A batata também.');
+      await say(who, '[neutro]Sabe por que eu fico aqui em cima? Não é birra. Daqui eu vejo o tempo chegando antes de todo mundo.');
+      await say(who, '[neutro]Agora é a sua vez. Ninguém troca a cidade por um sítio tomado de mato sem um motivo.');
+      const c = await choose(['Contar do escritório e do cansaço', 'Contar da carta do seu avô']);
+      if (c === 0) await say(who, '[neutro]Cansaço de cidade eu conheço de ouvir falar. Aqui o corpo cansa, a cabeça descansa. Dá pra dormir depois.');
+      else await say(who, '[emocionado]O ' + AVO + ' escrevia do jeito que falava: devagar e certo. Ele ia gostar de saber que a carta chegou.');
+      await say(who, '[emocionado]Faz tempo que eu não converso assim, sem ficar de olho na trilha.');
+      await say(who, '[contente]Toma. Uma muda da goiabeira da nascente. Planta no seu sítio. Quando der fruto, lembra que tem um velho aqui em cima que gosta de goiaba.');
+      S.lucio.fireScene = true; S.scenes.lucio_fogo = true;
+      qEvent('scene');
+    });
+  }
+  /* Tenda: na primeira vez, Lúcio precisa deixar entrar. */
+  function askTent(to) {
+    run(async () => {
+      if (!S.lucio.met) return say('narr', 'É a tenda de alguém. Entrar sem conhecer o dono não parece certo.');
+      const v = villagerById('lucio'), who = speaker(v);
+      await say(who, '[desconfiado]Vai entrar na tenda?');
+      if (await choose(['Posso dar uma olhada lá dentro?', 'Não, deixa pra lá']) !== 0) return say(who, '[neutro]Hum. Tá certo.');
+      await say(who, '[neutro]Pode. Olhar não tira pedaço. Só não mexa nos potes de erva: cada um tem seu lugar.');
+      S.lucio.permit = true; save();
+      const m = World.get(to); setTimeout(() => travel(to, m.spawn.x, m.spawn.y, 'up'), 0);
+    });
+  }
+  /* Reforço da lona: a madeira é usada no primeiro clique; depois, 3 reparos. */
+  function lonaAction() {
+    const st = S.quests.lona, T = World.SERRA.tent;
+    if (!st || st.state !== 'active') return { label: S.lucio.tentUp ? 'Lona reforçada' : 'Lona da tenda', act: () => run(() => say('narr', S.lucio.tentUp ? 'A lona nova está esticada e firme, presa na cumeeira de madeira. Nem o vento da serra balança.' : 'A lona está remendada em vários pontos e tem um rasgo perto do topo.')) };
+    const n = st.n.repair || 0;
+    if (n >= 3) return { label: 'Lona reforçada — fale com Lúcio', act: () => tip('A lona está reforçada. Fale com Lúcio.') };
+    const hit = () => {
+      if (!useTool('madeira', 2)) return;
+      bang(T.x + 18, T.base - 30, 'wood'); qEvent('repair');
+      if ((st.n.repair || 0) >= 3) { S.lucio.tentUp = true; toast('Tenda reforçada! Agora fale com Lúcio.'); } else toast(`Reparo ${st.n.repair}/3`);
+      save();
+    };
+    if (!st.mat) return { label: `Reforçar a lona (madeira: ${Math.min(4, count('madeira'))}/4)`, act: () => {
+      if (count('madeira') < 4) return tip(`Faltam madeiras: você tem ${count('madeira')} de 4. Galhos e árvores do bosque dão madeira.`);
+      if (S.energy < 2) return tip('Sem energia para trabalhar. Durma para recuperar.');
+      removeItem('madeira', 4); st.mat = true; toast('4 madeiras usadas no reforço'); hit();
+    } };
+    return { label: `Reparar a lona (${n}/3)`, act: hit };
   }
   async function give(v, who, id) {
     const kind = v.love.includes(id) ? 'love' : v.like.includes(id) ? 'like' : v.dislike.includes(id) ? 'dislike' : 'neutral';
@@ -1011,7 +1164,7 @@
     if (!notes.length) notes.push('Uma noite tranquila no sítio.');
     const box = $('summary-body'); box.replaceChildren(el('h3', '', `${dateText(finished)} — dia encerrado`));
     const ul = el('ul', 'list'); notes.forEach(n => ul.append(el('li', '', n))); box.append(ul, el('p', 'dim', 'Você acorda com a energia completa.'));
-    const go = btn('btn primary', `Começar o dia ▶`, () => { $('summary').hidden = true; renderHud(); toast(dateText()); petEvent(); }); go.id = 'summary-go';
+    const go = btn('btn primary', `Começar o dia ▶`, () => { $('summary').hidden = true; renderHud(); toast(dateText()); VILLAGERS.forEach(v => { if (isBirthday(v) && (!v.hidden || S.lucio.met)) toast(`Hoje é aniversário de ${v.name}!`); }); petEvent(); }); go.id = 'summary-go';
     box.append(go); $('summary').hidden = false; go.focus(); renderHud(); renderHotbar();
   }
 
@@ -1093,6 +1246,8 @@
       const c = calendar();
       body.append(el('p', 'dim', `Hoje: ${c.season}, dia ${c.day} do ano ${c.year}. ${S.farmName}, ${VILA}.`));
       const lt = btn('btn', '✉ Reler a carta do Vô ' + AVO, () => showLetter(true)); lt.id = 'btn-letter'; body.append(lt);
+      const bdays = VILLAGERS.filter(v => v.birthday && (!v.hidden || S.lucio.met));
+      if (bdays.length) body.append(el('p', 'dim', 'Aniversários: ' + bdays.map(v => `${v.name}, ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' (hoje!)' : ''}`).join(' · ')));
       body.append(el('h3', '', 'Missões em andamento'));
       const act = qActive(), ul = el('ul', 'list');
       if (!act.length) ul.append(el('li', 'dim', 'Nenhuma missão no momento. Converse com os moradores: quem tem um pedido aparece com um "!".'));
@@ -1108,10 +1263,20 @@
       body.append(el('h3', '', 'Moradores'), el('p', 'dim', 'A primeira conversa do dia e um presente por dia aumentam a amizade. Cada morador tem seus gostos.'));
       const ul = el('ul', 'list');
       VILLAGERS.forEach(v => {
+        if (v.hidden && !(v.id === 'lucio' && S.lucio.met)) { ul.append(el('li', 'dim', 'Dizem na vila que alguém mora numa tenda na serra, ao norte. A trilha começa entre a vila e o bosque.')); return; }
         const li = el('li', 'friend'), top = el('div', 'friend-top'), txt = el('div');
+        li.dataset.id = v.id;
         txt.append(el('b', '', v.name), heartsNode(hearts(v.id)), el('span', 'dim', v.bio));
-        top.append(Sprites.canvas(v.look), txt); li.append(top);
-        li.append(el('span', 'dim', `Costuma ficar ${v.place}.`), el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'} · presente ${S.daily.gift[v.id] ? '✔' : '—'}`));
+        const pic = v.portrait ? Sprites.portrait(v.portrait, hearts(v.id) >= 3 ? 'contente' : 'neutro') : Sprites.canvas(v.look);
+        if (v.portrait) pic.classList.add('portrait-pic');
+        top.append(pic, txt); li.append(top);
+        li.append(el('span', 'dim', `Costuma ficar ${v.place}.`));
+        if (v.birthday) li.append(el('span', '', `🎂 Aniversário: ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' — é hoje!' : ''}`));
+        if (GIFT_RULES[v.id]) {
+          const R = GIFT_RULES[v.id], L = S.lucio, n = L.gifts.week === weekOf(S.day) ? L.gifts.n : 0;
+          li.append(el('span', 'gift-week', `Presentes nesta semana: ${n}/${R.perWeek} · hoje: ${S.daily.gift[v.id] ? '1' : '0'}/${R.perDay}${isBirthday(v) ? ` · presente de aniversário: ${L.bday === calendar().year ? 'entregue' : 'disponível (amizade x8)'}` : ''}. A semana vira nos dias 1, 8, 15 e 22 de cada estação.`));
+          li.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'}`));
+        } else li.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'} · presente ${S.daily.gift[v.id] ? '✔' : '—'}`));
         const kn = Object.keys(S.known[v.id] || {});
         if (kn.length) li.append(el('span', 'ok', 'Você já sabe: ' + kn.map(k => `${ITEMS[k].name} (${{ love: 'adora', like: 'gosta', neutral: 'aceita', dislike: 'não gosta' }[S.known[v.id][k]]})`).join(', ')));
         ul.append(li);
@@ -1204,6 +1369,9 @@
     praca: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 6, 16, 12); g.fillStyle = '#3f86d8'; g.fillRect(x - 7, y - 5, 14, 10); g.fillStyle = '#e8e2d4'; g.fillRect(x - 1, y - 8, 2, 8); },
     morador: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 6, y - 8, 12, 16); g.fillStyle = '#f6c89c'; g.fillRect(x - 4, y - 7, 8, 6); g.fillStyle = '#3f86d0'; g.fillRect(x - 5, y - 1, 10, 8); },
     bosque: (g, x, y) => { g.fillStyle = '#143c24'; g.fillRect(x - 8, y - 9, 16, 13); g.fillStyle = '#2a8046'; g.fillRect(x - 7, y - 8, 14, 11); g.fillStyle = '#6a4426'; g.fillRect(x - 1, y + 3, 3, 5); },
+    trilha: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 8, 16, 16); g.fillStyle = '#d8c48c'; g.fillRect(x - 3, y - 7, 6, 14); g.fillStyle = '#8a8478'; for (let i = 0; i < 6; i++) g.fillRect(x - 7 + i, y - 7 + i * 2, 2, 2); g.fillStyle = '#ffffff'; g.fillRect(x - 1, y - 6, 2, 2); g.fillRect(x - 2, y - 4, 4, 1); },
+    tenda: (g, x, y) => { g.fillStyle = '#241a2c'; for (let i = 0; i < 12; i++) g.fillRect(x - i - 1, y - 8 + i, i * 2 + 2, 1); g.fillStyle = '#c8b48a'; for (let i = 1; i < 11; i++) g.fillRect(x - i, y - 8 + i, i * 2, 1); g.fillStyle = '#2a1e16'; for (let i = 0; i < 5; i++) g.fillRect(x - i / 2, y - 1 + i, i, 1); g.fillStyle = '#f08a20'; g.fillRect(x + 7, y + 1, 3, 3); },
+    rocha: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 6, 16, 12); g.fillStyle = '#8a8478'; g.fillRect(x - 7, y - 5, 14, 10); g.fillStyle = '#b4ae9e'; g.fillRect(x - 6, y - 4, 6, 2); g.fillStyle = '#6a6458'; g.fillRect(x + 1, y + 1, 5, 2); },
     voce: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 7, y - 16, 14, 14); g.fillStyle = '#ff5a5a'; g.fillRect(x - 6, y - 15, 12, 12); g.fillStyle = '#ffffff'; g.fillRect(x - 3, y - 12, 6, 6); g.fillStyle = '#241a2c'; g.fillRect(x - 3, y - 2, 6, 2); g.fillRect(x - 1, y, 2, 3); },
     destino: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 18, 16, 12); g.fillRect(x - 6, y - 6, 12, 2); g.fillRect(x - 3, y - 4, 6, 2); g.fillRect(x - 1, y - 2, 2, 2); g.fillStyle = '#ffd75e'; g.fillRect(x - 7, y - 17, 14, 10); g.fillRect(x - 5, y - 7, 10, 1); g.fillRect(x - 2, y - 5, 4, 1); },
   };
@@ -1215,28 +1383,33 @@
     g.lineWidth = 4; g.strokeStyle = '#241a2c'; g.strokeText(t, x, y); g.fillStyle = '#ffffff'; g.fillText(t, x, y);
   }
   /* Onde o personagem está, no mapa externo (dentro de um prédio = a porta dele). */
-  const playerPoint = () => (map.id === 'fora' ? { x: P.x, y: P.y } : outdoorPoint(map.id, 0, 0));
-  const PLACE_NAME = { casa: 'dentro de casa', loja: 'no Armazém', galinheiro: 'no galinheiro' };
+  const playerPoint = () => (map.id === 'fora' || map.id === 'montanha' ? outdoorPoint(map.id, P.x, P.y) : outdoorPoint(map.id, 0, 0));
+  const PLACE_NAME = { casa: 'dentro de casa', loja: 'no Armazém', galinheiro: 'no galinheiro', montanha: 'na serra', tenda: 'na tenda de Lúcio' };
+  const LEGEND = { casa: 'Sua casa', galinha: 'Galinheiro', cerca: 'Cercado das galinhas', roca: 'Roça (terra cultivável)', agua: 'Água (lago, lagoa e nascente)', loja: 'Armazém', praca: 'Praça e fonte', morador: 'Casa de morador', bosque: 'Bosque e mata', trilha: 'Trilha da serra (norte)', tenda: 'Tenda de Lúcio', rocha: 'Rochedos da serra' };
   function renderMap() {
-    const m = World.get('fora'), c = $('map-canvas'), g = c.getContext('2d');
-    c.width = m.w; c.height = m.h; g.imageSmoothingEnabled = false;
-    g.drawImage(m.bg, 0, 0);
-    g.fillStyle = 'rgba(16,20,40,.18)'; g.fillRect(0, 0, m.w, m.h);
-    $('map-title').textContent = `Mapa — ${S.farmName} e ${VILA}, ${REGIAO}`;
-    // nome da fazenda sobre a roça e nome da vila
-    label(g, S.farmName, 200, 186, 16); label(g, VILA, 640, 36, 16);
+    const m = World.get('fora'), mt = World.get('montanha'), c = $('map-canvas'), g = c.getContext('2d');
+    c.width = m.w; c.height = m.h + MAP_FY; g.imageSmoothingEnabled = false;
+    g.fillStyle = '#3e4a34'; g.fillRect(0, 0, m.w, MAP_FY);
+    for (let i = 0; i < 40; i++) { g.fillStyle = i % 2 ? '#56604a' : '#6a6a5a'; const x = (i * 97) % m.w, y = (i * 53) % (MAP_FY - 40); for (let r = 0; r < 18; r++) g.fillRect(x - r, y + r, r * 2, 1); }   // morros
+    g.drawImage(mt.bg, MAP_SX, 0); g.drawImage(m.bg, 0, MAP_FY);
+    g.fillStyle = 'rgba(16,20,40,.18)'; g.fillRect(0, 0, c.width, c.height);
+    $('map-title').textContent = `Mapa — ${S.farmName}, ${VILA} e a serra, ${REGIAO}`;
+    // nomes de regiões
+    label(g, S.farmName, 200, 186 + MAP_FY, 16); label(g, VILA, 640, 36 + MAP_FY, 16); label(g, 'Serra', MAP_SX + 320, 90, 16);
     const leg = $('map-legend'); leg.replaceChildren();
     const seenKinds = new Set();
-    World.PLACES.forEach(pl => {
-      MAP_ICON[pl.icon](g, pl.x, pl.y);
-      label(g, pl.id === 'casa' ? 'Casa' : pl.label, pl.x, pl.y + 12, 12);
-      if (!seenKinds.has(pl.icon)) { seenKinds.add(pl.icon); const li = el('li'); li.append(legendIcon(pl.icon), el('span', '', { casa: 'Sua casa', galinha: 'Galinheiro', cerca: 'Cercado das galinhas', roca: 'Roça (terra cultivável)', agua: 'Água (lago e lagoa)', loja: 'Armazém', praca: 'Praça e fonte', morador: 'Casa de morador', bosque: 'Bosque' }[pl.icon])); leg.append(li); }
-    });
-    const id = tracked(), tg = id && questTarget(id), dest = tg && outdoorPoint(tg.map, tg.x, tg.y + (tg.map === 'fora' ? 8 : 0));
+    const put = (pl, mapId, name) => {
+      const q = outdoorPoint(mapId, pl.x, pl.y);
+      MAP_ICON[pl.icon](g, q.x, q.y); label(g, name, q.x, q.y + 12, 12);
+      if (!seenKinds.has(pl.icon)) { seenKinds.add(pl.icon); const li = el('li'); li.append(legendIcon(pl.icon), el('span', '', pl.icon === 'tenda' && !S.lucio.met ? 'Tenda na serra' : LEGEND[pl.icon])); leg.append(li); }
+    };
+    World.PLACES.forEach(pl => put(pl, 'fora', pl.id === 'casa' ? 'Casa' : pl.label));
+    World.MPLACES.forEach(pl => put(pl, 'montanha', pl.id === 'tenda' ? (S.lucio.met ? 'Tenda de Lúcio' : 'Tenda') : pl.label));
+    const id = tracked(), tg = id && questTarget(id), dest = tg && outdoorPoint(tg.map, tg.x, tg.y + (tg.map === 'fora' || tg.map === 'montanha' ? 8 : 0));
     if (dest) { MAP_ICON.destino(g, Math.round(dest.x), Math.round(dest.y) - 4); const li = el('li'); li.append(legendIcon('destino'), el('span', '', `Destino: ${tg.label}`)); leg.prepend(li); }
     const me = playerPoint();
     if (me) { MAP_ICON.voce(g, Math.round(me.x), Math.round(me.y) - 6); label(g, 'Você', Math.round(me.x), Math.round(me.y) + 4, 12); const li = el('li'); li.append(legendIcon('voce'), el('span', '', 'Você')); leg.prepend(li); }
-    const where = map.id === 'fora' ? '' : ` Você está ${PLACE_NAME[map.id] || 'dentro de um prédio'}.`;
+    const where = map.id === 'fora' ? '' : map.id === 'montanha' ? ' Você está na serra.' : ` Você está ${PLACE_NAME[map.id] || 'dentro de um prédio'}.`;
     $('map-info').textContent = `${id ? `Missão: ${QUESTS[id].title} → ${tg.label}.` : 'Nenhuma missão em andamento.'}${where} O tempo fica parado com o mapa aberto. Feche com ${COARSE ? 'o botão' : 'M, Esc ou o botão'}.`;
   }
   function openMap() { if (busy || screen !== 'game' || !S || !$('letter').hidden) return; if (!$('modal').hidden) closeModal(); if (!$('modal').hidden) return; renderMap(); $('mapview').hidden = false; $('map-close').focus(); }
@@ -1255,7 +1428,7 @@
   /* Ganchos para testes automatizados e depuração. */
   window.__trilha = {
     get S() { return S; }, get P() { return P; }, get map() { return map; }, get hover() { return hover; }, get near() { return hover && hover.ok ? hover : null; }, get busy() { return blocked(); }, get hens() { return hens; }, save,
-    cam: () => World.camera(map, P.x, P.y), get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), marker: () => trackedMarker(), openMap, fit, petEvent, cleanName, textWidth,
+    cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), marker: () => trackedMarker(), openMap, fit, petEvent, cleanName, textWidth,
     villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
   };
