@@ -22,6 +22,7 @@ pelo GitHub Pages. Não precisa instalar nada.
 | Abrir a porta à frente | Q (ou clique na porta) | Toque na porta |
 | Usar a ferramenta, semente ou muda | Clique na terra ou no objeto | Toque na terra ou no objeto |
 | Escolher o item da barra | Clique na barra ou teclas 1 a 9 e 0 | Toque na barra |
+| Comer (ovo, laranja, goiaba, amora, fruta de cristal, narciso) | Clique no item que já está na mão, na barra | Toque de novo no item da barra |
 | Trocar a linha da mochila usada na barra | Tab | Menu → Inventário → "Usar na barra" |
 | Menu principal (abre no Inventário) | E ou Esc (de novo fecha) | Botão ☰ Menu |
 | Diário | F | Botão Diário |
@@ -315,9 +316,13 @@ recarregar a página. Os itens podem ser guardados, vendidos e dados de presente
 os pontos de surgimento em vermelho e usar `window.__trilha.dev` (avançar horas,
 noites e dias). Nada disso aparece na versão normal.
 
-### Energia
+### Energia e comida
 
-Andar e conversar não gastam energia. Dormir recupera tudo e mostra um resumo da
+Andar e conversar não gastam energia. Para recuperar no meio do dia, **coma**:
+escolha o item na barra de baixo e clique nele de novo. Ovo +20, goiaba +18,
+laranja +15, narciso +10, amora +8 e fruta de cristal +40 de energia (até o
+máximo de 100; com a energia cheia, nada é gasto). O Inventário mostra quanto
+cada comida recupera. Dormir recupera tudo e mostra um resumo da
 noite.
 
 O Armazém (Dona Celeste atende das 6h às 18h) vende sementes, mudas, ração,
