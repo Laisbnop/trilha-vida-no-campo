@@ -7,7 +7,7 @@ const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem 
 const MS_PER_GAME_MIN = 1300;      // 78 s reais por hora de jogo → 20 horas em 26 minutos ativos
 const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
-/* kind: tool | seed | sapling | hat | quest | item.  sell = preço de venda. */
+/* kind: tool | seed | sapling | hat | quest | item.  sell = preço de venda.  food = energia que recupera ao comer. */
 const ITEMS = {
   enxada:   { name: 'Enxada',    kind: 'tool', desc: 'Prepara a terra para o plantio.' },
   regador:  { name: 'Regador',   kind: 'tool', desc: 'Rega a terra. Reabasteça no lago.' },
@@ -25,19 +25,19 @@ const ITEMS = {
 
   muda_laranja: { name: 'Muda de laranjeira', kind: 'sapling', tree: 'laranja', price: 60, desc: 'Vira árvore em 5 dias. Dá frutos a cada 3.' },
   muda_goiaba:  { name: 'Muda de goiabeira',  kind: 'sapling', tree: 'goiaba',  price: 70, desc: 'Vira árvore em 6 dias. Dá frutos a cada 3.' },
-  laranja: { name: 'Laranja', sell: 16, desc: 'Colhida do pé.' },
-  goiaba:  { name: 'Goiaba',  sell: 20, desc: 'Perfumada.' },
+  laranja: { name: 'Laranja', sell: 16, food: 15, desc: 'Colhida do pé.' },
+  goiaba:  { name: 'Goiaba',  sell: 20, food: 18, desc: 'Perfumada.' },
 
   madeira: { name: 'Madeira', sell: 3, desc: 'De galhos e árvores comuns.' },
   pedra:   { name: 'Pedra',   sell: 3, desc: 'De pedras quebradas.' },
   racao:   { name: 'Ração',   price: 5, desc: 'Coloque no comedouro do galinheiro.' },
-  ovo:     { name: 'Ovo',     sell: 14, desc: 'Fresquinho.' },
-  amora:    { name: 'Amora silvestre', sell: 7, desc: 'Colhida no bosque, na serra e, no outono, pela vila.' },
-  narciso:        { name: 'Narciso',          sell: 30,  desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila.' },
+  ovo:     { name: 'Ovo',     sell: 14, food: 20, desc: 'Fresquinho.' },
+  amora:    { name: 'Amora silvestre', sell: 7, food: 8, desc: 'Colhida no bosque, na serra e, no outono, pela vila.' },
+  narciso:        { name: 'Narciso',          sell: 30, food: 10, desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila.' },
   ervilha_cheiro: { name: 'Ervilha-de-cheiro', sell: 45, desc: 'Flor perfumada do verão, em tons de rosa e lilás.' },
   acafrao:        { name: 'Flor de açafrão',  sell: 55,  desc: 'Flor roxa que fura a neve no inverno.' },
   azevinho:       { name: 'Azevinho',         sell: 70,  desc: 'Ramo de folhas pontudas com bagas vermelhas. Enfeite de inverno.' },
-  fruta_cristal:  { name: 'Fruta de cristal', sell: 130, desc: 'Rara. Fria e translúcida, aparece só no inverno.' },
+  fruta_cristal:  { name: 'Fruta de cristal', sell: 130, food: 40, desc: 'Rara. Fria e translúcida, aparece só no inverno.' },
   cogumelo: { name: 'Cogumelo',        sell: 9, desc: 'Encontrado à sombra das árvores.' },
   flor:     { name: 'Flor-do-campo',   sell: 6, desc: 'Simples e bonita.' },
 

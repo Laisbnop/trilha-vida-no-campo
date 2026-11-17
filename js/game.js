@@ -790,6 +790,26 @@
   function tip(text) { const now = performance.now(); if (text === lastTip && now - lastTipT < 1200) return; lastTip = text; lastTipT = now; toast(text); }
   /* A barra de ferramentas mostra uma das 3 linhas da mochila (Tab troca a linha, mantendo a coluna). */
   function selectSlot(i) { S.sel = S.row * HOTBAR + i; renderHotbar(); save(); }
+  /* Clique na barra: escolhe o item; se ele já está na mão e é comida, come. */
+  function hotbarClick(i) {
+    const idx = S.row * HOTBAR + i, s2 = S.inv[idx];
+    if (idx === S.sel && s2 && ITEMS[s2.id].food) return eat(idx);
+    selectSlot(i);
+    if (s2 && ITEMS[s2.id].food) tip(`${ITEMS[s2.id].name} na mão. Clique de novo para comer (+${ITEMS[s2.id].food} de energia).`);
+  }
+  /* Come uma unidade do item: recupera energia (até 100). Nada acontece com a energia cheia ou com o jogo ocupado. */
+  function eat(idx) {
+    const s2 = S.inv[idx]; if (!s2) return false;
+    const it = ITEMS[s2.id]; if (!it.food) return false;
+    if (blocked() || P.work) return false;
+    if (S.energy >= 100) { tip('Sua energia já está cheia.'); return false; }
+    const before = S.energy; S.energy = Math.min(100, S.energy + it.food);
+    s2.n--; if (!s2.n) S.inv[idx] = null;
+    P.hop = performance.now() + 300; floats.push({ icon: s2.id, x: P.x, y: P.y, t0: performance.now() });
+    toast(`Você comeu ${it.name.toLowerCase()}: +${Math.round(S.energy - before)} de energia`);
+    renderHotbar(); renderHud(); save();
+    return true;
+  }
   function cycleRow(d = 1) {
     const col = S.sel % HOTBAR; S.row = (S.row + d + 3) % 3; S.sel = S.row * HOTBAR + col;
     renderHotbar(); save(); tip(`Barra de ferramentas: linha ${S.row + 1} de 3`);
@@ -1348,7 +1368,7 @@
     if (!S) return;
     const bar = $('hotbar'); bar.replaceChildren();
     const base = S.row * HOTBAR;
-    for (let i = 0; i < HOTBAR; i++) { const b = slotNode(S.inv[base + i], base + i === S.sel ? 'sel' : ''); b.dataset.slot = i; b.append(el('u', '', String((i + 1) % 10))); b.onclick = () => selectSlot(i); bar.append(b); }
+    for (let i = 0; i < HOTBAR; i++) { const b = slotNode(S.inv[base + i], base + i === S.sel ? 'sel' : ''); b.dataset.slot = i; b.append(el('u', '', String((i + 1) % 10))); b.onclick = () => hotbarClick(i); bar.append(b); }
     const it = equipped(); $('equipped').textContent = it ? ITEMS[it.id].name : 'Mãos livres';
     let hr = $('hotrow'); if (!hr) { hr = el('span', 'hotrow'); hr.id = 'hotrow'; hr.title = 'Linha da mochila na barra (Tab troca)'; bar.parentNode.append(hr); }
     hr.textContent = `Linha ${S.row + 1}/3 · Tab`;
@@ -1418,7 +1438,7 @@
         const s2 = S.inv[i]; info.replaceChildren();
         if (!s2) { info.append(el('span', 'dim', picked !== null ? 'Clique num espaço para colocar o item ali.' : 'Clique num item para ver, mover ou usar na barra.')); return; }
         const it = ITEMS[s2.id];
-        info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}`), el('span', 'dim', it.desc + (it.sell ? ` Vende por ${it.sell} moedas.` : '')));
+        info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}`), el('span', 'dim', it.desc + (it.food ? ` Comestível: +${it.food} de energia.` : '') + (it.sell ? ` Vende por ${it.sell} moedas.` : '')));
         if (i === picked) {
           const use = btn('btn', i === S.sel ? 'Na mão ✔' : 'Usar na barra', () => { S.row = Math.floor(i / HOTBAR); S.sel = i; picked = null; save(); renderTab('mochila'); }); use.dataset.use = i; info.append(use);
           if (it.kind === 'hat') info.append(btn('btn', S.look.hat === it.hat ? 'Tirar o chapéu' : 'Usar o chapéu', () => { S.look.hat = S.look.hat === it.hat ? null : it.hat; save(); renderTab('mochila'); }));
