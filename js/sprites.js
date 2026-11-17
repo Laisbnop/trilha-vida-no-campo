@@ -1,226 +1,345 @@
-/* Personagens em pixel art (20x28), montados por código a partir da aparência:
-   tom de pele, cabelo e cor, roupa de cima, roupa de baixo, calçado e chapéu.
-   Qualquer combinação vale para qualquer gênero. Sem imagens externas.
+/* Personagens em pixel art (24x32), montados por código a partir da aparência:
+   tom de pele, penteado e cor, parte de cima, parte de baixo, calçado,
+   acessório e chapéu. Qualquer combinação vale para qualquer gênero.
+   Sem imagens externas.
 
-   Camadas: cabelo de trás → corpo → cabeça → cabelo da frente → chapéu →
-   contorno escuro automático. Três vistas: de frente, de costas e de perfil. */
+   Camadas: cabelo de trás → corpo e roupas → cabeça e rosto → cabelo da
+   frente → acessório → chapéu → contorno escuro automático.
+   Vistas: de frente ('down'), de costas ('up') e de perfil ('side', olhando
+   para a esquerda; a direita é o espelho). Quadros: 0 parado, 1 passo com a
+   perna esquerda, 2 passo com a perna direita. */
 
 const Sprites = (() => {
-  const W = 20, H = 28;
-  const OUT = '#241a2c';
+  const W = 24, H = 32;
+  const OUT = '#231a2a';
 
   /* [base, sombra, luz] */
   const SKINS = [
-    { id: 's1', name: 'Muito clara',  c: ['#ffe0c4', '#e8b896', '#fff0e0'] },
-    { id: 's2', name: 'Clara',        c: ['#f4c79c', '#d49c70', '#ffdcb8'] },
-    { id: 's3', name: 'Morena clara', c: ['#dca272', '#b87c50', '#ecb888'] },
-    { id: 's4', name: 'Morena',       c: ['#b9794f', '#955a36', '#cc8e62'] },
-    { id: 's5', name: 'Escura',       c: ['#8a5636', '#6a3e24', '#9e6a48'] },
-    { id: 's6', name: 'Muito escura', c: ['#5e3a26', '#452818', '#724a34'] },
+    { id: 's1', name: 'Muito clara',  c: ['#ffe2c8', '#eab894', '#fff2e4'] },
+    { id: 's2', name: 'Clara',        c: ['#f6c89c', '#d89c70', '#ffdcb8'] },
+    { id: 's3', name: 'Morena clara', c: ['#dca272', '#b47848', '#ecb888'] },
+    { id: 's4', name: 'Morena',       c: ['#b9794f', '#8f5634', '#cc8e62'] },
+    { id: 's5', name: 'Escura',       c: ['#8a5636', '#663a22', '#a06a48'] },
+    { id: 's6', name: 'Muito escura', c: ['#5e3a26', '#422616', '#764c34'] },
   ];
+  /* [base, sombra, luz] */
   const HAIR_COLORS = [
-    { id: 'preto',    name: 'Preto',           c: ['#2e2836', '#18141e', '#4a4458'] },
-    { id: 'castanho', name: 'Castanho escuro', c: ['#5a3a24', '#3c2414', '#7a5438'] },
-    { id: 'claro',    name: 'Castanho claro',  c: ['#9a6a3c', '#74482a', '#bc8a56'] },
-    { id: 'loiro',    name: 'Loiro',           c: ['#e8c45a', '#bc9238', '#f8e08c'] },
-    { id: 'ruivo',    name: 'Ruivo',           c: ['#c8562a', '#983a1c', '#e87a48'] },
-    { id: 'grisalho', name: 'Grisalho',        c: ['#b8b8c8', '#8a8a9e', '#dcdce8'] },
-    { id: 'azul',     name: 'Azul',            c: ['#3f7fd8', '#2a56a8', '#6aa6f0'] },
-    { id: 'rosa',     name: 'Rosa',            c: ['#e870a8', '#b84a80', '#f8a0c8'] },
+    { id: 'preto',    name: 'Preto',           c: ['#2e2836', '#17131c', '#504862'] },
+    { id: 'castanho', name: 'Castanho escuro', c: ['#5a3a24', '#3a2212', '#80583a'] },
+    { id: 'claro',    name: 'Castanho claro',  c: ['#9a6a3c', '#704626', '#c08e5a'] },
+    { id: 'loiro',    name: 'Loiro',           c: ['#e8c45a', '#b88e34', '#fae29a'] },
+    { id: 'ruivo',    name: 'Ruivo',           c: ['#c8562a', '#923818', '#ec8250'] },
+    { id: 'grisalho', name: 'Grisalho',        c: ['#b8b8c8', '#84849a', '#e4e4ee'] },
+    { id: 'azul',     name: 'Azul',            c: ['#3f7fd8', '#2652a2', '#74acf4'] },
+    { id: 'rosa',     name: 'Rosa',            c: ['#e870a8', '#b0467a', '#fcaad0'] },
   ];
-  /* back = até onde o cabelo desce nas costas (linha do sprite); 0 = não desce. */
+  /* 16 penteados, de estilos tradicionalmente masculinos a femininos — todos livres. */
   const HAIRS = [
-    { id: 'careca',        name: 'Careca',          back: 0 },
-    { id: 'curtoLiso',     name: 'Curto liso',      back: 0 },
-    { id: 'curtoOndulado', name: 'Curto ondulado',  back: 0 },
-    { id: 'curtoCacheado', name: 'Curto cacheado',  back: 0 },
-    { id: 'crespoCurto',   name: 'Crespo curto',    back: 0 },
-    { id: 'crespo',        name: 'Crespo volumoso', back: 0 },
-    { id: 'medio',         name: 'Médio',           back: 15 },
-    { id: 'longoLiso',     name: 'Longo liso',      back: 19 },
-    { id: 'longoOndulado', name: 'Longo ondulado',  back: 20 },
-    { id: 'longoCacheado', name: 'Longo cacheado',  back: 17 },
-    { id: 'trancas',       name: 'Tranças',         back: 20 },
-    { id: 'rabo',          name: 'Rabo de cavalo',  back: 0 },
-    { id: 'coque',         name: 'Coque',           back: 0 },
+    { id: 'careca',        name: 'Careca' },
+    { id: 'raspado',       name: 'Raspado' },
+    { id: 'curtoLiso',     name: 'Curto liso' },
+    { id: 'topete',        name: 'Topete' },
+    { id: 'curtoOndulado', name: 'Curto ondulado' },
+    { id: 'curtoCacheado', name: 'Curto cacheado' },
+    { id: 'crespoCurto',   name: 'Crespo curto' },
+    { id: 'crespo',        name: 'Black power' },
+    { id: 'medio',         name: 'Chanel com franja' },
+    { id: 'medioOndulado', name: 'Médio ondulado' },
+    { id: 'longoLiso',     name: 'Longo liso' },
+    { id: 'longoOndulado', name: 'Longo ondulado' },
+    { id: 'longoCacheado', name: 'Longo cacheado' },
+    { id: 'trancas',       name: 'Tranças' },
+    { id: 'rabo',          name: 'Rabo de cavalo' },
+    { id: 'coque',         name: 'Coque' },
   ];
   const GENDERS = [{ id: 'f', name: 'Feminino' }, { id: 'm', name: 'Masculino' }, { id: 'n', name: 'Não-binário' }];
-  const TOPS = [{ id: 'camiseta', name: 'Camiseta' }, { id: 'camisa', name: 'Camisa' }, { id: 'blusa', name: 'Blusa' }, { id: 'jardineira', name: 'Jardineira' }];
-  const BOTTOMS = [{ id: 'calca', name: 'Calça' }, { id: 'short', name: 'Short' }, { id: 'saia', name: 'Saia' }];
+  const TOPS = [
+    { id: 'camiseta', name: 'Camiseta' }, { id: 'regata', name: 'Regata' }, { id: 'camisa', name: 'Camisa' },
+    { id: 'blusa', name: 'Blusa' }, { id: 'moletom', name: 'Moletom' }, { id: 'jardineira', name: 'Jardineira' },
+  ];
+  const BOTTOMS = [{ id: 'calca', name: 'Calça' }, { id: 'short', name: 'Short' }, { id: 'saia', name: 'Saia' }, { id: 'saiaLonga', name: 'Saia longa' }];
+  const ACCESSORIES = [{ id: 'oculos', name: 'Óculos' }, { id: 'laco', name: 'Laço' }, { id: 'bandana', name: 'Bandana' }, { id: 'cachecol', name: 'Cachecol' }];
   const CLOTH_COLORS = ['#d8507c', '#e04a3a', '#e0a23a', '#f2d24a', '#3fa070', '#5a7a5a', '#3f86d0', '#3a4a8a', '#8a5ad9', '#f4f4f4', '#3a3a4a', '#6a5038', '#c8683a', '#f08fb0'];
   const SHOE_COLORS = ['#3a2a22', '#8a5e36', '#f4f4f4', '#c8483a', '#3a4a8a', '#2a2a34'];
   const HATS = [{ id: 'palha', name: 'Chapéu de palha' }, { id: 'boina', name: 'Boina' }, { id: 'pescador', name: 'Chapéu de pescador' }];
 
   const byId = (list, id) => list.find(o => o.id === id) || list[0];
-  const shade = (hex, k) => {
-    const n = parseInt(hex.slice(1), 16);
-    const f = v => Math.max(0, Math.min(255, Math.round(v * k))).toString(16).padStart(2, '0');
-    return '#' + f(n >> 16) + f((n >> 8) & 255) + f(n & 255);
-  };
+  const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const toHex = a => '#' + a.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const shade = (h, k) => toHex(hex(h).map(v => v * k));
+  const mix = (a, b, k) => { const A = hex(a), B = hex(b); return toHex(A.map((v, i) => v + (B[i] - v) * k)); };
+  const ell = (x, y, cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
 
-  /* dir: 'down' (de frente), 'up' (de costas) ou 'side' (de perfil, olhando para a esquerda) */
-  function render(look, frame, dir = 'down') {
+  function render(look, frame, dir) {
     const grid = Array.from({ length: H }, () => Array(W).fill(null));
-    const p = (x, y, c) => { if (x >= 1 && x < W - 1 && y >= 1 && y < H - 1) grid[y][x] = c; };
+    const inb = (x, y) => x >= 1 && x < W - 1 && y >= 0 && y < H - 1;
+    const p = (x, y, c) => { if (inb(x, y)) grid[y][x] = c; };
     const row = (y, x0, x1, c) => { for (let x = x0; x <= x1; x++) p(x, y, c); };
     const box = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) row(y, x0, x1, c); };
+    const get = (x, y) => (inb(x, y) ? grid[y][x] : null);
 
     const [S, Sd, Sl] = byId(SKINS, look.skin).c;
     const [Hb, Hd, Hl] = byId(HAIR_COLORS, look.hairColor).c;
+    const Hdd = shade(Hd, 0.75);
     const robe = look.top === 'manto';
-    const T = look.topColor || '#3f86d0', B = look.bottomColor || '#6a5038', SHOE = look.shoeColor || '#3a2a22';
-    const Td = shade(T, 0.75), Bd = shade(B, 0.75), CREAM = '#f0e8d0';
-    const hair = byId(HAIRS, look.hair), hid = hair.id, bottom = look.bottom || 'calca', top = look.top || 'camiseta';
-    const step = frame === 1, up = dir === 'up', side = dir === 'side';
-    const sleeve = { camiseta: 2, camisa: 4, blusa: 1, jardineira: 2, manto: 5 }[top] || 2;      // linhas de manga
-    const sleeveColor = top === 'jardineira' ? CREAM : T;
+    const top = robe ? 'manto' : byId(TOPS, look.top).id, bottom = byId(BOTTOMS, look.bottom).id;
+    const T = look.topColor || '#3f86d0', Td = shade(T, 0.74), Tl = mix(T, '#ffffff', 0.28);
+    const B = look.bottomColor || '#6a5038', Bd = shade(B, 0.72), Bl = mix(B, '#ffffff', 0.22);
+    const SHOE = look.shoeColor || '#3a2a22', SHOEl = mix(SHOE, '#ffffff', 0.25);
+    const CREAM = '#f2ead6', CREAMd = '#d4c8ac';
+    const hair = look.hair || 'careca', hat = look.hat || null, acc = look.accessory || null, A = look.accColor || '#e04a3a';
+    const up = dir === 'up', side = dir === 'side', down = !up && !side;
+    const stepL = frame === 1, stepR = frame === 2;
 
-    /* ---- cabelo de trás (fica atrás do corpo) ---- */
-    if (!up && !side) {
-      if (hid === 'longoLiso') box(4, 8, 15, 19, Hd);
-      if (hid === 'longoOndulado') for (let y = 8; y <= 20; y++) row(y, y % 4 < 2 ? 4 : 3, y % 4 < 2 ? 15 : 16, Hd);
-      if (hid === 'longoCacheado') box(4, 8, 15, 17, Hd);
-      if (hid === 'medio') box(4, 8, 15, 15, Hd);
-      if (hid === 'trancas') [6, 8, 11, 13].forEach(x => { for (let y = 14; y <= 18; y++) p(x, y, y % 2 ? Hb : Hd); });
+    /* ---------- cabelo: máscara + textura ---------- */
+    const HAIR = { straight: 1, wavy: 2, curly: 3, coily: 4 };
+    let mask = new Set(), tex = HAIR.straight;
+    const add = (x, y) => { if (inb(x, y)) mask.add(x + ',' + y); };
+    const has = (x, y) => mask.has(x + ',' + y);
+    const addEll = (cx, cy, rx, ry, pred) => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ell(x, y, cx, cy, rx, ry) && (!pred || pred(x, y))) add(x, y); };
+    const addRect = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) add(x, y); };
+    const cut = pred => { mask = new Set([...mask].filter(k => { const [x, y] = k.split(',').map(Number); return !pred(x, y); })); };
+    /* topo da cabeça coberto (y <= linha do cabelo) */
+    const crown = (line, vol = 0) => addEll(11.5, 10, 5.6 + vol, 6.6 + vol, (x, y) => y <= line);
+    /* rosto livre, de frente */
+    const face = (line) => cut((x, y) => down && y > line && x >= 8 && x <= 15);
+    const backLayer = new Set();              // o que fica atrás do corpo (cabelo longo, de frente)
+
+    function hairShape() {
+      if (hair === 'careca') return;
+      if (down) {
+        switch (hair) {
+          case 'raspado': crown(8); break;
+          case 'curtoLiso': crown(8, 0.4); addRect(7, 9, 10, 9); add(7, 10); add(16, 9); add(16, 10); add(11, 9); break;
+          case 'topete': crown(8); addEll(12.5, 4.2, 3.6, 2.6); add(7, 9); add(16, 9); break;
+          case 'curtoOndulado': tex = HAIR.wavy; crown(8, 0.8); [7, 9, 13, 15].forEach(x => add(x, 9)); add(6, 10); add(17, 10); add(6, 11); add(17, 11); break;
+          case 'curtoCacheado': tex = HAIR.curly; addEll(11.5, 7.5, 7.2, 5.6, (x, y) => y <= 9); [[6, 10], [17, 10], [6, 11], [17, 11], [5, 9], [18, 9]].forEach(([x, y]) => add(x, y)); face(8); break;
+          case 'crespoCurto': tex = HAIR.coily; addEll(11.5, 7.6, 7.4, 5.8); face(8); break;
+          case 'crespo': tex = HAIR.coily; addEll(11.5, 7.4, 10.2, 8.4); face(8); break;
+          case 'medio': crown(8, 0.6); addRect(5, 8, 7, 15); addRect(16, 8, 18, 15); addRect(8, 8, 15, 8); add(8, 9); add(10, 9); add(12, 9); add(14, 9); add(15, 9); cut((x, y) => y === 15 && (x === 5 || x === 18)); break;
+          case 'medioOndulado': tex = HAIR.wavy; crown(8, 0.7); for (let y = 8; y <= 18; y++) { const o = (y >> 1) % 2; addRect(5 - o, y, 7, y); addRect(16, y, 18 + o, y); } add(8, 9); add(15, 9); break;
+          case 'longoLiso': crown(8, 0.5); addRect(5, 8, 7, 22); addRect(16, 8, 18, 22); addRect(8, 8, 12, 9); add(8, 10); add(9, 10); add(13, 8); cut((x, y) => y >= 21 && (x === 5 || x === 18)); for (let y = 15; y <= 22; y++) for (let x = 6; x <= 17; x++) backLayer.add(x + ',' + y); break;
+          case 'longoOndulado': tex = HAIR.wavy; crown(8, 0.7); for (let y = 8; y <= 23; y++) { const o = (y >> 1) % 2; addRect(5 - o, y, 7, y); addRect(16, y, 18 + o, y); } add(8, 9); add(15, 9); for (let y = 15; y <= 23; y++) for (let x = 6; x <= 17; x++) backLayer.add(x + ',' + y); break;
+          case 'longoCacheado': tex = HAIR.curly; addEll(11.5, 9.5, 9.4, 9.2); addEll(11.5, 17, 8.6, 6.2); face(8); for (let y = 15; y <= 23; y++) for (let x = 5; x <= 18; x++) backLayer.add(x + ',' + y); break;
+          case 'trancas': crown(8, 0.3); for (const x of [4, 6, 17, 19]) addRect(x, 8, x, x === 4 || x === 19 ? 21 : 23); add(5, 8); add(18, 8); for (let y = 15; y <= 23; y++) for (let x = 6; x <= 17; x++) backLayer.add(x + ',' + y); break;
+          case 'rabo': crown(8, 0.1); add(7, 9); add(16, 9); addRect(17, 8, 18, 16); add(19, 12); add(19, 13); add(18, 17); break;
+          case 'coque': crown(8, 0.1); addEll(11.5, 2.4, 2.8, 2.2); add(7, 9); add(7, 10); add(16, 9); break;
+        }
+      } else if (up) {
+        const nape = { raspado: 14, curtoLiso: 15, topete: 14, curtoOndulado: 15, curtoCacheado: 15, crespoCurto: 15, rabo: 14, coque: 14 }[hair];
+        switch (hair) {
+          case 'crespoCurto': tex = HAIR.coily; addEll(11.5, 8.4, 7.4, 6.6); break;
+          case 'crespo': tex = HAIR.coily; addEll(11.5, 8, 10.2, 8.8); break;
+          case 'curtoCacheado': tex = HAIR.curly; addEll(11.5, 9, 7.2, 6.6); break;
+          case 'longoCacheado': tex = HAIR.curly; addEll(11.5, 9.5, 9.4, 9.2); addEll(11.5, 17, 8.6, 6.2); break;
+          default: crown(15, hair === 'raspado' ? 0 : 0.5);
+        }
+        if (nape) cut((x, y) => y > nape);
+        if (hair === 'curtoOndulado') tex = HAIR.wavy;
+        if (hair === 'topete') addEll(12, 3.4, 3.2, 2);
+        if (hair === 'medio') { addRect(6, 9, 17, 16); }
+        if (hair === 'medioOndulado') { tex = HAIR.wavy; for (let y = 9; y <= 19; y++) { const o = (y >> 1) % 2; addRect(6 - o, y, 17 + o, y); } }
+        if (hair === 'longoLiso') { addRect(6, 9, 17, 22); add(7, 23); add(16, 23); for (let x = 8; x <= 15; x++) add(x, 23); }
+        if (hair === 'longoOndulado') { tex = HAIR.wavy; for (let y = 9; y <= 23; y++) { const o = (y >> 1) % 2; addRect(6 - o, y, 17 + o, y); } }
+        if (hair === 'trancas') { for (const x of [6, 9, 14, 17]) addRect(x, 9, x + 1, 23); }
+        if (hair === 'rabo') { addRect(10, 9, 13, 20); add(11, 21); add(12, 21); add(11, 22); }
+        if (hair === 'coque') addEll(11.5, 2.4, 2.8, 2.2);
+      } else {                                            // perfil, olhando para a esquerda
+        const sideCrown = (vol = 0) => addEll(12, 9.6, 5.4 + vol, 6.4 + vol, (x, y) => y <= 8 || x >= 12);
+        switch (hair) {
+          case 'raspado': addEll(12, 9.6, 5.2, 6.2, (x, y) => y <= 8 || (x >= 13 && y <= 14)); break;
+          case 'curtoLiso': sideCrown(0.4); cut((x, y) => y > 14); add(7, 9); add(8, 9); break;
+          case 'topete': sideCrown(); cut((x, y) => y > 14); addEll(9.5, 4, 3.6, 2.6); break;
+          case 'curtoOndulado': tex = HAIR.wavy; sideCrown(0.8); cut((x, y) => y > 15); add(7, 9); break;
+          case 'curtoCacheado': tex = HAIR.curly; addEll(12.5, 8.6, 6.8, 6.4, (x, y) => y <= 9 || x >= 12); cut((x, y) => y > 15); break;
+          case 'crespoCurto': tex = HAIR.coily; addEll(12.6, 8, 7.2, 6.6, (x, y) => y <= 9 || x >= 11); break;
+          case 'crespo': tex = HAIR.coily; addEll(13, 7.6, 9.6, 8.6, (x, y) => y <= 9 || x >= 11); break;
+          case 'medio': sideCrown(0.6); addRect(12, 9, 17, 15); add(7, 8); add(7, 9); add(8, 9); break;
+          case 'medioOndulado': tex = HAIR.wavy; sideCrown(0.7); for (let y = 9; y <= 18; y++) addRect(12, y, 17 + ((y >> 1) % 2), y); add(7, 9); break;
+          case 'longoLiso': sideCrown(0.5); addRect(12, 9, 17, 22); add(7, 9); add(8, 9); add(8, 10); break;
+          case 'longoOndulado': tex = HAIR.wavy; sideCrown(0.7); for (let y = 9; y <= 23; y++) addRect(12, y, 17 + ((y >> 1) % 2), y); add(7, 9); break;
+          case 'longoCacheado': tex = HAIR.curly; addEll(12.8, 9.6, 8.6, 9, (x, y) => y <= 8 || x >= 11); addEll(14, 17, 5.4, 6.2); break;
+          case 'trancas': sideCrown(0.3); for (const x of [13, 15, 17]) addRect(x, 9, x, 23); add(14, 22); add(16, 23); break;
+          case 'rabo': sideCrown(0.1); cut((x, y) => y > 13); addRect(16, 9, 18, 18); add(19, 12); add(19, 13); add(17, 19); break;
+          case 'coque': sideCrown(0.1); cut((x, y) => y > 13); addEll(15, 3.4, 2.6, 2.2); break;
+        }
+      }
+      if (hat) cut((x, y) => y < 5 || (y < 6 && x > 5 && x < 18));          // o chapéu assenta sobre o cabelo
+    }
+    hairShape();
+
+    /* pinta a máscara com luz, sombra e textura do tipo de cabelo */
+    function paintHair(only) {
+      for (const k of mask) {
+        if (only && !only(k)) continue;
+        const [x, y] = k.split(',').map(Number);
+        const topEdge = !has(x, y - 1), rightEdge = !has(x + 1, y), bottomEdge = !has(x, y + 1), leftEdge = !has(x - 1, y);
+        let c = Hb;
+        if (tex === HAIR.straight) { if ((x + (y > 12 ? 1 : 0)) % 3 === 0 && !topEdge) c = Hd; if (y >= 5 && y <= 6 && x >= 9 && x <= 12) c = Hl; }
+        else if (tex === HAIR.wavy) { if ((x + (y >> 1)) % 4 === 0) c = Hd; else if ((x + (y >> 1)) % 4 === 2 && y < 12) c = Hl; }
+        else if (tex === HAIR.curly) { const q = (x * 3 + y * 5) % 7; if (q < 2) c = Hd; else if ((x + y) % 5 === 0) c = Hl; }
+        else { const q = ((x * 37) ^ (y * 91) ^ (x * y * 13)) % 9; if (q === 0 || q === 4) c = Hd; else if (q === 2 && y < 9) c = Hl; }
+        if (rightEdge || bottomEdge) c = c === Hl ? Hb : Hd;
+        if (topEdge && x < 12 && tex !== HAIR.coily) c = Hl;
+        if (leftEdge && !topEdge && tex === HAIR.straight && y > 9) c = Hb;
+        if (hair === 'raspado') c = mix(c, S, 0.45);
+        grid[y][x] = c;
+      }
     }
 
-    /* ---- corpo ---- */
-    row(15, 8, 11, Sd);                                   // pescoço
-    if (side) {                                           // perfil: tronco estreito, um braço e pernas em passada
-      box(7, 16, 12, robe ? 25 : 21, top === 'jardineira' ? CREAM : T); box(12, 16, 12, 21, top === 'jardineira' ? shade(CREAM, 0.85) : Td);
-      if (top === 'jardineira') { box(7, 18, 9, 21, T); p(8, 16, T); p(8, 17, T); }
-      if (top === 'camisa') { p(7, 16, shade(T, 1.3)); box(7, 17, 7, 21, shade(T, 1.2)); }
-      if (robe) { row(25, 6, 13, '#ffd75e'); row(26, 7, 11, SHOE); }
-      else {
-        const leg = (x0, x1, yEnd, c) => { if (bottom === 'calca') box(x0, 22, x1, yEnd, c); else { box(x0, 22, x1, 23, c); box(x0, 24, x1, yEnd, S); } };
-        if (step) { leg(6, 8, 24, B); leg(11, 13, 25, Bd); row(25, 5, 8, SHOE); row(26, 10, 13, SHOE); }
-        else { leg(8, 11, 25, B); row(26, 7, 11, SHOE); }
-        if (bottom === 'saia') { row(21, 6, 13, B); row(22, 5, 14, B); row(23, 5, 14, Bd); }
+    /* ---------- cabelo de trás do corpo (cabelo longo visto de frente) ---------- */
+    if (down && backLayer.size) paintHair(k => backLayer.has(k));
+
+    /* ---------- corpo ---------- */
+    const arms = (sleeveEnd, color, colorR) => {          // braços, mangas e mãos (de frente/costas)
+      const L = stepR ? 1 : 0, Rr = stepL ? 1 : 0;           // o braço oposto à perna que avança vai à frente
+      box(5, 18, 6, 24 - L, S); box(17, 18, 18, 24 - Rr, Sd); p(6, 18 + 0, S);
+      if (sleeveEnd >= 18) { box(5, 18, 6, Math.min(sleeveEnd, 24 - L), color); box(17, 18, 18, Math.min(sleeveEnd, 24 - Rr), colorR || shade(color, 0.85)); }
+      if (sleeveEnd >= 23) { row(Math.min(sleeveEnd, 24 - L), 5, 6, Tl); row(Math.min(sleeveEnd, 24 - Rr), 17, 18, shade(Tl, 0.9)); }
+      box(5, 25 - L, 6, 25 - L, S); box(17, 25 - Rr, 18, 25 - Rr, Sd);           // mãos
+    };
+    const legs = () => {
+      const lEnd = stepL ? 27 : 28, rEnd = stepR ? 27 : 28;
+      const leg = (x0, x1, yEnd, c, cd) => {
+        if (bottom === 'calca') { box(x0, 25, x1, yEnd, c); p(x1, yEnd, cd); p(x0, 26, cd); }
+        else if (bottom === 'short') { box(x0, 25, x1, 26, c); box(x0, 27, x1, yEnd, S); p(x1, yEnd, Sd); }
+        else if (bottom === 'saia') { box(x0, 27, x1, yEnd, S); p(x1, yEnd, Sd); }
+      };
+      if (bottom !== 'saiaLonga') { leg(8, 10, lEnd, B, Bd); leg(13, 15, rEnd, B, Bd); }
+      if (bottom === 'calca' || bottom === 'short') { row(24, 7, 16, Bd); row(25, 8, 15, B); p(11, 25, Bd); p(12, 25, Bd); }
+      if (bottom === 'calca') { p(10, 27, Bl); p(13, 27, Bl); }
+      if (bottom === 'saia') { row(24, 7, 16, Bd); row(25, 7, 16, B); row(26, 6, 17, B); row(27, 6, 17, Bd); p(9, 26, Bd); p(14, 26, Bd); p(8, 25, Bl); p(11, 26, Bl); }
+      if (bottom === 'saiaLonga') { const sw = stepL ? -1 : stepR ? 1 : 0; row(24, 7, 16, Bd); for (let y = 25; y <= 29; y++) row(y, 7 - ((y - 24) >> 1) + (y > 27 ? sw : 0), 16 + ((y - 24) >> 1) + (y > 27 ? sw : 0), B); for (let y = 25; y <= 29; y++) { p(9 + (y > 27 ? sw : 0), y, Bd); p(14 + (y > 27 ? sw : 0), y, Bd); } row(29, 5 + sw, 18 + sw, Bd); p(8, 25, Bl); p(12, 26, Bl); }
+      // calçados
+      const shoe = (x0, x1, y) => { row(y, x0, x1, SHOE); row(y + 1, x0, x1, SHOE); p(x0, y, SHOEl); };
+      if (bottom === 'saiaLonga') { row(30, 7, 10, SHOE); row(30, 13, 16, SHOE); }
+      else { shoe(7, 10, lEnd + 1); shoe(13, 16, rEnd + 1); }
+    };
+
+    if (side) {
+      // perfil: tronco estreito, um braço e pernas em passada
+      const swing = stepL ? -1 : stepR ? 1 : 0;
+      const legSide = (x0, x1, yEnd, c) => { if (bottom === 'calca') box(x0, 25, x1, yEnd, c); else if (bottom === 'short') { box(x0, 25, x1, 26, c); box(x0, 27, x1, yEnd, S); } else box(x0, 27, x1, yEnd, S); };
+      if (bottom !== 'saiaLonga') {
+        if (swing) { legSide(7, 9, 27, B); legSide(13, 15, 28, Bd); row(28, 6, 9, SHOE); row(29, 6, 9, SHOE); row(29, 12, 15, SHOE); row(30, 12, 15, SHOE); }
+        else { legSide(10, 13, 28, B); row(29, 9, 13, SHOE); row(30, 9, 13, SHOE); p(9, 29, SHOEl); }
       }
-      const ax = step ? 8 : 9;                            // braço balança
-      box(ax, 16, ax + 1, 20, S); box(ax, 16, ax + 1, 15 + sleeve, shade(sleeveColor, 0.8));
-    } else {
+      if (bottom === 'calca' || bottom === 'short') row(24, 9, 15, Bd);
+      if (bottom === 'saia') { row(24, 9, 15, Bd); row(25, 8, 15, B); row(26, 7, 16, B); row(27, 7, 16, Bd); }
+      if (bottom === 'saiaLonga') { for (let y = 24; y <= 29; y++) row(y, 9 - ((y - 24) >> 1) + (y > 27 ? swing : 0), 15 + ((y - 24) >> 1) + (y > 27 ? swing : 0), y === 29 ? Bd : B); row(30, 8, 12, SHOE); }
       // tronco
-      box(6, 16, 13, 21, top === 'jardineira' ? CREAM : T); box(13, 16, 13, 21, top === 'jardineira' ? shade(CREAM, 0.85) : Td);
-      if (top === 'camiseta') row(16, 8, 11, shade(T, 1.2));
-      if (top === 'camisa') { box(9, 16, 10, 21, shade(T, 1.25)); p(8, 16, '#ffffff'); p(11, 16, '#ffffff'); p(9, 18, Td); p(9, 20, Td); }
-      if (top === 'blusa') { row(16, 8, 11, S); p(9, 17, S); p(10, 17, S); row(21, 6, 13, shade(T, 1.2)); }
-      if (top === 'jardineira') { box(7, 18, 12, 21, T); box(7, 16, 7, 17, T); box(12, 16, 12, 17, T); p(7, 18, '#ffd75e'); p(12, 18, '#ffd75e'); }
-      if (up && top === 'jardineira') { box(7, 16, 12, 21, CREAM); box(7, 19, 12, 21, T); p(8, 16, T); p(8, 17, T); p(8, 18, T); p(11, 16, T); p(11, 17, T); p(11, 18, T); }
-      if (up && (top === 'camisa' || top === 'blusa' || top === 'camiseta')) box(6, 16, 12, 21, T);
-      // braços
-      const a = step ? 1 : 0;
-      box(4, 16, 5, 21 - a, S); box(14, 16, 15, 20 + a, S);
-      box(4, 16, 5, Math.min(21 - a, 15 + sleeve), sleeveColor); box(14, 16, 15, Math.min(20 + a, 15 + sleeve), shade(sleeveColor, 0.8));
-      // parte de baixo
-      if (robe) { box(6, 16, 13, 25, T); box(13, 16, 13, 25, Td); box(5, 22, 14, 25, T); box(9, 16, 10, 25, '#ffd75e'); row(25, 5, 14, '#ffd75e'); row(26, 6, 8, SHOE); row(26, 11, 13, SHOE); box(4, 16, 5, 20, T); box(14, 16, 15, 20, Td); }
-      else {
-        const ly = step ? 24 : 25;
-        const leg = (x0, x1, yEnd, sh) => { if (bottom === 'calca') { box(x0, 23, x1, yEnd, B); p(x1, yEnd, Bd); } else if (bottom === 'short') { box(x0, 23, x1, 23, B); box(x0, 24, x1, yEnd, S); } else box(x0, 24, x1, yEnd, S); };
-        if (bottom !== 'saia') row(22, 6, 13, B);
-        leg(6, 8, ly); leg(11, 13, 25);
-        if (bottom === 'saia') { row(21, 6, 13, B); row(22, 5, 14, B); row(23, 5, 14, Bd); p(9, 22, Bd); }
-        row(ly + 1, 5, 8, SHOE); row(26, 11, 14, SHOE);
-      }
+      const body = top === 'jardineira' ? CREAM : top === 'regata' ? S : T;
+      box(9, 18, 15, 23, body); box(15, 18, 15, 23, shade(body, 0.85));
+      if (top === 'regata') { box(10, 19, 15, 23, T); box(15, 19, 15, 23, Td); p(12, 18, T); }
+      if (top === 'jardineira') { box(9, 20, 13, 23, T); p(11, 18, T); p(11, 19, T); p(10, 20, '#ffd75e'); }
+      if (top === 'camisa') { p(9, 18, Tl); p(10, 18, Tl); box(9, 19, 9, 23, shade(T, 1.1)); }
+      if (top === 'moletom') { box(13, 16, 16, 19, Td); p(14, 16, T); row(23, 9, 15, Td); }
+      if (top === 'blusa') { p(9, 18, S); p(9, 19, S); row(23, 8, 16, Tl); }
+      if (robe) { box(8, 18, 16, 29, T); box(16, 18, 16, 29, Td); row(29, 7, 16, '#ffd75e'); row(30, 8, 12, SHOE); }
+      // braço que balança
+      const ax = 11 + swing, sl = { camiseta: 20, regata: 17, camisa: 24, blusa: 19, moletom: 24, jardineira: 20, manto: 24 }[top];
+      box(ax, 18, ax + 2, 24, S); p(ax + 2, 24, Sd);
+      if (sl >= 18) { const sc = top === 'jardineira' ? CREAMd : shade(T, 0.88); box(ax, 18, ax + 2, Math.min(sl, 24), sc); if (sl >= 23) row(24, ax, ax + 2, Tl); }
+      if (top === 'blusa') { box(ax - 1, 18, ax + 3, 19, shade(T, 0.9)); }
+      box(ax, 25, ax + 2, 25, S);
+    } else {
+      // tronco de frente/costas
+      const body = top === 'jardineira' ? CREAM : T;
+      box(7, 18, 16, 23, body); box(16, 18, 16, 23, shade(body, 0.86)); row(18, 7, 7, null); row(18, 16, 16, null); p(8, 18, body); p(15, 18, body);
+      if (top === 'camiseta') { row(23, 7, 16, Td); if (down) { row(18, 10, 13, Td); p(10, 19, Td); p(13, 19, Td); } arms(20, T, Td); }
+      if (top === 'regata') { box(7, 18, 16, 23, T); box(16, 18, 16, 23, Td); if (down) { box(10, 18, 13, 19, S); p(11, 20, S); p(12, 20, S); } row(18, 7, 8, S); row(18, 15, 16, S); p(9, 18, T); p(14, 18, T); row(23, 7, 16, Td); if (up) { box(9, 18, 14, 18, S); } arms(17, T); }
+      if (top === 'camisa') { if (down) { box(11, 18, 12, 23, Tl); p(11, 20, Td); p(11, 22, Td); p(9, 18, '#ffffff'); p(10, 19, '#ffffff'); p(14, 18, '#ffffff'); p(13, 19, '#ffffff'); p(10, 18, Tl); p(13, 18, Tl); } else { row(18, 8, 15, Tl); row(20, 8, 15, Td); } row(23, 7, 16, Td); arms(24, T, Td); }
+      if (top === 'blusa') { if (down) { box(10, 18, 13, 18, S); p(11, 19, S); p(12, 19, S); } row(22, 7, 16, Td); row(23, 6, 17, Tl); arms(19, T, Td); box(4, 18, 6, 19, T); box(17, 18, 19, 19, Td); }
+      if (top === 'moletom') { arms(24, T, Td); if (down) { row(17, 8, 15, Td); p(9, 18, Td); p(14, 18, Td); p(10, 19, CREAM); p(13, 19, CREAM); p(10, 20, CREAM); p(13, 20, CREAM); box(9, 21, 14, 23, Td); box(10, 21, 13, 22, T); } else { box(8, 16, 15, 19, Td); box(9, 17, 14, 18, T); row(23, 7, 16, Td); } }
+      if (top === 'jardineira') { arms(20, CREAM, CREAMd); if (down) { box(9, 20, 14, 23, T); box(14, 20, 14, 23, Td); p(9, 18, T); p(9, 19, T); p(14, 18, T); p(14, 19, T); p(9, 20, '#ffd75e'); p(14, 20, '#ffd75e'); box(11, 21, 12, 22, Td); } else { box(7, 21, 16, 23, T); for (let i = 0; i < 3; i++) { p(9 + i, 18 + i, T); p(14 - i, 18 + i, T); } } }
+      if (robe) { box(7, 18, 16, 29, T); box(16, 18, 16, 29, Td); box(6, 25, 17, 29, T); if (down) box(11, 18, 12, 29, '#ffd75e'); row(29, 6, 17, '#ffd75e'); row(30, 7, 10, SHOE); row(30, 13, 16, SHOE); arms(24, T, Td); }
+      if (!robe) legs();
     }
 
-    /* ---- cabeça ---- */
-    row(6, 7, 12, S); row(7, 6, 13, S); box(5, 8, 14, 12, S); row(13, 6, 13, S); row(14, 7, 12, S);
-    box(14, 8, 14, 12, Sd); p(13, 13, Sd); p(12, 14, Sd);
-    if (side) { p(6, 10, OUT); p(6, 11, OUT); p(6, 13, Sd); }
-    else if (!up) {
-      p(7, 10, OUT); p(7, 11, OUT); p(12, 10, OUT); p(12, 11, OUT);
-      p(6, 12, shade(S, 0.93)); p(13, 12, shade(S, 0.93)); p(9, 13, Sd); p(10, 13, Sd);
+    /* ---------- pescoço e cabeça ---------- */
+    if (side) {
+      box(11, 16, 13, 17, Sd);
+      row(5, 9, 13, S); row(6, 8, 14, S); box(7, 7, 15, 13, S); row(14, 8, 14, S); row(15, 9, 13, S);
+      box(15, 7, 15, 13, Sd); p(14, 14, Sd); p(13, 15, Sd);
+      p(6, 11, S); p(6, 12, Sd);                         // nariz
+      p(8, 10, OUT); p(8, 11, OUT); p(9, 10, '#ffffff');  // olho
+      p(7, 13, mix(S, '#c04848', 0.35));                  // boca
+      p(9, 12, mix(S, '#e87a7a', 0.25));
+      p(13, 10, Sd); p(13, 11, Sd); p(14, 11, S);         // orelha
+    } else {
+      box(10, 16, 13, 17, Sd); row(17, 10, 13, mix(Sd, S, 0.5));
+      row(5, 9, 14, S); row(6, 8, 15, S); box(7, 7, 16, 13, S); row(14, 8, 15, S); row(15, 9, 14, S);
+      p(6, 10, S); p(6, 11, Sd); p(17, 10, Sd); p(17, 11, Sd);   // orelhas
+      if (down) {
+        box(16, 7, 16, 13, Sd); p(15, 14, Sd); p(14, 15, Sd); row(15, 10, 13, mix(S, Sd, 0.4));
+        p(9, 10, OUT); p(9, 11, OUT); p(14, 10, OUT); p(14, 11, OUT); p(10, 10, '#ffffff'); p(15, 10, '#ffffff'); p(15, 11, Sd);
+        p(8, 12, mix(S, '#e87a7a', 0.3)); p(15, 12, mix(S, '#e87a7a', 0.3));
+        p(12, 12, Sd); row(14, 11, 12, mix(S, '#b04040', 0.35));
+        const brow = hair === 'careca' ? Sd : hair === 'raspado' ? mix(Hd, S, 0.4) : Hd;
+        row(9, 8, 10, brow); row(9, 13, 15, brow);
+      } else { box(7, 7, 16, 15, S); box(16, 7, 16, 14, Sd); }
+      if (hair === 'careca') { row(6, 9, 11, Sl); p(9, 7, Sl); }
     }
 
-    /* ---- cabelo da frente ---- */
-    const cap = () => {                    // topo da cabeça
-      row(4, 7, 12, Hb); row(5, 6, 13, Hb); box(5, 6, 14, 8, Hb);
-      p(5, 9, Hb); p(6, 9, Hb); p(13, 9, Hb); p(14, 9, Hb); row(4, 7, 12, Hl);
-    };
-    const curl = (cx, cy) => {
-      box(cx - 1, cy - 1, cx + 1, cy + 1, Hb); p(cx, cy - 2, Hb); p(cx - 2, cy, Hb); p(cx + 2, cy, Hb); p(cx, cy + 2, Hb);
-      p(cx - 1, cy - 1, Hl); p(cx + 1, cy + 1, Hd); p(cx, cy + 1, Hd);
-    };
-    const afro = (r, cy, y0) => {
-      for (let y = y0; y <= 13; y++) for (let x = 2; x <= 17; x++) {
-        if (Math.hypot(x - 9.5, y - cy) > r) continue;
-        if (!up && y >= 9 && x >= 6 && x <= 13) continue;
-        const tex = ((x * 37) ^ (y * 91) ^ (x * y * 13)) % 7;
-        p(x, y, tex === 0 || tex === 4 ? Hd : (tex === 2 && y < 7 ? Hl : Hb));
-      }
-    };
-    if (hid === 'careca') {
-      row(7, 8, 10, Sl); p(8, 8, Sl); p(4, 11, S); p(15, 11, Sd);
-      if (!up && !side) { p(7, 9, Sd); p(12, 9, Sd); }
-    } else if (hid === 'curtoLiso') {
-      cap(); p(4, 7, Hb); p(4, 8, Hb); p(15, 7, Hb); p(15, 8, Hb); p(5, 10, Hb); p(14, 10, Hb); row(6, 8, 11, Hl); p(11, 8, Hd); p(12, 8, Hd);
-    } else if (hid === 'curtoOndulado') {
-      cap(); [5, 7, 9].forEach(y => { p(4, y, Hb); p(15, y, Hb); }); p(5, 10, Hb); p(14, 10, Hb); p(4, 6, Hl);
-      [7, 10, 13].forEach(x => { p(x, 3, Hb); p(x, 6, Hd); }); p(8, 8, Hd); p(11, 8, Hd);
-    } else if (hid === 'curtoCacheado') {
-      box(5, 5, 14, 8, Hb); [[6, 5], [9, 4], [12, 4], [14, 6], [4, 8], [15, 8], [8, 7], [11, 7]].forEach(c => curl(c[0], c[1]));
-    } else if (hid === 'crespoCurto') afro(5.9, 8.6, 3);
-    else if (hid === 'crespo') afro(7.1, 7.6, 1);
-    else if (hid === 'medio') {
-      cap(); box(4, 7, 5, 14, Hb); box(14, 7, 15, 14, Hb); for (let y = 9; y <= 14; y++) { p(5, y, Hd); p(14, y, Hd); }
-      p(4, 15, Hb); p(15, 15, Hb); row(6, 8, 11, Hl); p(10, 5, Hd); p(10, 6, Hd); p(10, 7, Hd);
-    } else if (hid === 'longoLiso') {
-      cap(); box(4, 7, 5, 19, Hb); box(14, 7, 15, 19, Hb); for (let y = 9; y <= 19; y++) { p(5, y, Hd); p(14, y, Hd); }
-      row(6, 8, 11, Hl); p(9, 5, Hd); p(9, 6, Hd); p(9, 7, Hd); p(9, 8, Hd);
-    } else if (hid === 'longoOndulado') {
-      cap();
-      for (let y = 7; y <= 20; y++) { const out = y % 4 >= 2; row(y, out ? 3 : 4, 5, Hb); row(y, 14, out ? 16 : 15, Hb); p(5, y, out ? Hb : Hd); p(14, y, out ? Hb : Hd); if (out) { p(3, y, Hl); p(16, y, Hd); } }
-      p(3, 21, Hb); p(4, 21, Hb); p(15, 21, Hb); p(16, 21, Hb); p(8, 5, Hd); p(8, 6, Hd); p(8, 7, Hd); p(7, 8, Hd);
-    } else if (hid === 'longoCacheado') {
-      box(5, 5, 14, 8, Hb);
-      [[6, 5], [9, 4], [12, 4], [14, 6], [4, 8], [15, 9], [3, 11], [16, 12], [4, 14], [15, 15], [5, 17], [14, 18], [8, 7], [11, 7]].forEach(c => curl(c[0], c[1]));
-    } else if (hid === 'trancas') {
-      cap(); for (let x = 6; x <= 13; x += 2) for (let y = 5; y <= 8; y++) p(x, y, Hd);
-      const braid = (x, y1) => { for (let y = 8; y <= y1; y++) p(x, y, y % 2 ? Hb : Hd); p(x, y1 + 1, '#ffd75e'); };
-      braid(3, 19); braid(5, 21); braid(14, 21); braid(16, 19);
-    } else if (hid === 'rabo') {
-      cap(); p(4, 7, Hb); p(15, 7, Hb); row(6, 8, 11, Hl);
-      if (!up && !side) { box(15, 8, 16, 14, Hb); p(16, 15, Hb); p(15, 8, '#e04a3a'); for (let y = 10; y <= 14; y += 2) p(16, y, Hd); }
-    } else if (hid === 'coque') {
-      cap(); p(4, 7, Hb); p(15, 7, Hb); box(8, 1, 11, 3, Hb); row(1, 9, 10, Hl); p(11, 3, Hd); p(8, 3, Hd);
+    /* ---------- cabelo da frente ---------- */
+    paintHair(k => !(down && backLayer.has(k) && !isFront(k)));
+    function isFront(k) { const [x, y] = k.split(',').map(Number); return x <= 7 || x >= 16 || y < 15; }
+    // detalhes por estilo
+    if (down && hair === 'trancas') { [4, 6, 17, 19].forEach(x => { const yEnd = x === 4 || x === 19 ? 21 : 23; for (let y = 9; y <= yEnd; y++) p(x, y, y % 2 ? Hb : Hd); p(x, yEnd + 1, '#ffd75e'); }); for (let x = 8; x <= 15; x += 2) { p(x, 6, Hd); p(x, 7, Hd); } }
+    if (up && hair === 'trancas') { for (const x of [6, 9, 14, 17]) { for (let y = 9; y <= 23; y++) { p(x, y, y % 2 ? Hb : Hd); p(x + 1, y, y % 2 ? Hd : Hl); } row(24, x, x + 1, '#ffd75e'); } for (let y = 3; y <= 14; y++) p(11, y, Hdd); }
+    if (side && hair === 'trancas') { for (const x of [13, 15, 17]) { for (let y = 9; y <= 23; y++) p(x, y, y % 2 ? Hb : Hd); p(x, 24, '#ffd75e'); } }
+    if (hair === 'rabo') { if (down) { p(17, 8, '#e04a3a'); p(18, 8, '#e04a3a'); } if (up) { row(9, 10, 13, '#e04a3a'); } if (side) { p(16, 9, '#e04a3a'); p(17, 9, '#e04a3a'); } }
+    if (hair === 'coque' && !hat) { if (down || up) row(4, 10, 13, '#e04a3a'); else p(14, 5, '#e04a3a'); }
+    if (hair === 'topete' && down) { p(16, 8, Hdd); p(7, 8, Hdd); }
+    if (hair === 'medio' && down) { for (let x = 8; x <= 15; x++) if (get(x, 9) === Hb || get(x, 9) === Hl) p(x, 9, Hd); }
+
+    /* ---------- acessório ---------- */
+    const Ad = shade(A, 0.72), Al = mix(A, '#ffffff', 0.35);
+    if (acc === 'oculos') {
+      const F = '#2a2a3a', L = 'rgba(0,0,0,0)';
+      if (down) { row(9, 8, 10, F); row(9, 13, 15, F); p(8, 10, F); p(8, 11, F); p(10, 11, F); p(13, 11, F); p(15, 10, F); p(15, 11, F); row(12, 8, 10, F); row(12, 13, 15, F); p(11, 10, F); p(12, 10, F); p(7, 10, F); p(16, 10, F); }
+      else if (side) { row(9, 7, 9, F); row(12, 7, 9, F); p(7, 10, F); p(7, 11, F); p(10, 10, F); p(10, 11, F); row(10, 11, 13, F); }
+      else { p(6, 10, F); p(17, 10, F); p(6, 9, F); p(17, 9, F); }
+    }
+    const bow = (x0, y0) => { box(x0, y0, x0 + 1, y0 + 2, A); p(x0 + 2, y0 + 1, Ad); box(x0 + 3, y0, x0 + 4, y0 + 2, A); p(x0, y0, Al); p(x0 + 3, y0, Al); };
+    if (acc === 'laco' && !hat) { if (down) bow(13, 2); else if (up) bow(6, 2); else bow(11, 1); }
+    if (acc === 'bandana' && !hat) {
+      if (down || up) { row(6, 7, 16, A); row(7, 6, 17, A); row(6, 9, 14, Al); if (up) { p(11, 8, Ad); p(12, 8, Ad); p(10, 9, A); p(13, 9, A); p(10, 10, Ad); p(13, 10, Ad); } }
+      else { row(6, 8, 15, A); row(7, 7, 16, A); row(6, 9, 12, Al); p(16, 8, Ad); p(17, 8, A); p(17, 9, A); p(18, 10, Ad); }
+    }
+    if (acc === 'cachecol') {
+      if (down) { row(16, 8, 15, A); row(17, 8, 15, Ad); row(16, 9, 12, Al); box(8, 18, 9, 22, A); p(8, 23, Al); p(9, 23, Ad); p(9, 20, Ad); }
+      else if (up) { row(16, 8, 15, A); row(17, 8, 15, Ad); }
+      else { row(16, 10, 14, A); row(17, 10, 14, Ad); box(14, 18, 15, 21, A); p(15, 22, Ad); }
     }
 
-    if (hid !== 'careca' && up) {                         // de costas: o cabelo cobre a cabeça
-      row(9, 6, 13, Hb); box(5, 9, 14, 12, Hb); row(13, 6, 13, Hb); row(14, 7, 12, Hd);
-      for (let y = 9; y <= 13; y += 2) for (let x = 6 + (y % 4 ? 0 : 1); x <= 13; x += 3) p(x, y, Hd);
-      const fall = hair.back;
-      if (hid === 'trancas') for (let x = 5; x <= 14; x += 2) { for (let y = 9; y <= 20; y++) p(x, y, y % 2 ? Hb : Hd); p(x, 21, '#ffd75e'); }
-      else if (hid === 'longoCacheado') { box(5, 13, 14, 17, Hb); for (let y = 13; y <= 17; y += 2) for (let x = 5; x <= 14; x += 3) { p(x, y, Hl); p(x + 1, y + 1, Hd); } }
-      else if (fall) { box(5, 13, 14, fall, Hb); for (let y = 13; y <= fall; y++) { p(5, y, Hd); p(14, y, Hd); if (hid === 'longoOndulado' && y % 2) { p(8, y, Hd); p(11, y, Hd); } } p(9, fall, Hd); p(10, fall, Hd); }
-      if (hid === 'rabo') { box(9, 11, 10, 19, Hb); p(10, 13, Hd); p(10, 16, Hd); row(11, 9, 10, '#e04a3a'); p(9, 20, Hb); }
-      if (hid === 'coque') { box(8, 6, 11, 8, Hd); row(6, 9, 10, Hl); }
+    /* ---------- chapéu ---------- */
+    if (hat === 'palha') {
+      const st = '#e8c860', sd = '#c8a040', sl = '#f6e090', band = '#8a3a2a';
+      box(8, 1, 15, 4, st); row(1, 9, 14, sl); for (let x = 8; x <= 15; x += 2) p(x, 3, sd); row(5, 8, 15, band);
+      if (side) { row(6, 3, 16, st); row(7, 4, 16, sd); p(3, 6, sd); }
+      else { row(6, 4, 19, st); row(7, 3, 20, sd); if (down) { row(6, 8, 15, sl); row(7, 7, 16, null); for (let x = 7; x <= 16; x++) if (!get(x, 7)) p(x, 7, x >= 8 && x <= 15 ? S : null); } }
+    } else if (hat === 'boina') {
+      const c = '#c8483a', cd = '#962e24', cl = '#e66a5c';
+      if (side) { box(6, 3, 16, 5, c); row(2, 8, 15, c); row(2, 9, 12, cl); p(5, 5, c); p(5, 6, cd); row(6, 7, 15, cd); p(12, 1, cd); }
+      else { box(6, 3, 17, 5, c); row(2, 8, 16, c); row(2, 9, 13, cl); p(18, 4, c); p(18, 5, cd); p(19, 5, cd); row(6, 6, 17, cd); p(12, 1, cd); }
+    } else if (hat === 'pescador') {
+      const c = '#8a9a6a', cd = '#64744a', cl = '#a8b886';
+      if (side) { box(7, 2, 15, 5, c); row(2, 8, 14, cl); row(6, 4, 16, cd); row(7, 3, 9, cd); }
+      else { box(7, 2, 16, 5, c); row(2, 8, 15, cl); row(5, 7, 16, cd); row(6, 5, 18, c); row(7, 4, 19, cd); }
+    } else if (hat === 'chef') {
+      box(7, 0, 16, 4, '#f8f8f8'); row(0, 8, 15, '#ffffff'); box(16, 1, 16, 4, '#d8d8e4'); row(5, 6, 17, '#e8e8f0');
     }
-    if (hid !== 'careca' && side) {                       // de perfil: rosto livre à esquerda, cabelo atrás
-      for (let y = 9; y < H; y++) for (let x = 1; x <= 5; x++) if (grid[y][x] === Hb || grid[y][x] === Hd || grid[y][x] === Hl || grid[y][x] === '#ffd75e') grid[y][x] = null;
-      box(5, 9, 5, 12, S);
-      box(10, 9, 14, 13, Hb); p(10, 13, S); p(10, 12, S); p(12, 11, Hd); p(13, 9, Hd);
-      if (hair.back) for (let y = 14; y <= Math.min(hair.back, 19); y++) { row(y, 12, 15, y % 2 && hid !== 'longoLiso' && hid !== 'medio' ? Hd : Hb); p(15, y, Hd); }
-      if (hid === 'rabo') { box(15, 9, 16, 15, Hb); p(16, 16, Hb); p(15, 9, '#e04a3a'); p(16, 12, Hd); }
-      if (hid === 'coque') { for (let x = 8; x <= 11; x++) for (let y = 1; y <= 3; y++) grid[y][x] = null; box(12, 3, 15, 6, Hb); p(15, 6, Hd); p(13, 3, Hl); }
+    // com chapéu, o laço vai na fita do chapéu e a bandana aparece por baixo da aba
+    if (hat && acc === 'laco') { if (down) bow(15, 2); else if (up) bow(4, 2); else bow(13, 2); }
+    if (hat && acc === 'bandana') {
+      if (down) { row(8, 7, 16, A); p(7, 9, Ad); p(16, 9, Ad); }
+      else if (up) { row(8, 6, 17, A); p(11, 9, Ad); p(12, 9, Ad); p(11, 10, A); p(12, 10, A); }
+      else { row(8, 9, 16, A); p(16, 9, Ad); p(17, 9, A); p(17, 10, Ad); }
     }
+    if (look.beard) { for (let y = 12; y <= 18; y++) row(y, y < 16 ? 7 : 9 + (y - 16), y < 16 ? 16 : 14 - (y - 16), y % 2 ? '#eeeef4' : '#d8d8e4'); p(11, 14, '#b8b8c8'); p(12, 14, '#b8b8c8'); }
 
-    /* ---- chapéu ---- */
-    if (look.hat === 'palha') {
-      box(6, 2, 13, 5, '#e8c860'); row(2, 7, 12, '#f4dc88'); row(5, 6, 13, '#8a5e36'); row(6, 3, 16, '#e8c860');
-      if (up) row(7, 4, 15, '#c8a040'); else if (side) { row(6, 2, 15, '#e8c860'); row(7, 10, 15, '#c8a040'); } else { row(7, 4, 5, '#c8a040'); row(7, 14, 15, '#c8a040'); }
-    } else if (look.hat === 'boina') {
-      box(5, 3, 14, 6, '#c8483a'); row(2, 7, 13, '#c8483a'); row(2, 8, 11, '#e06a5a'); p(15, 4, '#c8483a'); p(15, 5, '#c8483a'); p(16, 5, '#a83a2e'); p(10, 1, '#a83a2e'); row(6, 5, 14, '#a83a2e');
-    } else if (look.hat === 'pescador') {
-      box(5, 2, 14, 6, '#8a9a6a'); row(2, 6, 13, '#a4b482'); row(6, 5, 14, '#6a7a4e'); row(7, 3, 16, '#8a9a6a'); p(3, 8, '#6a7a4e'); p(16, 8, '#6a7a4e');
-    } else if (look.hat === 'chef') {
-      box(6, 1, 13, 5, '#f8f8f8'); row(1, 7, 12, '#ffffff'); box(13, 2, 13, 5, '#d8d8e4'); row(6, 5, 14, '#e8e8f0');
-    }
-    if (look.beard) {
-      row(12, 6, 13, '#eeeef4'); row(13, 6, 13, '#eeeef4'); row(14, 7, 12, '#eeeef4'); row(15, 8, 11, '#d8d8e4'); row(16, 9, 10, '#d8d8e4'); p(9, 13, '#b8b8c8'); p(10, 13, '#b8b8c8');
-    }
-
-    /* ---- contorno ---- */
+    /* ---------- contorno ---------- */
     const filled = grid.map(r => r.map(Boolean));
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       if (filled[y][x]) continue;
@@ -237,12 +356,12 @@ const Sprites = (() => {
     const g = c.getContext('2d'); g.translate(W, 0); g.scale(-1, 1); g.drawImage(img, 0, 0);
     return c;
   };
-  /* Quadros por direção: [parado, passo A, passo B]. */
+  /* Quadros por direção: [parado, passo esquerdo, passo direito]. */
   const cache = new Map();
   function frames(look) {
     const key = JSON.stringify(look);
     if (!cache.has(key)) {
-      const set = dir => { const a = render(look, 0, dir), b = render(look, 1, dir); return [a, b, dir === 'side' ? a : flipped(b)]; };
+      const set = dir => [0, 1, 2].map(f => render(look, f, dir));
       const down = set('down'), up = set('up'), left = set('side');
       cache.set(key, { down, up, left, right: left.map(flipped) });
       if (cache.size > 80) cache.delete(cache.keys().next().value);
@@ -256,13 +375,27 @@ const Sprites = (() => {
     const set = frames(look)[dir] || frames(look).down;
     ctx.drawImage(set[Math.abs(frame) % 3 | 0], Math.round(x), Math.round(y));
   }
+  /* Desenha com os pés em (x, y). */
+  const drawAt = (ctx, look, x, y, frame = 0, dir = 'down') => draw(ctx, look, x - W / 2, y - H + 1, frame, dir);
   const walk = t => WALK[Math.floor(t / 130) % 4];
-  /* Pequeno canvas com o personagem parado, para painéis. */
+  /* Pequeno canvas com o personagem, para painéis. */
   function canvas(look, dir = 'down', frame = 0) {
     const c = document.createElement('canvas'); c.className = 'pixel'; c.width = W; c.height = H;
     draw(c.getContext('2d'), look, 0, 0, frame, dir);
     return c;
   }
 
-  return { W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, CLOTH_COLORS, SHOE_COLORS, HATS, draw, frames, walk, canvas };
+  /* Aparência sorteada (só as escolhas visuais). */
+  function randomLook(base) {
+    const r = list => list[Math.floor(Math.random() * list.length)];
+    const look = Object.assign({}, base, {
+      skin: r(SKINS).id, hair: r(HAIRS).id, hairColor: r(HAIR_COLORS.slice(0, 6)).id,
+      top: r(TOPS).id, topColor: r(CLOTH_COLORS), bottom: r(BOTTOMS).id, bottomColor: r(CLOTH_COLORS),
+      shoeColor: r(SHOE_COLORS), accessory: Math.random() < 0.5 ? null : r(ACCESSORIES).id, accColor: r(CLOTH_COLORS),
+    });
+    if (look.bottomColor === look.topColor) look.bottomColor = r(CLOTH_COLORS.filter(c => c !== look.topColor));
+    return look;
+  }
+
+  return { W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
 })();

@@ -5,7 +5,9 @@
    Tudo é desenhado por código, sem imagens externas. */
 
 const World = (() => {
-  const VW = 256, VH = 160;          // área visível (a câmera)
+  const RW = 256, RH = 160;          // tamanho dos interiores
+  let VW = 256, VH = 160;            // área visível (a câmera); muda com o tamanho da janela
+  function setView(w, h) { VW = w; VH = h; }
   const CELL = 8;                    // célula de colisão
   const OUT = '#241a2c';
   let W = VW, H = VH, g, rand;
@@ -77,6 +79,17 @@ const World = (() => {
         }
       }
     }
+  }
+
+  /* Letreiro em fonte de pixel 3x5 (só as letras usadas nas placas). */
+  const GLYPH = { R: '110101110101101', A: '010101111101101', C: '011100100100011', O: '010101101101010', N: '110101101101101', I: '111010010010111', H: '101101111101101', S: '011100010001110' };
+  function pixelText(x, y, str, c) {
+    [...str].forEach((ch, i) => {
+      const base = { 'Ç': 'C', 'Ã': 'A' }[ch] || ch, gl = GLYPH[base]; if (!gl) return;
+      for (let k = 0; k < 15; k++) if (gl[k] === '1') R(x + i * 4 + (k % 3), y + Math.floor(k / 3), 1, 1, c);
+      if (ch === 'Ç') R(x + i * 4 + 1, y + 5, 1, 1, c);
+      if (ch === 'Ã') { R(x + i * 4, y - 2, 2, 1, c); R(x + i * 4 + 1, y - 3, 2, 1, c); }
+    });
   }
 
   function shadowOval(cx, cy, rx, ry) {
@@ -207,6 +220,101 @@ const World = (() => {
     }
   }
 
+  /* Casa da fazenda: madeira, telhado de telhas, varanda com toldo e degraus.
+     (x, y) = canto de cima do telhado. Devolve o ponto em frente à porta. */
+  function farmhouse(x, y) {
+    const w = 96, roofH = 44, wy = y + roofH, wallH = 36, by = wy + wallH, dx = x + w / 2;
+    g.fillStyle = 'rgba(20,40,20,.25)'; g.fillRect(x + 4, by + 14, w, 3); g.fillRect(x + w + 1, wy + 4, 5, wallH + 10);
+    // parede de tábuas horizontais
+    R(x - 1, wy - 1, w + 2, wallH + 2, OUT);
+    for (let r = 0; r < wallH; r += 4) {
+      R(x, wy + r, w, 4, r % 8 ? '#b47c48' : '#a8703e'); R(x, wy + r + 3, w, 1, '#7a4e2a'); R(x, wy + r, w, 1, '#c8925a');
+      for (let c = (r % 8 ? 9 : 22); c < w; c += 31) R(x + c, wy + r, 1, 3, '#7a4e2a');
+      if (rand() < 0.5) R(x + 6 + Math.floor(rand() * (w - 12)), wy + r + 1, 2, 1, '#8a5a32');
+    }
+    R(x, wy, 3, wallH, '#6a4426'); R(x + w - 3, wy, 3, wallH, '#6a4426'); R(x, wy, w, 3, 'rgba(40,20,10,.35)');
+    // janelas com venezianas verdes e floreiras
+    [[x + 12, wy + 9], [x + w - 28, wy + 9]].forEach(([X, Y]) => {
+      R(X - 1, Y - 1, 18, 15, OUT); R(X, Y, 16, 13, '#f2e6c8'); R(X + 2, Y + 2, 12, 9, '#ffd98a'); R(X + 2, Y + 2, 12, 3, '#fff0c0');
+      R(X + 7, Y + 2, 2, 9, '#f2e6c8'); R(X + 2, Y + 6, 12, 1, '#f2e6c8');
+      R(X - 5, Y - 1, 4, 15, OUT); R(X - 4, Y, 2, 13, '#4a8a5a'); R(X + 17, Y - 1, 4, 15, OUT); R(X + 18, Y, 2, 13, '#4a8a5a');
+      R(X - 1, Y + 13, 18, 3, '#6a4426'); for (let i = 0; i < 16; i += 2) R(X + i, Y + 12, 2, 1, ['#ff7088', '#ffe066', '#ffffff', '#ff9ec0'][(i / 2) % 4]);
+    });
+    // porta de madeira com janelinha
+    R(dx - 8, by - 24, 16, 24, OUT); R(dx - 7, by - 23, 14, 23, '#7a4422'); R(dx - 7, by - 23, 14, 2, '#9a5a30');
+    R(dx - 5, by - 20, 10, 6, '#ffd98a'); R(dx - 1, by - 20, 1, 6, '#7a4422'); R(dx - 5, by - 12, 4, 9, '#6a3a1c'); R(dx + 1, by - 12, 4, 9, '#6a3a1c');
+    R(dx + 4, by - 9, 2, 2, '#ffd75e');
+    // lampião ao lado da porta
+    R(dx + 12, by - 22, 5, 7, OUT); R(dx + 13, by - 21, 3, 5, '#ffe89a'); R(dx + 14, by - 23, 1, 2, OUT);
+    // telhado de telhas com beiral e cumeeira
+    for (let r = 0; r < roofH; r++) {
+      const inset = Math.round((1 - r / roofH) * 7) - 5, x0 = x + inset, ww = w - inset * 2;
+      R(x0 - 1, y + r, ww + 2, 1, OUT);
+      for (let c = 0; c < ww; c++) {
+        const band = Math.floor(r / 5), edge = r % 5 === 4, seam = (c + band * 4) % 8 === 0;
+        g.fillStyle = edge ? '#5e2a1c' : seam ? '#7a3826' : r % 5 === 0 ? '#c0603e' : '#a24c32';
+        g.fillRect(x0 + c, y + r, 1, 1);
+      }
+    }
+    R(x - 1, y - 2, w + 2, 3, OUT); R(x, y - 1, w, 2, '#d0744c');
+    R(x - 6, wy, w + 12, 2, OUT); R(x - 5, wy, w + 10, 1, '#5e2a1c');
+    // água-furtada no meio do telhado
+    R(dx - 11, y + 12, 22, 18, OUT); R(dx - 10, y + 13, 20, 16, '#b47c48'); R(dx - 6, y + 17, 12, 10, '#f2e6c8'); R(dx - 5, y + 18, 10, 8, '#ffd98a'); R(dx, y + 18, 1, 8, '#f2e6c8');
+    for (let r = 0; r < 8; r++) R(dx - 12 - (r >> 1) + 4, y + 6 + r, 16 + r - 0, 1, r === 7 ? '#5e2a1c' : '#a24c32');
+    R(dx - 9, y + 5, 18, 1, OUT);
+    // chaminé de pedra
+    const cx = x + w - 22; R(cx - 1, y - 12, 12, 22, OUT); R(cx, y - 11, 10, 20, '#9a9088');
+    for (let r = 0; r < 20; r += 4) for (let c = (r % 8 ? 0 : 3); c < 10; c += 6) R(cx + c, y - 11 + r, 1, 3, '#7a7068');
+    R(cx - 2, y - 13, 14, 3, '#6a6058');
+    // varanda: assoalho, toldo, colunas, guarda-corpo e degraus
+    R(x + 3, by, w - 6, 13, OUT); R(x + 4, by, w - 8, 12, '#c89a62');
+    for (let r = 0; r < 12; r += 3) R(x + 4, by + r + 2, w - 8, 1, '#a07848');
+    R(x + 4, by, w - 8, 2, 'rgba(40,20,10,.3)');
+    R(x + 8, wy + 1, w - 16, 5, OUT); R(x + 9, wy + 1, w - 18, 3, '#8a4a2e'); R(x + 9, wy + 1, w - 18, 1, '#b8603e');
+    [x + 10, x + w - 13].forEach(px => { R(px - 1, wy + 5, 5, by - wy + 6, OUT); R(px, wy + 5, 3, by - wy + 5, '#e8dcc0'); R(px, wy + 5, 1, by - wy + 5, '#ffffff'); });
+    [[x + 4, dx - 13], [dx + 13, x + w - 4]].forEach(([a, b]) => { R(a, by + 6, b - a, 2, OUT); R(a, by + 6, b - a, 1, '#e8dcc0'); for (let i = a + 3; i < b - 1; i += 5) R(i, by + 7, 1, 5, '#e8dcc0'); });
+    R(dx - 12, by + 12, 24, 4, OUT); R(dx - 11, by + 12, 22, 3, '#b08050'); R(dx - 11, by + 12, 22, 1, '#d8a868');
+    // vasos e barril
+    [[x + 6, by + 1], [x + w - 12, by + 1]].forEach(([X, Y]) => { R(X, Y + 2, 6, 4, '#b0603a'); blob(X + 3, Y, 3, '#2f8a40'); R(X + 2, Y - 1, 1, 1, '#ff7088'); });
+    return { x: dx, y: by + 10 };
+  }
+
+  /* Galinheiro: celeiro pequeno de madeira vermelha, com placa e portinhola para o cercado. */
+  function coopHouse(x, y) {
+    const w = 84, roofH = 32, wy = y + roofH, wallH = 48, by = wy + wallH, dx = x + 42;
+    g.fillStyle = 'rgba(20,40,20,.25)'; g.fillRect(x + 4, by, w, 3); g.fillRect(x + w, wy + 4, 5, wallH - 2);
+    R(x - 1, wy - 1, w + 2, wallH + 2, OUT);
+    for (let c = 0; c < w; c += 4) { R(x + c, wy, 4, wallH, c % 8 ? '#b0432e' : '#a03c28'); R(x + c + 3, wy, 1, wallH, '#7a2a1c'); }
+    R(x, wy, w, 3, 'rgba(40,10,10,.35)'); R(x, by - 3, w, 3, '#7a2a1c');
+    R(x, wy + 3, 2, wallH - 3, '#f2e6d0'); R(x + w - 2, wy + 3, 2, wallH - 3, '#f2e6d0');
+    // janela redonda
+    blob(x + 16, wy + 13, 6, OUT); blob(x + 16, wy + 13, 5, '#f2e6d0'); blob(x + 16, wy + 13, 3, '#ffd98a'); R(x + 16, wy + 9, 1, 8, '#f2e6d0');
+    // placa com galinha sobre a porta
+    R(dx - 13, wy + 3, 26, 11, OUT); R(dx - 12, wy + 4, 24, 9, '#f2e6c8');
+    R(dx - 5, wy + 6, 7, 5, '#ffffff'); R(dx + 1, wy + 5, 3, 3, '#ffffff'); R(dx + 2, wy + 4, 1, 1, '#e04a3a'); R(dx + 4, wy + 6, 1, 1, '#f0a020'); R(dx - 6, wy + 6, 1, 2, '#d8d8c8'); R(dx + 2, wy + 6, 1, 1, OUT);
+    R(dx - 3, wy + 11, 1, 1, '#f0a020'); R(dx, wy + 11, 1, 1, '#f0a020');
+    // porta de celeiro (com X branco)
+    const dh = 24, dw = 20, dy = by - dh;
+    R(dx - dw / 2 - 1, dy - 1, dw + 2, dh + 1, OUT); R(dx - dw / 2, dy, dw, dh, '#8a3424');
+    R(dx - dw / 2, dy, dw, 2, '#f2e6d0'); R(dx - dw / 2, dy, 2, dh, '#f2e6d0'); R(dx + dw / 2 - 2, dy, 2, dh, '#f2e6d0'); R(dx - 1, dy, 2, dh, '#f2e6d0');
+    for (let i = 0; i < dh - 2; i++) { const k = Math.round(i * 8 / (dh - 2)); R(dx - 9 + k, dy + 2 + i, 1, 1, '#f2e6d0'); R(dx + 8 - k, dy + 2 + i, 1, 1, '#f2e6d0'); R(dx + 1 + k, dy + 2 + i, 1, 1, '#f2e6d0'); R(dx - 2 - k, dy + 2 + i, 1, 1, '#f2e6d0'); }
+    R(dx + 4, dy + 12, 2, 2, '#ffd75e');
+    R(dx - 13, by, 26, 2, '#b8b0a0'); R(dx - 13, by + 2, 26, 1, '#807868');
+    // portinhola e rampa para o cercado
+    R(x + w - 12, by - 12, 10, 12, OUT); R(x + w - 11, by - 11, 8, 11, '#3a1a12');
+    for (let i = 0; i < 10; i++) R(x + w - 3 + i, by - 4 + Math.floor(i / 3), 3, 2, i % 2 ? '#a07848' : '#c89a62');
+    // telhado escuro de duas águas
+    for (let r = 0; r < roofH; r++) {
+      const inset = Math.round((1 - r / roofH) * 6) - 4, x0 = x + inset, ww = w - inset * 2;
+      R(x0 - 1, y + r, ww + 2, 1, OUT);
+      for (let c = 0; c < ww; c++) { const edge = r % 4 === 3, seam = c % 6 === 0; g.fillStyle = edge ? '#2e3442' : seam ? '#3a4254' : r % 4 === 0 ? '#5e6a80' : '#4a5468'; g.fillRect(x0 + c, y + r, 1, 1); }
+    }
+    R(x - 1, y - 2, w + 2, 3, OUT); R(x, y - 1, w, 2, '#7a869c'); R(x - 5, wy, w + 10, 2, OUT);
+    // cata-vento
+    R(dx, y - 8, 1, 7, OUT); R(dx - 3, y - 9, 7, 2, OUT); R(dx - 2, y - 9, 5, 1, '#e0a23a');
+    return { x: dx, y: by };
+  }
+
   function car(x, y, c) {
     shadowOval(x + 18, y + 14, 19, 2);
     R(x + 7, y - 1, 22, 8, OUT); R(x + 8, y, 20, 7, shade(c, 0.85));
@@ -243,8 +351,8 @@ const World = (() => {
   /* ================= posições fixas do mapa externo ================= */
   const FORA = { w: 1200, h: 512 };
   const GRID = { x0: 40, y0: 196, cols: 20, rows: 10, s: 16 };            // terra cultivável da fazenda
-  const YARD = { x0: 142, y0: 402, x1: 256, y1: 458 };                    // onde as galinhas ciscam
-  const SPOT = { feeder: [124, 414], nest: [124, 448], water: [336, 136], dummy: [196, 142], bench: [598, 206], hat: [1150, 470] };
+  const YARD = { x0: 156, y0: 402, x1: 290, y1: 440 };                    // onde as galinhas ciscam (cercado)
+  const SPOT = { water: [336, 136], dummy: [214, 142], bench: [598, 206], hat: [1150, 470] };
   const NTREES = [[880, 90], [930, 70], [900, 236], [950, 276], [880, 336], [940, 388], [1000, 428], [900, 450], [1070, 96], [1130, 116], [1164, 66], [1060, 392], [1120, 440], [1172, 366]];
   const NROCKS = [[862, 206], [984, 246], [1012, 344], [872, 404], [962, 468], [1102, 350], [1152, 196], [1092, 140]];
   const FORAGE = [[916, 124], [1042, 204], [892, 296], [976, 352], [1036, 470], [1142, 404], [1186, 316], [852, 466]];
@@ -317,35 +425,47 @@ const World = (() => {
     grass();
     // ---------- estradas ----------
     road('terra', 60, 152, 1130, 24);
-    road('terra', 366, 176, 20, 198); road('terra', 176, 362, 210, 16); road('terra', 182, 378, 22, 8);
+    road('terra', 366, 176, 20, 298); road('terra', 52, 458, 334, 16);
     road('pedra', 560, 110, 140, 122);
     road('terra', 450, 176, 20, 124); road('terra', 622, 232, 20, 68); road('terra', 440, 300, 392, 22);
     // ---------- fazenda ----------
     keep(GRID.x0 - 6, GRID.y0 - 6, GRID.cols * GRID.s + 12, GRID.rows * GRID.s + 12);
     R(GRID.x0 - 2, GRID.y0 - 2, GRID.cols * GRID.s + 4, GRID.rows * GRID.s + 4, '#4f9c38');
-    building('casa', 'Sua casa', { x: 56, y: 60, w: 80, h: 88, roof: '#b85a3a', roofRatio: 0.42, wall: '#ece2c8', windows: [[8, 10], [62, 10]], chimney: 58, flowerBox: true, door: '#6a4426' }, true);
+    {
+      const d = farmhouse(52, 56);                                                   // casa: x 52..148, varanda até y 150
+      solid(46, 50, 108, 86); solid(52, 144, 34, 8); solid(114, 144, 34, 8); solid(52, 136, 6, 10); solid(142, 136, 6, 10);
+      keep(40, 40, 124, 116);
+      m.doors.casa = d; obj({ id: 'door:casa', kind: 'door', to: 'casa', x: d.x, y: d.y - 3, r: 14, hit: [d.x - 12, d.y - 36, 24, 40], label: 'Entrar: Sua casa' });
+    }
     water(336, 100, 40, 24);
     obj({ id: 'water', kind: 'water', x: SPOT.water[0], y: SPOT.water[1], r: 22, hit: [296, 76, 80, 54], label: 'Lago' });
     // boneco de treino
     box(SPOT.dummy[0] - 2, SPOT.dummy[1] - 4, 4, 4, '#6a4426'); solid(SPOT.dummy[0] - 5, SPOT.dummy[1] - 6, 10, 6); keep(SPOT.dummy[0] - 14, SPOT.dummy[1] - 30, 28, 40);
     obj({ id: 'dummy', kind: 'dummy', x: SPOT.dummy[0], y: SPOT.dummy[1] + 6, r: 16, hit: [SPOT.dummy[0] - 9, SPOT.dummy[1] - 32, 18, 36], label: 'Boneco de treino' });
-    // galinheiro e cercado
-    house({ x: 44, y: 384, w: 60, h: 62, roof: '#b8402e', wall: '#c8744a', timber: '#f0e8d8', windows: [[6, 6, 9, 8]], door: '#f0e8d8', doorW: 12, doorX: 40 }); solid(41, 388, 66, 60);
-    keep(104, 376, 176, 110);
-    R(108, 390, 164, 84, '#b89858'); for (let i = 0; i < 90; i++) R(110 + rand() * 158, 392 + rand() * 80, 2, 1, rand() < 0.5 ? '#a08448' : '#d0b470');
-    fence(108, 176, 392, '#c89858'); fence(208, 270, 392, '#c89858'); fence(108, 270, 478, '#c89858');
-    solid(106, 384, 74, 8); solid(206, 384, 68, 8); solid(106, 470, 168, 8); solid(268, 384, 6, 94);
-    for (let y = 398; y < 474; y += 8) { R(270, y, 3, 6, '#c89858'); R(270, y, 1, 6, '#e0b878'); }
-    box(SPOT.feeder[0] - 9, SPOT.feeder[1] - 12, 18, 7, '#8a5e36'); R(SPOT.feeder[0] - 8, SPOT.feeder[1] - 11, 16, 3, '#5a3a22'); solid(SPOT.feeder[0] - 9, SPOT.feeder[1] - 12, 18, 7);
-    box(SPOT.nest[0] - 9, SPOT.nest[1] - 12, 18, 9, '#c89858'); R(SPOT.nest[0] - 7, SPOT.nest[1] - 10, 14, 5, '#e8d070'); solid(SPOT.nest[0] - 9, SPOT.nest[1] - 12, 18, 9);
-    obj({ id: 'feeder', kind: 'feeder', x: SPOT.feeder[0], y: SPOT.feeder[1], r: 16, hit: [SPOT.feeder[0] - 11, SPOT.feeder[1] - 16, 22, 16], label: 'Comedouro' });
-    obj({ id: 'nest', kind: 'nest', x: SPOT.nest[0], y: SPOT.nest[1] + 2, r: 16, hit: [SPOT.nest[0] - 11, SPOT.nest[1] - 16, 22, 18], label: 'Ninho' });
+    // galinheiro (com porta e interior) e cercado das galinhas
+    {
+      const d = coopHouse(52, 372);                                                  // prédio: x 52..136, y 372..452; porta embaixo, na estrada
+      solid(47, 376, 94, 76); keep(40, 364, 270, 96);
+      m.doors.galinheiro = { x: d.x, y: 463 };
+      obj({ id: 'door:galinheiro', kind: 'door', to: 'galinheiro', x: d.x, y: 460, r: 14, hit: [d.x - 11, d.y - 26, 22, 28], label: 'Entrar: Galinheiro' });
+      const X0 = 144, X1 = 300, Y0 = 392, Y1 = 448;                                 // cercado
+      R(X0, Y0 - 4, X1 - X0, Y1 - Y0 + 4, '#b89858'); for (let i = 0; i < 110; i++) R(X0 + 2 + rand() * (X1 - X0 - 4), Y0 - 2 + rand() * (Y1 - Y0), 2, 1, rand() < 0.5 ? '#a08448' : '#d0b470');
+      for (let i = 0; i < 8; i++) { const hx = X0 + 10 + rand() * (X1 - X0 - 20), hy = Y0 + 4 + rand() * (Y1 - Y0 - 10); R(hx, hy, 3, 1, '#e8d070'); R(hx + 1, hy - 1, 1, 1, '#e8d070'); }
+      box(X1 - 26, Y0 + 2, 12, 5, '#8a9aa8'); R(X1 - 25, Y0 + 3, 10, 2, '#6aacf0');                        // bebedouro
+      fence(X0, X1, Y0, '#d8b078'); fence(X0, 196, Y1, '#d8b078'); fence(226, X1, Y1, '#d8b078');
+      for (let y = Y0; y <= Y1; y += 6) { R(X0 - 1, y - 6, 3, 7, OUT); R(X0, y - 5, 1, 6, '#d8b078'); R(X1 + 1, y - 6, 3, 7, OUT); R(X1 + 2, y - 5, 1, 6, '#d8b078'); }
+      box(196, Y1 - 10, 3, 12, '#8a5e36'); box(224, Y1 - 10, 3, 12, '#8a5e36');                             // porteira aberta
+      solid(X0 - 2, Y0 - 8, X1 - X0 + 6, 8); solid(X0 - 2, Y1 - 6, 56, 8); solid(226, Y1 - 6, X1 - 222, 8); solid(X0 - 2, Y0, 6, Y1 - Y0); solid(X1 - 2, Y0, 6, Y1 - Y0);
+      R(X0 + 6, Y0 - 16, 30, 9, OUT); R(X0 + 7, Y0 - 15, 28, 7, '#f0e6cc'); R(X0 + 10, Y0 - 13, 22, 1, '#8a5e36'); R(X0 + 10, Y0 - 11, 16, 1, '#8a5e36');
+      obj({ id: 'cercado', kind: 'text', x: 211, y: 456, r: 14, hit: [X0 + 4, Y0 - 18, 34, 12], label: 'Cercado das galinhas', text: 'Cercado das galinhas. O comedouro e os ninhos ficam dentro do galinheiro: entre pela porta vermelha, à esquerda.' });
+    }
     // cerca e porteira da fazenda
     for (let y = 40; y < 500; y += 8) if (y < 144 || y > 180) { R(404, y, 3, 6, '#b88448'); R(404, y, 1, 6, '#d8a868'); }
     solid(402, 30, 6, 116); solid(402, 182, 6, 320); keep(396, 30, 18, 470);
     box(396, 140, 6, 12, '#8a5e36'); box(396, 176, 6, 12, '#8a5e36');
-    R(120, 132, 14, 10, OUT); R(121, 133, 12, 8, '#f0e6cc'); R(126, 142, 2, 8, '#6a4426'); R(123, 135, 8, 1, '#8a5e36'); R(123, 138, 6, 1, '#8a5e36');
-    obj({ id: 'placa', kind: 'text', x: 127, y: 154, r: 12, hit: [118, 130, 18, 22], label: 'Placa', text: 'SÍTIO BEIRA-RIO — cuidado por você. A vila fica para o leste, seguindo a estrada.' });
+    R(158, 124, 30, 16, OUT); R(159, 125, 28, 14, '#c89a62'); R(159, 125, 28, 2, '#e8c088'); R(162, 129, 22, 1, '#6a4426'); R(162, 132, 18, 1, '#6a4426'); R(162, 135, 20, 1, '#6a4426');
+    R(161, 140, 3, 8, '#6a4426'); R(182, 140, 3, 8, '#6a4426'); solid(160, 140, 26, 8);
+    obj({ id: 'placa', kind: 'sign', x: 173, y: 154, r: 14, hit: [156, 122, 34, 26], label: 'Placa da fazenda' });
     // ---------- vila ----------
     building('loja', 'Armazém', { x: 466, y: 62, w: 88, h: 86, roof: '#c8683a', wall: '#f4e8c8', windows: [[8, 10, 16, 9], [64, 10, 16, 9]], flowerBox: true, door: '#7a4a2a', doorW: 14 }, true);
     box(502, 108, 16, 9, '#f0e6cc'); R(505, 111, 10, 3, '#c8683a');
@@ -376,8 +496,26 @@ const World = (() => {
     for (let i = 0; i < 46; i++) { const x = 30 + rand() * (W - 60), y = 50 + rand() * (H - 80); if (x > 404 && isFree(x - 8, y - 10, 16, 14)) { bush(Math.round(x), Math.round(y), 4 + Math.floor(rand() * 2)); solid(x - 4, y - 4, 8, 5); } }
     flowers(520, (x, y) => !isFree(x - 2, y - 2, 6, 8));
     m.spawn = { x: m.doors.casa.x, y: m.doors.casa.y };
+    m.places = PLACES;
     return m;
   }
+
+  /* Lugares mostrados na tela do mapa (coordenadas do mapa externo). */
+  const PLACES = [
+    { id: 'casa', label: 'Sua casa', x: 100, y: 120, icon: 'casa' },
+    { id: 'galinheiro', label: 'Galinheiro', x: 94, y: 420, icon: 'galinha' },
+    { id: 'cercado', label: 'Cercado', x: 222, y: 420, icon: 'cerca' },
+    { id: 'roca', label: 'Roça', x: 200, y: 276, icon: 'roca' },
+    { id: 'lago', label: 'Lago', x: 336, y: 100, icon: 'agua' },
+    { id: 'loja', label: 'Armazém', x: 510, y: 110, icon: 'loja' },
+    { id: 'praca', label: 'Praça', x: 630, y: 170, icon: 'praca' },
+    { id: 'honorio', label: 'Seu Honório', x: 755, y: 112, icon: 'morador' },
+    { id: 'bia', label: 'Bia', x: 515, y: 266, icon: 'morador' },
+    { id: 'iara', label: 'Iara', x: 725, y: 266, icon: 'morador' },
+    { id: 'tome', label: 'Tomé', x: 1010, y: 106, icon: 'morador' },
+    { id: 'bosque', label: 'Bosque', x: 950, y: 330, icon: 'bosque' },
+    { id: 'rio', label: 'Lagoa do bosque', x: 1104, y: 258, icon: 'agua' },
+  ];
 
   /* ================= interiores ================= */
   const ST = {
@@ -395,7 +533,7 @@ const World = (() => {
   };
 
   function buildRoom(id) {
-    const m = newMap(id, VW, VH, 29);
+    const m = newMap(id, RW, RH, 29);
     if (id === 'casa') {
       roomBase('#eadfc4', '#b08a5a', '#96744a', true);
       box(30, 12, 26, 20, '#f4f0e4'); R(32, 14, 22, 16, '#8fd0f0'); R(42, 14, 2, 16, '#f4f0e4');
@@ -407,6 +545,28 @@ const World = (() => {
       FLOOR.chest(44, 92); obj({ id: 'chest', kind: 'chest', x: 53, y: 98, hit: [42, 78, 22, 16], label: 'Baú' });
       ST.wardrobe(190, 36); solid(190, 72, 36, 20); obj({ id: 'wardrobe', kind: 'wardrobe', x: 208, y: 100, hit: [190, 34, 36, 62], label: 'Guarda-roupa e espelho' });
       FLOOR.table(170, 144, 34); FLOOR.plant(236, 150);
+    } else if (id === 'galinheiro') {
+      roomBase('#b86a4a', '#d8b868', '#c0a050', true);
+      for (let i = 0; i < 160; i++) R(rand() * W, 74 + rand() * (H - 76), 3, 1, rand() < 0.5 ? '#e8d080' : '#a88a40');      // palha
+      for (let x = 0; x < W; x += 8) R(x, 0, 1, 62, '#9a5236');
+      box(112, 14, 32, 22, '#f2e6d0'); R(114, 16, 28, 18, '#8fd0f0'); R(127, 16, 2, 18, '#f2e6d0'); R(114, 24, 28, 2, '#f2e6d0');      // janela
+      R(4, 30, 60, 3, '#6a4426'); R(4, 33, 2, 10, '#6a4426'); R(62, 33, 2, 10, '#6a4426');                                            // poleiro
+      // comedouro: cocho comprido com placa "RAÇÃO"
+      box(26, 38, 44, 14, '#f0e6cc'); pixelText(29, 43, 'RAÇÃO', '#6a3a1c'); R(52, 41, 2, 2, '#c8a050'); R(56, 44, 3, 3, '#c8a050'); R(60, 41, 2, 2, '#c8a050'); R(63, 44, 3, 3, '#c8a050');
+      box(20, 80, 56, 12, '#8a5e36'); R(20, 80, 56, 3, '#b88448'); R(22, 83, 52, 5, '#4a2e18'); R(22, 92, 3, 4, '#6a4426'); R(71, 92, 3, 4, '#6a4426');
+      box(80, 74, 12, 16, '#c8a050'); R(80, 74, 12, 4, '#e8d070'); R(83, 80, 6, 4, '#8a5e36');                                         // saco de ração
+      solid(18, 76, 76, 20);
+      obj({ id: 'feeder', kind: 'feeder', x: 48, y: 106, r: 20, hit: [16, 36, 80, 62], label: 'Comedouro' });
+      // ninhos: três caixas com palha numa prateleira
+      box(150, 46, 90, 8, '#8a5e36'); R(150, 46, 90, 2, '#b88448');
+      for (let i = 0; i < 3; i++) { const nx = 154 + i * 29; box(nx, 56, 24, 26, '#a87a48'); R(nx + 2, 58, 20, 20, '#4a2e18'); R(nx + 2, 70, 20, 8, '#e8d070'); R(nx + 4, 68, 16, 3, '#f8e8a0'); R(nx + 1, 82, 2, 10, '#6a4426'); R(nx + 21, 82, 2, 10, '#6a4426'); }
+      R(150, 92, 90, 2, '#6a4426'); solid(148, 76, 94, 20);
+      box(182, 28, 34, 11, '#f0e6cc'); pixelText(187, 31, 'NINHOS', '#6a3a1c');
+      obj({ id: 'nest', kind: 'nest', x: 196, y: 106, r: 20, hit: [146, 28, 98, 70], label: 'Ninhos' });
+      // fardos de feno e bebedouro
+      [[8, 140], [8, 124], [26, 140]].forEach(([x, y]) => { box(x, y, 18, 12, '#d8b858'); R(x, y, 18, 3, '#f0d878'); R(x + 5, y, 1, 12, '#a88a40'); R(x + 12, y, 1, 12, '#a88a40'); });
+      solid(6, 122, 40, 32);
+      box(214, 132, 20, 8, '#8a9aa8'); R(216, 134, 16, 4, '#6aacf0'); solid(212, 130, 24, 12);
     } else {
       roomBase('#f8e8c8', '#c8b088', '#b09868');
       ST.shelf(10, 40); solid(10, 72, 40, 20); ST.shelf(206, 40); solid(206, 72, 40, 20);
@@ -435,7 +595,9 @@ const World = (() => {
     for (let cy = Math.floor(y0 / CELL); cy <= Math.floor((y - 1) / CELL); cy++) for (let cx = Math.floor(x0 / CELL); cx <= Math.floor((x0 + 9) / CELL); cx++) if (map.solid[cy * map.cols + cx]) return false;
     return true;
   }
-  const camera = (map, px, py) => ({ x: Math.round(Math.max(0, Math.min(map.w - VW, px - VW / 2))), y: Math.round(Math.max(0, Math.min(map.h - VH, py - 14 - VH / 2))) });
+  /* Câmera: segue o personagem; se o mapa for menor que a tela, fica centralizado. */
+  const axis = (size, view, p) => size <= view ? Math.round((size - view) / 2) : Math.round(Math.max(0, Math.min(size - view, p - view / 2)));
+  const camera = (map, px, py) => ({ x: axis(map.w, VW, px), y: axis(map.h, VH, py - 14) });
   /* Canteiro da grade da fazenda que contém o ponto (ou -1). */
   const tileAt = (x, y) => { const c = Math.floor((x - GRID.x0) / GRID.s), r = Math.floor((y - GRID.y0) / GRID.s); return c < 0 || r < 0 || c >= GRID.cols || r >= GRID.rows ? -1 : r * GRID.cols + c; };
   const tilePos = i => ({ x: GRID.x0 + (i % GRID.cols) * GRID.s, y: GRID.y0 + Math.floor(i / GRID.cols) * GRID.s });
@@ -547,6 +709,7 @@ const World = (() => {
   /* v: { map, cam, t, state, actors, hens, cursor, markers, tint, floats } */
   function render(ctx, v) {
     const { map, cam, t, state: S } = v;
+    if (cam.x < 0 || cam.y < 0 || map.w < VW || map.h < VH) { ctx.fillStyle = map.id === 'fora' ? '#2f6a2c' : '#1c1420'; ctx.fillRect(0, 0, VW, VH); }
     ctx.drawImage(map.bg, -cam.x, -cam.y);
     g = ctx;
     ctx.save(); ctx.translate(-cam.x, -cam.y);
@@ -578,9 +741,6 @@ const World = (() => {
       NROCKS.forEach(([x, y], i) => { if (!S.nature.rocks[i] && seen(x, y)) rock(ctx, x + shk('r' + i), y); });
       FORAGE.forEach(([x, y], i) => { if (S.nature.forage[i] && seen(x, y)) forage(ctx, x, y, S.nature.forage[i]); });
       if (S.nature.hat) forage(ctx, SPOT.hat[0], SPOT.hat[1], 'chapeu_tome');
-      // galinheiro
-      if (S.coop.feed) { R(SPOT.feeder[0] - 8, SPOT.feeder[1] - 11, 16, 3, '#e8d070'); for (let i = 0; i < Math.min(6, S.coop.feed); i++) R(SPOT.feeder[0] - 7 + i * 3, SPOT.feeder[1] - 12, 2, 1, '#f8e8a0'); }
-      for (let i = 0; i < Math.min(3, S.coop.eggs); i++) { blob(SPOT.nest[0] - 4 + i * 4, SPOT.nest[1] - 8, 2, OUT, 1.2); blob(SPOT.nest[0] - 4 + i * 4, SPOT.nest[1] - 8, 1, '#fff8e8', 1.4); }
       // banco da praça: quebrado até a missão do Seu Honório
       const bx = SPOT.bench[0], by = SPOT.bench[1];
       if (S.world.banco) { box(bx - 13, by - 8, 26, 5, '#c89858'); R(bx - 13, by - 8, 26, 1, '#e8c888'); R(bx - 11, by - 3, 3, 4, '#6a4426'); R(bx + 8, by - 3, 3, 4, '#6a4426'); box(bx - 13, by - 14, 26, 3, '#b88448'); }
@@ -589,25 +749,42 @@ const World = (() => {
       const dk = v.dummyHit ? Math.max(0, 1 - (t - v.dummyHit) / 350) : 0, df = dummyFig();
       list.push({ base: SPOT.dummy[1], img: df.img, x: SPOT.dummy[0] - df.ox + Math.round(Math.sin(t / 30) * 3 * dk), y: SPOT.dummy[1] - df.h + 4 });
       (v.hens || []).forEach(h => list.push({ base: h.y, hen: h }));
+      if (v.pet) list.push({ base: v.pet.y, pet: v.pet });
+      // fumaça da chaminé
+      for (let i = 0; i < 4; i++) { const k = ((t / 1400) + i / 4) % 1; ctx.fillStyle = `rgba(230,230,236,${0.7 * (1 - k)})`; ctx.fillRect(Math.round(131 + Math.sin(k * 6 + i) * 3 + k * 6), Math.round(40 - k * 22), 3, 3); }
+    }
+    if (map.id === 'galinheiro') {
+      // ração no cocho (até 6 porções aparecem) e ovos nos ninhos
+      const f = Math.min(6, S.coop.feed || 0);
+      if (f) { R(22, 83, Math.round(52 * f / 6), 5, '#e8d070'); for (let i = 0; i < f * 4; i++) R(23 + (i * 7) % Math.max(4, Math.round(50 * f / 6)), 83 + (i * 3) % 4, 1, 1, '#c8a040'); }
+      const hens = (S.coop.hens || []).length;
+      for (let i = 0; i < Math.min(3, S.coop.eggs || 0); i++) { const nx = 166 + i * 29; blob(nx, 70, 3, OUT, 1.2); blob(nx, 70, 2, '#fff8e8', 1.3); R(nx - 1, 68, 1, 1, '#ffffff'); }
+      if (hens && !(S.coop.eggs > 0)) hen(ctx, 166, 76, 0, false, false, Math.floor(t / 600) % 2);
     }
 
     v.actors.forEach(a => list.push({ base: a.y, a }));
     list.sort((p, q) => p.base - q.base);
     list.forEach(e => {
       if (e.img) return ctx.drawImage(e.img, Math.round(e.x), Math.round(e.y));
+      if (e.pet) return pet(ctx, e.pet, t);
       if (e.hen) { const h = e.hen; hen(ctx, Math.round(h.x), Math.round(h.y), h.kind, h.flip, h.peck, h.moving ? Math.floor(t / 150) % 2 : 0); if (h.heart) heart(ctx, Math.round(h.x) - 3, Math.round(h.y) - 20 - Math.floor(t / 250) % 2); return; }
       const a = e.a, ax = Math.round(a.x), ay = Math.round(a.y);
       ctx.fillStyle = 'rgba(20,30,20,.28)'; ctx.fillRect(ax - 6, ay - 2, 12, 3);
       const tk = a.tool ? Math.min(1, (t - a.tool.t0) / 280) : -1, using = tk >= 0 && tk < 1;
       if (using && a.dir === 'up') toolSwing(ctx, a, ax, ay, tk);
-      Sprites.draw(ctx, a.look, ax - 10, ay - 27 + (a.hop || 0) + (using && tk > 0.4 ? 1 : 0), a.moving ? Sprites.walk(t) : (using ? 1 : 0), a.dir || 'down');
+      Sprites.drawAt(ctx, a.look, ax, ay + (a.hop || 0) + (using && tk > 0.4 ? 1 : 0), a.moving ? Sprites.walk(t) : (using ? 1 : 0), a.dir || 'down');
       if (using && a.dir !== 'up') toolSwing(ctx, a, ax, ay, tk);
     });
-    v.actors.forEach(a => { if (a.bubble) bubble(Math.round(a.x) - 7, Math.round(a.y) - 42, a.bubble === '...' ? '' : '!', t); if (a.heart) heart(ctx, Math.round(a.x) - 3, Math.round(a.y) - 38 - Math.floor(t / 300) % 2); });
+    v.actors.forEach(a => { if (a.bubble) bubble(Math.round(a.x) - 7, Math.round(a.y) - 46, a.bubble === '...' ? '' : '!', t); if (a.heart) heart(ctx, Math.round(a.x) - 3, Math.round(a.y) - 42 - Math.floor(t / 300) % 2); });
     if (v.cursor) { const c = v.cursor, b = Math.floor(t / 350) % 2; ctx.fillStyle = c.far ? 'rgba(255,255,255,.45)' : b ? '#ffffff' : '#ffd75e'; [[0, 0, 5, 1], [0, 0, 1, 5], [c.w - 5, 0, 5, 1], [c.w - 1, 0, 1, 5], [0, c.h - 1, 5, 1], [0, c.h - 5, 1, 5], [c.w - 5, c.h - 1, 5, 1], [c.w - 1, c.h - 5, 1, 5]].forEach(([a, e, w, h]) => ctx.fillRect(c.x + a, c.y + e, w, h)); }
     (v.bars || []).forEach(b => { const x = Math.round(b.x) - 8, y = Math.round(b.y); ctx.fillStyle = OUT; ctx.fillRect(x - 1, y - 1, 18, 4); ctx.fillStyle = '#5a1a1a'; ctx.fillRect(x, y, 16, 2); ctx.fillStyle = b.frac > 0.5 ? '#8fe88f' : b.frac > 0.25 ? '#ffd75e' : '#ff7b5a'; ctx.fillRect(x, y, Math.max(1, Math.round(16 * b.frac)), 2); });
     (v.impacts || []).forEach(f => impact(ctx, f, t));
-    (v.markers || []).forEach(mk => { const b = Math.floor(t / 250) % 2, x = Math.round(mk.x), y = Math.round(mk.y) - b * 2; ctx.fillStyle = OUT; ctx.fillRect(x - 4, y - 8, 9, 6); ctx.fillRect(x - 3, y - 2, 7, 2); ctx.fillRect(x - 1, y, 3, 2); ctx.fillStyle = '#ffd75e'; ctx.fillRect(x - 3, y - 7, 7, 5); ctx.fillRect(x - 2, y - 2, 5, 1); ctx.fillRect(x, y - 1, 1, 2); });
+    (v.markers || []).forEach(mk => {                         // seta amarela do destino da missão, quicando
+      const x = Math.round(mk.x), y = Math.round(mk.y) - (Math.floor(t / 250) % 2) * 3;
+      ctx.fillStyle = OUT; ctx.fillRect(x - 4, y - 16, 9, 9); for (let i = 0; i < 7; i++) ctx.fillRect(x - 7 + i, y - 8 + i, 15 - i * 2, 1);
+      ctx.fillStyle = '#ffd75e'; ctx.fillRect(x - 3, y - 15, 7, 8); for (let i = 0; i < 5; i++) ctx.fillRect(x - 5 + i, y - 7 + i, 11 - i * 2, 1);
+      ctx.fillStyle = '#fff6c0'; ctx.fillRect(x - 2, y - 14, 2, 5);
+    });
     (v.floats || []).forEach(f => { const k = (t - f.t0) / 700; if (k < 0 || k > 1) return; ctx.globalAlpha = 1 - k; ctx.drawImage(icon(f.icon), Math.round(f.x) - 8, Math.round(f.y - 24 - k * 14)); ctx.globalAlpha = 1; });
     ctx.restore();
     if (v.tint) { ctx.fillStyle = v.tint; ctx.fillRect(0, 0, VW, VH); }
@@ -616,7 +793,7 @@ const World = (() => {
   function toolSwing(ctx, a, x, y, k) {
     const d = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] }[a.dir] || [0, 1];
     const lift = Math.sin(k * Math.PI) * 9, reach = 4 + k * 9;
-    const tx = x + d[0] * reach - 8 + (d[1] ? (k - 0.5) * 8 : 0), ty = y - 18 - lift + (d[1] > 0 ? 6 + k * 6 : d[1] < 0 ? -6 - k * 4 : k * 8);
+    const tx = x + d[0] * reach - 8 + (d[1] ? (k - 0.5) * 8 : 0), ty = y - 20 - lift + (d[1] > 0 ? 6 + k * 6 : d[1] < 0 ? -6 - k * 4 : k * 8);
     ctx.save();
     if (a.dir === 'left') { ctx.translate(Math.round(tx) + 16, Math.round(ty)); ctx.scale(-1, 1); ctx.drawImage(icon(a.tool.id), 0, 0); }
     else ctx.drawImage(icon(a.tool.id), Math.round(tx), Math.round(ty));
@@ -636,7 +813,39 @@ const World = (() => {
       ctx.fillStyle = i % 2 ? a : b; ctx.fillRect(Math.round(x), Math.round(y), k < 0.5 ? 2 : 1, k < 0.5 ? 2 : 1);
     }
   }
+  /* Bicho de estimação (gato ou cachorro), 16x14, com pés em (x, y). */
+  const PETC = { gato: ['#e8a048', '#b87028', '#fff0d8'], cachorro: ['#a87048', '#7a4a28', '#f4e4cc'] };
+  function petFig(ctx, x, y, sp, frame, flip, sit) {
+    const [c, d, l] = PETC[sp] || PETC.gato, s = flip ? -1 : 1, P = (a, b, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(flip ? x - a - w : x + a, y + b, w, h); };
+    ctx.fillStyle = 'rgba(20,30,20,.25)'; ctx.fillRect(x - 7, y - 1, 14, 2);
+    const leg = frame % 2;
+    if (sit) { P(-5, -9, 9, 9, OUT); P(-4, -8, 7, 8, c); P(-3, -5, 4, 5, l); P(-8, -3, 4, 3, OUT); P(-7, -2, 3, 1, c); }
+    else {
+      P(-7, -8, 12, 7, OUT); P(-6, -7, 10, 5, c); P(-6, -3, 10, 1, d); P(-4, -5, 5, 2, l);
+      P(-6, -2, 2, 2 + leg, OUT); P(2, -2, 2, 3 - leg, OUT); P(-3, -2, 2, 3 - leg, d); P(5 - 1, -2, 1, 2 + leg, d);
+      if (sp === 'gato') { P(-10, -12 + leg, 2, 6, OUT); P(-9, -11 + leg, 1, 5, c); } else { P(-9, -9 - leg, 3, 2, OUT); P(-8, -9 - leg, 2, 1, c); }
+    }
+    // cabeça
+    const hx = sit ? 0 : 3, hy = sit ? -15 : -13;
+    P(hx - 1, hy, 9, 8, OUT); P(hx, hy + 1, 7, 6, c); P(hx + 2, hy + 4, 4, 3, l);
+    if (sp === 'gato') { P(hx, hy - 2, 2, 3, OUT); P(hx + 5, hy - 2, 2, 3, OUT); P(hx + 1, hy - 1, 1, 1, '#f08fb0'); P(hx + 5, hy - 1, 1, 1, '#f08fb0'); P(hx + 1, hy + 3, 1, 1, '#2e6a3a'); P(hx + 5, hy + 3, 1, 1, '#2e6a3a'); }
+    else { P(hx - 2, hy + 1, 3, 5, OUT); P(hx - 1, hy + 1, 1, 4, d); P(hx + 6, hy + 1, 3, 5, OUT); P(hx + 7, hy + 1, 1, 4, d); P(hx + 2, hy + 3, 1, 1, OUT); P(hx + 5, hy + 3, 1, 1, OUT); P(hx + 3, hy + 5, 2, 1, OUT); }
+    if (sp === 'gato') P(hx + 3, hy + 5, 1, 1, '#f08fb0');
+  }
+  function pet(ctx, p, t) {
+    petFig(ctx, Math.round(p.x), Math.round(p.y), p.sp, p.moving ? Math.floor(t / 160) : 0, p.flip, !p.moving);
+    if (p.heart) heart(ctx, Math.round(p.x) - 3, Math.round(p.y) - 26 - Math.floor(t / 250) % 2);
+  }
+  /* Pequena imagem do bicho para painéis. */
+  function petCanvas(sp, sit = true) {
+    const c = document.createElement('canvas'); c.width = 24; c.height = 20; c.className = 'pixel';
+    petFig(c.getContext('2d'), 12, 19, sp, 0, false, sit); return c;
+  }
+
   function heart(ctx, x, y) { ctx.fillStyle = '#e04a3a'; ctx.fillRect(x, y, 3, 3); ctx.fillRect(x + 4, y, 3, 3); ctx.fillRect(x + 1, y + 3, 5, 2); ctx.fillRect(x + 3, y + 5, 1, 1); }
 
-  return { VW, VH, get, free, camera, render, icon, tileAt, tilePos, GRID, YARD, SPOT, NTREES, NROCKS, FORAGE };
+  return {
+    get VW() { return VW; }, get VH() { return VH; }, RW, RH, setView,
+    get, free, camera, render, icon, tileAt, tilePos, petCanvas, GRID, YARD, SPOT, NTREES, NROCKS, FORAGE, PLACES, FORA,
+  };
 })();
