@@ -1,11 +1,14 @@
 # Trilha — uma vida no campo
 
-RPG de vida no campo em pixel art 16-bits. Você chega aos 17 anos ao Sítio
-Beira-Rio, uma propriedade abandonada que a Vila Aroeira decidiu confiar a
-quem tivesse coragem de recomeçá-la. Com ferramentas usadas e algumas moedas,
-você planta, cuida de galinhas, explora o bosque e conhece os moradores. Não há
-profissões nem fim obrigatório: os dias passam, a fazenda evolui e as amizades
-crescem.
+RPG de vida no campo em pixel art 16-bits. Aos 22 anos, cansado(a) do escritório,
+você recebe uma carta do seu avô: ele deixou um velho sítio, tomado por mato e
+pedras, perto da Vila Acapulco, no Vale do Orvalho. Com as ferramentas antigas
+dele e algumas moedas, você planta, cuida de galinhas, ganha um bicho de
+estimação, explora o bosque e conhece os moradores. Não há profissões nem fim
+obrigatório: os dias passam, a fazenda evolui e as amizades crescem.
+
+O jogo ocupa a janela inteira. O botão **Tela cheia** usa a tela toda do
+aparelho (Esc ou o mesmo botão saem dela).
 
 ## Como jogar
 
@@ -19,6 +22,7 @@ pelo GitHub Pages. Não precisa instalar nada.
 | Usar a ferramenta, semente ou muda | Clique na terra ou no objeto | Toque na terra ou no objeto |
 | Escolher o item da barra | Clique na barra ou teclas 1 a 9 e 0 | Toque na barra |
 | Avançar conversa | Clique na caixa, E, Espaço ou Enter | Toque na caixa de conversa |
+| Abrir/fechar o mapa | M (fecha também com Esc) | Botão Mapa |
 | Fechar painel | Esc ou clique fora | Botão ✕ |
 
 **Só funciona de perto.** O alvo precisa estar ao lado do personagem (na fazenda,
@@ -54,24 +58,63 @@ Com um painel ou conversa aberta, cliques no cenário não fazem nada.
 
 ## Personagem
 
-Na criação: gênero, tom de pele, cabelo (13 cortes, do careca às tranças, rabo
-de cavalo e coque), cor do cabelo, roupa de cima (camiseta, camisa, blusa ou
-jardineira), roupa de baixo (calça, short ou saia), calçado, cores de cada peça
-e nome. Qualquer cabelo e roupa serve para qualquer gênero. A aparência vale nas
-quatro direções e no uso das ferramentas. O guarda-roupa de casa permite mudar
-cabelo, roupas e chapéu a qualquer momento. A idade é 17 anos e não avança.
+Na criação: gênero, 6 tons de pele, 16 penteados (curtos, médios e longos; lisos,
+ondulados, cacheados e crespos; tranças, coque e rabo de cavalo), 8 cores de
+cabelo, 6 modelos de roupa de cima (camiseta, regata, camisa, blusa, moletom e
+jardineira), 4 de baixo (calça, short, saia e saia longa), calçado, 4 acessórios
+(óculos, laço, bandana e cachecol) com cor, animal favorito (gato ou cachorro),
+nome do personagem e nome da fazenda. Tudo vale para qualquer gênero. O botão
+**Aparência aleatória** sorteia só o visual. A prévia mostra frente, costas e os
+dois lados, andando. O personagem tem 24×32 pixels e não perde cabelo nem
+acessório em nenhuma direção, andando, usando ferramentas ou de chapéu.
+
+O gênero define os pronomes nas falas (masculino, feminino ou formas neutras).
+Não há casamento, gravidez nem filhos. O guarda-roupa de casa permite mudar
+cabelo, roupas, acessório e chapéu a qualquer momento. A idade é 22 anos.
+
+**Nomes:** aceitam letras com acento, números, espaços e pontuação comum
+(`. , ' ! ? & ( ) -`). Espaços nas pontas são retirados e nome só com espaços não
+vale. O limite é pela largura na tela (até 16 letras no nome e 20 na fazenda): ao
+chegar nele, o campo avisa. Os nomes aparecem como texto nas falas, na carta, no
+diário, no mapa e na placa da fazenda.
+
+## Abertura e carta
+
+Só num jogo novo: depois da criação, uma cena curta em que o personagem abre o
+envelope do avô, a carta (com o seu nome e o da fazenda) e a chegada. Ao
+continuar um jogo salvo, nada disso se repete; a carta fica no **Diário** para
+reler.
 
 ## O mapa
 
 Um mapa externo maior que a tela, com a câmera acompanhando o personagem:
 
-- **Fazenda** (oeste): casa, 200 canteiros de terra — parte tomada por mato,
-  galhos, pedras e tocos —, lago para encher o regador, galinheiro com cercado e um
-  boneco de treino.
+- **Fazenda** (oeste): casa de madeira com varanda, 200 canteiros de terra —
+  parte tomada por mato, galhos, pedras e tocos —, lago para encher o regador,
+  placa com o nome da fazenda, boneco de treino e, no sul, o **galinheiro**
+  (celeiro vermelho com porta para a estrada) ao lado do cercado das galinhas.
 - **Vila** (centro): praça com fonte, Armazém e as casas dos moradores.
 - **Bosque** (leste): árvores comuns, rochas, amoras, cogumelos e flores.
 
-Interiores: a **casa** (cama, baú e guarda-roupa) e o **Armazém**.
+Interiores: a **casa** (cama, baú e guarda-roupa), o **Armazém** e o
+**galinheiro** (comedouro com placa "RAÇÃO", três ninhos, feno e bebedouro).
+
+**Tela do mapa** (M ou botão Mapa): mostra o mapa de verdade, com a fazenda pelo
+nome, casa, galinheiro, cercado, roça, lago, Vila Acapulco, Armazém, praça, casas
+dos moradores, bosque, estradas, a sua posição e o destino da missão
+acompanhada, com legenda. O tempo para enquanto ele está aberto, e ele não
+teleporta. No cenário, uma seta amarela aponta o destino (ou a porta que leva até
+ele). No Diário, "Mostrar no mapa" escolhe qual missão acompanhar.
+
+**Galinheiro passo a passo:** Bia entrega 5 de ração. Siga a estrada que desce da
+porteira até o fim, vire à esquerda e entre pela porta vermelha. Clique no
+comedouro (cada clique põe 1 porção da mochila), ponha 2 e volte a falar com
+Bia: ela dá uma galinha para você batizar. Com ração no comedouro, a galinha bota
+de noite, e o ovo aparece nos ninhos de manhã.
+
+**Calendário e bicho:** as estações têm 28 dias. Na manhã do dia 12 da primavera
+do ano 1, Bia traz o seu animal favorito. Aceite e dê um nome; se adiar, ela volta
+na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
 ## Fazenda
 
@@ -133,6 +176,11 @@ O progresso fica no navegador (`localStorage`): personagem e aparência, posiç�
 dia e horário, mochila, baú, moedas, canteiros, árvores, galinhas, amizades,
 limites diários, missões e mudanças no mapa. Use o mesmo navegador e aparelho
 para continuar.
+
+Jogos salvos da versão anterior da fazenda continuam: o jogo pede só o nome da
+fazenda e o animal favorito, sem recomeçar nem mexer em mochila, plantações,
+galinhas, amizades ou missões. Se o dia 12 já passou, o bicho chega na próxima
+manhã. A idade passa a 22 anos.
 
 Jogos salvos das versões com profissões não têm como continuar, porque a
 estrutura da partida mudou. A tela de título explica isso e oferece começar a

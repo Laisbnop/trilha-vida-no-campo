@@ -29,10 +29,16 @@
       <div class="steps" id="steps"></div>
       <div class="create-body">
         <div class="preview">
-          <canvas id="preview" class="pixel" width="20" height="28"></canvas>
-          <div>
+          <div class="views" id="preview-views" aria-label="Prévia: frente, lado esquerdo, costas e lado direito">
+            <figure><canvas class="pixel" width="24" height="32"></canvas><figcaption>Frente</figcaption></figure>
+            <figure><canvas class="pixel" width="24" height="32"></canvas><figcaption>Esquerda</figcaption></figure>
+            <figure><canvas class="pixel" width="24" height="32"></canvas><figcaption>Costas</figcaption></figure>
+            <figure><canvas class="pixel" width="24" height="32"></canvas><figcaption>Direita</figcaption></figure>
+          </div>
+          <div class="preview-info">
             <div class="preview-name" id="preview-name"></div>
-            <div class="preview-age">17 anos</div>
+            <div class="preview-farm" id="preview-farm"></div>
+            <div class="preview-age"><span id="preview-pet"></span> 22 anos</div>
           </div>
         </div>
         <div class="create-step">
@@ -42,58 +48,59 @@
         </div>
       </div>
       <div class="create-nav">
-        <button id="btn-back" class="btn">◀ Voltar</button>
-        <button id="btn-next" class="btn primary">Avançar ▶</button>
+        <button id="btn-back" class="btn" type="button">◀ Voltar</button>
+        <button id="btn-random" class="btn" type="button">🎲 Aparência aleatória</button>
+        <button id="btn-next" class="btn primary" type="button">Avançar ▶</button>
       </div>
     </div>
   </section>
 
-  <!-- JOGO -->
+  <!-- JOGO: ocupa a janela inteira; HUD, botões e barra ficam por cima do cenário -->
   <section id="screen-game" class="screen" hidden>
-    <div class="stage">
-      <div class="frame scene-wrap" id="scene-wrap">
+    <div class="stage" id="stage">
+      <div class="scene-wrap" id="scene-wrap">
         <canvas id="scene" class="pixel" width="256" height="160" aria-label="Cenário: clique ou toque em pessoas, portas e objetos próximos"></canvas>
-        <div class="hud" id="hud"></div>
-        <div class="toasts" id="toasts" aria-live="polite"></div>
-        <div class="hint-bar" id="hint" hidden></div>
       </div>
-
+      <div class="hud" id="hud"></div>
       <div class="objective" id="objective"></div>
+      <nav class="actions" id="actions">
+        <button class="btn" type="button" data-tab="mochila">Mochila</button>
+        <button class="btn" type="button" data-tab="diario">Diário</button>
+        <button class="btn" type="button" data-tab="amizades">Amizades</button>
+        <button class="btn" type="button" id="btn-map" title="Mapa (tecla M)">Mapa</button>
+        <button class="btn" type="button" id="btn-full" title="Tela cheia">Tela cheia</button>
+      </nav>
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+      <div class="hint-bar" id="hint" hidden></div>
 
       <div class="bottom">
         <!-- conversa: aparece só quando alguém fala -->
         <div class="win dialog" id="dialog" hidden>
-          <canvas id="portrait" class="pixel portrait" width="20" height="18"></canvas>
+          <canvas id="portrait" class="pixel portrait" width="24" height="20"></canvas>
           <div class="dialog-main">
             <div class="who" id="dlg-who"></div>
             <div class="text" id="dlg-text"></div>
             <div class="choices" id="dlg-choices"></div>
             <form class="dlg-form" id="dlg-form" hidden>
-              <input id="dlg-input" type="text" maxlength="12" autocomplete="off">
+              <input id="dlg-input" type="text" maxlength="16" autocomplete="off">
               <button class="btn primary" type="submit">Confirmar</button>
             </form>
+            <div class="dlg-msg" id="dlg-msg" aria-live="polite"></div>
           </div>
           <div class="more" id="dlg-more">▼</div>
         </div>
 
-        <!-- barra de itens, painéis e controles de toque -->
+        <!-- barra de itens e controles de toque -->
         <div class="dock" id="dock">
-          <div class="hotbar-wrap">
-            <div class="hotbar" id="hotbar" aria-label="Barra de itens"></div>
-            <div class="equipped" id="equipped"></div>
+          <div class="touch" id="touch" aria-label="Controles de direção">
+            <button class="tb up" type="button" data-dir="up" aria-label="Cima">▲</button>
+            <button class="tb left" type="button" data-dir="left" aria-label="Esquerda">◀</button>
+            <button class="tb right" type="button" data-dir="right" aria-label="Direita">▶</button>
+            <button class="tb down" type="button" data-dir="down" aria-label="Baixo">▼</button>
           </div>
-          <div class="dock-row">
-            <div class="touch" id="touch" aria-label="Controles de direção">
-              <button class="tb up" data-dir="up" aria-label="Cima">▲</button>
-              <button class="tb left" data-dir="left" aria-label="Esquerda">◀</button>
-              <button class="tb right" data-dir="right" aria-label="Direita">▶</button>
-              <button class="tb down" data-dir="down" aria-label="Baixo">▼</button>
-            </div>
-            <nav class="actions" id="actions">
-              <button class="btn" data-tab="mochila">Mochila</button>
-              <button class="btn" data-tab="diario">Diário</button>
-              <button class="btn" data-tab="amizades">Amizades</button>
-            </nav>
+          <div class="hotbar-wrap">
+            <div class="equipped" id="equipped"></div>
+            <div class="hotbar" id="hotbar" aria-label="Barra de itens"></div>
           </div>
         </div>
       </div>
@@ -103,12 +110,32 @@
     <div class="modal" id="modal" hidden>
       <div class="win modal-win" role="dialog" aria-modal="true" aria-label="Menu">
         <div class="tabs" id="tabs">
-          <button data-tab="mochila">Mochila</button>
-          <button data-tab="diario">Diário</button>
-          <button data-tab="amizades">Amizades</button>
-          <button class="close" id="modal-close" aria-label="Fechar">✕</button>
+          <button type="button" data-tab="mochila">Mochila</button>
+          <button type="button" data-tab="diario">Diário</button>
+          <button type="button" data-tab="amizades">Amizades</button>
+          <button type="button" class="close" id="modal-close" aria-label="Fechar">✕</button>
         </div>
         <div class="modal-body" id="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- mapa: pausa o tempo; fecha com o botão, M ou Esc -->
+    <div class="modal" id="mapview" hidden>
+      <div class="win map-win" role="dialog" aria-modal="true" aria-label="Mapa">
+        <div class="map-head"><h3 id="map-title">Mapa</h3><button type="button" class="btn" id="map-close" aria-label="Fechar o mapa">✕ Fechar</button></div>
+        <div class="map-body">
+          <div class="map-frame"><canvas id="map-canvas" class="pixel"></canvas></div>
+          <ul class="legend" id="map-legend"></ul>
+        </div>
+        <p class="map-info" id="map-info"></p>
+      </div>
+    </div>
+
+    <!-- carta do avô -->
+    <div class="modal" id="letter" hidden>
+      <div class="paper" role="dialog" aria-modal="true" aria-label="Carta">
+        <div class="letter-body" id="letter-body"></div>
+        <button type="button" class="btn primary" id="letter-ok">Guardar a carta ▶</button>
       </div>
     </div>
 

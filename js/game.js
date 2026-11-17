@@ -22,11 +22,12 @@
   const save = () => { if (S) store.set(SAVE_KEY, JSON.stringify(S)); };
   const validSave = s => s && s.v === 4 && s.look && typeof s.name === 'string' && Array.isArray(s.inv) && s.farm && s.farm.tiles && s.coop && s.nature && s.quests && s.pos;
 
-  function newState(look, name) {
+  function newState(look, name, farmName = '', petSp = null) {
     const seed = Math.floor(Math.random() * 1e9);
     const s = {
-      v: 4, look, name, age: START_AGE, coins: START_COINS, day: 1, time: DAY_START, energy: 100,
-      pos: { map: 'fora', x: 96, y: 166, dir: 'down' },
+      v: 4, look, name, farmName, age: START_AGE, coins: START_COINS, day: 1, time: DAY_START, energy: 100,
+      pos: { map: 'fora', x: 100, y: 164, dir: 'down' },
+      pet: { sp: petSp, state: 'pending', name: '', offered: 0 }, letterSeen: false, track: null,
       inv: Array(INV_SIZE).fill(null), sel: 0, chest: Array(CHEST_SIZE).fill(null), can: 10,
       farm: { tiles: {} }, coop: { feed: 0, eggs: 0, hens: [] },
       nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
@@ -73,7 +74,48 @@
     }
     return {};
   }
-  function show(name) { screen = name; ['title', 'create', 'game'].forEach(n => { $('screen-' + n).hidden = n !== name; }); window.scrollTo(0, 0); }
+  function show(name) { screen = name; ['title', 'create', 'game'].forEach(n => { $('screen-' + n).hidden = n !== name; }); document.body.classList.toggle('playing', name === 'game'); window.scrollTo(0, 0); }
+
+  /* =====================================================
+     NOMES: validação comum (personagem, fazenda, galinhas e bicho)
+     ===================================================== */
+  const NAME_CHAR = /^[\p{L}\p{M}\p{N} .,'’!?&()-]$/u;
+  const NAME_MAX = { name: 160, farm: 200, pet: 120 };          // largura máxima, em pixels da fonte das placas (10px)
+  let measureCtx = null;
+  /* Largura visual do texto na fonte das placas. A fonte é monoespaçada: no mínimo 10px por letra. */
+  function textWidth(t) {
+    if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
+    measureCtx.font = '10px "Press Start 2P"';
+    return Math.max(measureCtx.measureText(t).width, [...t].length * 10);
+  }
+  /* Limpa o que foi digitado: tira caracteres não aceitos e corta no limite de largura. Devolve { value, msg }. */
+  function cleanName(raw, kind) {
+    let msg = '', v = [...String(raw).replace(/[\t\n\r]/g, ' ')].filter(ch => NAME_CHAR.test(ch)).join('');
+    if (v !== String(raw).replace(/[\t\n\r]/g, ' ')) msg = 'Use só letras (com ou sem acento), números, espaços e pontuação simples: . , \' ! ? & ( ) -';
+    v = v.replace(/ {2,}/g, ' ');
+    if (textWidth(v.trim()) > NAME_MAX[kind]) {
+      const chars = [...v]; while (chars.length && textWidth(chars.join('').trim()) > NAME_MAX[kind]) chars.pop();
+      v = chars.join(''); msg = `Limite atingido: o nome pode ter até ${Math.floor(NAME_MAX[kind] / 10)} letras, para caber nas placas e nas falas.`;
+    }
+    return { value: v, msg };
+  }
+  const nameOk = v => v.trim().length > 0;
+  /* Campo de nome com aviso. onChange recebe o texto já limpo. */
+  function nameField(label, value, kind, placeholder, onChange, id) {
+    const box = el('div', 'name-field'), lab = el('label', '', label), input = el('input'), msg = el('div', 'field-msg');
+    input.type = 'text'; input.value = value; input.placeholder = placeholder; input.autocomplete = 'off'; input.maxLength = 30; if (id) { input.id = id; lab.htmlFor = id; }
+    const count = () => { const n = [...input.value.trim()].length, max = Math.floor(NAME_MAX[kind] / 10); return `${n}/${max} letras`; };
+    msg.textContent = count();
+    input.oninput = () => {
+      const r = cleanName(input.value, kind);
+      if (r.value !== input.value) input.value = r.value;
+      msg.textContent = r.msg || (nameOk(input.value) || !input.value ? count() : 'O nome não pode ficar só com espaços.');
+      msg.classList.toggle('warn', !!r.msg || (!!input.value && !nameOk(input.value)));
+      onChange(input.value);
+    };
+    box.append(lab, input, msg);
+    return { box, input, msg };
+  }
 
   /* =====================================================
      TÍTULO
@@ -129,39 +171,54 @@
     cima: (box, look, change) => { optionGrid(box, Sprites.TOPS.map(o => ({ id: o.id, label: o.name, canvas: Sprites.canvas(Object.assign({}, look, { top: o.id })) })), look.top, id => { look.top = id; change(); }, 'many'); box.append(el('p', 'hint', 'Cor')); optionGrid(box, colorItems(Sprites.CLOTH_COLORS), look.topColor, id => { look.topColor = id; change(); }, 'colors'); },
     baixo: (box, look, change) => { optionGrid(box, Sprites.BOTTOMS.map(o => ({ id: o.id, label: o.name, canvas: Sprites.canvas(Object.assign({}, look, { bottom: o.id })) })), look.bottom, id => { look.bottom = id; change(); }); box.append(el('p', 'hint', 'Cor')); optionGrid(box, colorItems(Sprites.CLOTH_COLORS), look.bottomColor, id => { look.bottomColor = id; change(); }, 'colors'); },
     calcado: (box, look, change) => optionGrid(box, colorItems(Sprites.SHOE_COLORS), look.shoeColor, id => { look.shoeColor = id; change(); }, 'colors'),
+    acessorio: (box, look, change) => {
+      optionGrid(box, [{ id: 'none', label: 'Nenhum', canvas: Sprites.canvas(Object.assign({}, look, { accessory: null })) }, ...Sprites.ACCESSORIES.map(a => ({ id: a.id, label: a.name, canvas: Sprites.canvas(Object.assign({}, look, { accessory: a.id })) }))],
+        look.accessory || 'none', id => { look.accessory = id === 'none' ? null : id; change(); }, 'many');
+      if (look.accessory) { box.append(el('p', 'hint', 'Cor do acessório')); optionGrid(box, colorItems(Sprites.CLOTH_COLORS), look.accColor, id => { look.accColor = id; change(); }, 'colors'); }
+    },
+    extras: (box, look, change) => { box.append(el('p', 'hint', 'Calçado')); LOOK_SECTIONS.calcado(box, look, change); box.append(el('p', 'hint', 'Acessório')); LOOK_SECTIONS.acessorio(box, look, change); },
   };
 
   const draft = {};
-  let step = 0, previewTimer = 0;
+  let step = 0, previewTimer = 0, previewF = 0;
   const STEPS = [
-    { title: 'Gênero', hint: 'É só como você se apresenta. Todos os cabelos e roupas servem para qualquer gênero.', key: 'genero' },
-    { title: 'Cor da pele', hint: 'Escolha o tom de pele.', key: 'pele' },
-    { title: 'Cabelo', hint: 'Escolha o corte.', key: 'cabelo' },
-    { title: 'Cor do cabelo', hint: () => (draft.look.hair === 'careca' ? 'Seu personagem é careca, então a cor não aparece.' : 'Escolha a cor do cabelo.'), key: 'corCabelo' },
-    { title: 'Roupa de cima', hint: 'Peça e cor.', key: 'cima' },
-    { title: 'Roupa de baixo', hint: 'Peça e cor. Combina com qualquer parte de cima.', key: 'baixo' },
-    { title: 'Calçado', hint: 'Escolha a cor.', key: 'calcado' },
-    { title: 'Qual é o seu nome?', hint: 'É assim que a vila vai te chamar. Depois, o guarda-roupa de casa permite mudar cabelo e roupas.', valid: () => draft.name.trim().length >= 2 },
+    { title: 'Gênero', hint: 'Define como a vila se refere a você nas falas (ele, ela ou formas neutras). Todos os cabelos, roupas e acessórios servem para qualquer gênero.', key: 'genero' },
+    { title: 'Cor da pele', hint: 'Escolha o tom de pele.', key: 'pele', look: true },
+    { title: 'Cabelo', hint: 'Curtos, médios e longos; lisos, ondulados, cacheados e crespos.', key: 'cabelo', look: true },
+    { title: 'Cor do cabelo', hint: () => (draft.look.hair === 'careca' ? 'Seu personagem é careca, então a cor quase não aparece.' : 'Escolha a cor do cabelo.'), key: 'corCabelo', look: true },
+    { title: 'Roupa de cima', hint: 'Peça e cor.', key: 'cima', look: true },
+    { title: 'Roupa de baixo', hint: 'Peça e cor. Combina com qualquer parte de cima.', key: 'baixo', look: true },
+    { title: 'Calçado e acessório', hint: 'O acessório aparece de todos os lados, até com chapéu.', key: 'extras', look: true },
+    { title: 'Animal favorito', hint: 'Gato ou cachorro? Um dia, alguém da vila pode se lembrar disso.', key: 'pet' },
+    { title: 'Nomes', hint: 'Como a vila vai te chamar e o nome da fazenda que você vai herdar. Depois, o guarda-roupa de casa permite mudar cabelo, roupas e acessório.', key: 'names',
+      valid: () => nameOk(draft.name) && nameOk(draft.farm) },
   ];
+  function petOptions(box, cur, set) {
+    optionGrid(box, Object.keys(PETS).map(k => ({ id: k, label: PETS[k].name, canvas: Object.assign(World.petCanvas(k), { className: 'pixel pet' }) })), cur, set, 'two');
+  }
   function startCreation(pre) {
-    draft.look = Object.assign({}, DEFAULT_LOOK, pre ? pre.look : null); draft.name = pre ? pre.name : '';
+    draft.look = Object.assign({}, DEFAULT_LOOK, pre ? pre.look : null); draft.name = pre ? pre.name : ''; draft.farm = ''; draft.pet = 'gato';
     step = 0;
     const steps = $('steps'); steps.replaceChildren(); STEPS.forEach(() => steps.append(el('span')));
     show('create');
     clearInterval(previewTimer);
-    let f = 0; previewTimer = setInterval(() => { f = (f + 1) % 8; updatePreview(f); }, 380);
+    previewTimer = setInterval(() => { previewF = (previewF + 1) % 4; updatePreview(); }, 260);
     renderStep();
   }
-  function updatePreview(f = 0) {
-    const g = $('preview').getContext('2d'); g.clearRect(0, 0, Sprites.W, Sprites.H);
-    Sprites.draw(g, draft.look, 0, 0, f % 2, ['down', 'left', 'up', 'right'][Math.floor(f / 2)]);
+  /* Prévia ampliada: frente, esquerda, costas e direita, andando. */
+  function updatePreview() {
+    const dirs = ['down', 'left', 'up', 'right'], frame = [0, 1, 0, 2][previewF];
+    [...$('preview-views').querySelectorAll('canvas')].forEach((c, i) => { const g = c.getContext('2d'); g.clearRect(0, 0, Sprites.W, Sprites.H); Sprites.draw(g, draft.look, 0, 0, frame, dirs[i]); });
     $('preview-name').textContent = draft.name.trim() || '—';
+    $('preview-farm').textContent = draft.farm.trim() ? draft.farm.trim() : '';
+    $('preview-pet').replaceChildren(World.petCanvas(draft.pet));
   }
   function updateNav() {
     const st = STEPS[step];
     $('btn-back').textContent = step === 0 ? '◀ Título' : '◀ Voltar';
     $('btn-next').textContent = step === STEPS.length - 1 ? 'Começar ▶' : 'Avançar ▶';
     $('btn-next').disabled = st.valid ? !st.valid() : false;
+    $('btn-random').hidden = !st.look;
   }
   function renderStep() {
     const st = STEPS[step];
@@ -169,22 +226,24 @@
     $('step-title').textContent = `${step + 1}. ${st.title}`;
     $('step-hint').textContent = typeof st.hint === 'function' ? st.hint() : st.hint;
     const box = $('step-content'); box.replaceChildren();
-    if (st.key) LOOK_SECTIONS[st.key](box, draft.look, renderStep);
+    if (LOOK_SECTIONS[st.key]) LOOK_SECTIONS[st.key](box, draft.look, renderStep);
+    else if (st.key === 'pet') petOptions(box, draft.pet, id => { draft.pet = id; renderStep(); });
     else {
-      const input = el('input'); input.type = 'text'; input.maxLength = 14; input.placeholder = 'Seu nome'; input.autocomplete = 'off'; input.value = draft.name; input.id = 'name-input';
-      input.oninput = () => { draft.name = input.value; updatePreview(); updateNav(); };
-      input.onkeydown = e => { if (e.key === 'Enter' && st.valid()) $('btn-next').click(); };
-      box.append(input); setTimeout(() => input.focus(), 0);
+      const a = nameField('Seu nome', draft.name, 'name', 'Seu nome', v => { draft.name = v; updatePreview(); updateNav(); }, 'name-input');
+      const b = nameField('Nome da fazenda', draft.farm, 'farm', 'Ex.: Sítio Recanto', v => { draft.farm = v; updatePreview(); updateNav(); }, 'farm-input');
+      [a.input, b.input].forEach(i => { i.onkeydown = e => { if (e.key === 'Enter' && st.valid()) $('btn-next').click(); }; });
+      box.append(a.box, b.box); setTimeout(() => (draft.name ? b.input : a.input).focus(), 0);
     }
     updatePreview(); updateNav();
   }
   $('btn-back').onclick = () => { if (step === 0) { clearInterval(previewTimer); initTitle(); } else { step--; renderStep(); } };
+  $('btn-random').onclick = () => { draft.look = Sprites.randomLook(draft.look); renderStep(); };
   $('btn-next').onclick = () => {
     const st = STEPS[step];
     if (st.valid && !st.valid()) return;
     if (step < STEPS.length - 1) { step++; renderStep(); return; }
     clearInterval(previewTimer);
-    S = newState(Object.assign({}, draft.look), draft.name.trim());
+    S = newState(Object.assign({}, draft.look), cleanName(draft.name, 'name').value.trim(), cleanName(draft.farm, 'farm').value.trim(), draft.pet);
     save(); startGame();
   };
 
@@ -219,13 +278,18 @@
   let map = null;
   const P = { x: 0, y: 0, dir: 'down', moving: false, work: 0, tool: null, hop: 0 };
   const keys = {};
-  let busy = false, hover = null, lastSave = 0, clockAcc = 0, floats = [], dummyHit = 0, hens = [], impacts = [], shake = null;
+  let busy = false, hover = null, lastSave = 0, clockAcc = 0, floats = [], dummyHit = 0, hens = [], impacts = [], shake = null, pet = null;
   const COARSE = window.matchMedia && matchMedia('(pointer: coarse)').matches;
 
   const hearts = id => Math.floor((S.friends[id] || 0) / 100);
   const addFriend = (id, pts) => { const before = hearts(id); S.friends[id] = Math.max(0, Math.min(FRIEND.max, (S.friends[id] || 0) + pts)); if (hearts(id) > before) toast(`${villagerById(id).name}: ${hearts(id)} coração(ões)`); };
   const clock = () => `${String(Math.floor(S.time / 60)).padStart(2, '0')}:${String(S.time % 60).padStart(2, '0')}`;
-  const fmt = t => String(t).replace(/\{nome\}/g, S.name);
+  const fmt = t => String(t)
+    .replace(/\{g:([^|}]*)\|([^|}]*)\|([^}]*)\}/g, (_, m, f, n) => (S && S.look.gender === 'm' ? m : S && S.look.gender === 'f' ? f : n))
+    .replace(/\{nome\}/g, S ? S.name : '').replace(/\{fazenda\}/g, (S && S.farmName) || 'o sítio').replace(/\{pet\}/g, (S && S.pet && S.pet.name) || '');
+  /* Calendário: estações de 28 dias. */
+  const calendar = (d = S.day) => ({ season: SEASONS[Math.floor((d - 1) / SEASON_DAYS) % 4], day: (d - 1) % SEASON_DAYS + 1, year: Math.floor((d - 1) / (SEASON_DAYS * 4)) + 1 });
+  const dateText = (d = S.day) => { const c = calendar(d); return `${c.season} ${c.day} · Ano ${c.year}`; };
 
   /* Onde cada morador está agora: segue a rotina do dia, andando pelos caminhos. */
   function villagerAt(v, tm) {
@@ -258,6 +322,12 @@
   /* Campos criados depois (salvamentos anteriores continuam valendo). */
   function upgrade(s) {
     s.dmg = s.dmg || {};
+    s.look = Object.assign({ accessory: null, accColor: '#e04a3a' }, s.look);
+    if (!(s.age >= START_AGE)) s.age = START_AGE;                       // agora a história começa aos 22
+    if (typeof s.farmName !== 'string') s.farmName = '';                 // pedido na tela de ajuste, sem recomeçar
+    if (!s.pet) s.pet = { sp: null, state: 'pending', name: '', offered: 0 };
+    if (s.letterSeen === undefined) s.letterSeen = !!s.intro;           // quem já jogava não vê a cena de abertura de novo
+    if (s.track === undefined) s.track = null;
     s.nature.cleared = s.nature.cleared || {};
     if (!s.stumps) {                                    // alguns tocos em grama livre, longe da casa
       let sd = s.seed >>> 0, placed = 0; const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -265,20 +335,41 @@
       s.stumps = true;
     }
   }
+  const needsSetup = () => !S.farmName || !S.pet.sp;
   function startGame() {
     upgrade(S);
-    show('game');
-    closeModal();
+    show('game'); fit();
+    closeModal(); closeMap();
     enterMap(S.pos.map, S.pos.x, S.pos.y, S.pos.dir);
-    spawnHens();
+    spawnHens(); spawnPet();
     startAutoQuests();
     renderHud(); renderHotbar();
-    if (!S.intro) run(async () => {
-      await say('narr', 'A carroça da manhã deixa você diante de uma casinha de telhado torto: o Sítio Beira-Rio, na Vila Aroeira.');
-      await say('narr', `Você tem ${S.age} anos, uma mochila e uma carta do conselho da vila: o sítio estava abandonado, e decidiram confiá-lo a quem tivesse coragem de recomeçar. As ferramentas são usadas, doadas pelos moradores.`);
-      await say('narr', COARSE ? 'Ande com as setas da tela. Chegue perto e toque em pessoas, portas e objetos para interagir. Toque na barra para escolher o item; com uma ferramenta na mão, toque na terra ou no objeto ao seu lado.' : 'Ande com as setas (ou W, A, S, D). Chegue perto e clique em pessoas, portas e objetos para interagir. Clique na barra ou use as teclas 1 a 0 para escolher o item; com uma ferramenta na mão, clique na terra ou no objeto ao seu lado. Troncos, tocos e pedras pedem vários golpes: um clique para cada.');
+    if (needsSetup()) { openModal('ajuste'); return; }                 // jogo salvo de antes: pede nome da fazenda e animal
+    if (!S.intro) intro();
+  }
+  /* Abertura (só em jogo novo): o envelope do avô, a carta e a chegada. */
+  function intro() {
+    run(async () => {
+      if (!S.letterSeen) {
+        await say('narr', 'Mais uma noite de planilhas no escritório da Uni Corporation. Na volta para casa, entre os boletos da caixa de correio, um envelope amarelado com a letra caprichada do seu avô.');
+        await say('narr', 'Você senta no degrau da portaria e abre o envelope com cuidado.');
+        await showLetter(false);
+        S.letterSeen = true; save();
+        await say('narr', 'Você lê a carta duas vezes. Na semana seguinte, pede as contas, junta o que cabe numa mochila e pega a estrada para o ' + REGIAO + '.');
+      }
+      await say('narr', 'A carroça da manhã deixa você diante de uma casa de madeira com varanda, telhado gasto e mato por todo lado. Na placa nova do portão: {fazenda}. A ' + VILA + ' fica logo a leste.');
+      await say('narr', `Você tem ${S.age} anos, a carta do seu avô no bolso e as ferramentas antigas dele na mochila. A carta fica guardada no Diário.`);
+      await say('narr', COARSE ? 'Ande com as setas da tela. Chegue perto e toque em pessoas, portas e objetos para interagir. Toque na barra para escolher o item; com uma ferramenta na mão, toque na terra ou no objeto ao seu lado. O botão Mapa mostra onde fica cada lugar.' : 'Ande com as setas (ou W, A, S, D). Chegue perto e clique em pessoas, portas e objetos para interagir. Clique na barra ou use as teclas 1 a 0 para escolher o item; com uma ferramenta na mão, clique na terra ou no objeto ao seu lado. A tecla M abre o mapa.');
       await say('narr', 'Não há pressa nem fim: os dias passam quando você dorme. Para começar, siga a estrada para o leste e apresente-se no Armazém.');
       S.intro = true;
+    });
+  }
+  function showLetter(reread) {
+    return new Promise(resolve => {
+      const b = $('letter-body'); b.replaceChildren(el('div', 'stamp'), el('p', 'greet', fmt(LETTER.greet)), ...LETTER.body.map(t => el('p', '', fmt(t))), el('p', 'sign', LETTER.sign));
+      $('letter-ok').textContent = reread ? 'Fechar a carta' : 'Guardar a carta ▶';
+      $('letter').hidden = false; $('letter').scrollTop = 0; $('letter-ok').focus();
+      $('letter-ok').onclick = () => { $('letter').hidden = true; resolve(); };
     });
   }
   function enterMap(id, x, y, dir) {
@@ -291,7 +382,28 @@
     const wrap = $('scene-wrap'); wrap.classList.add('fade'); busy = true;
     setTimeout(() => { enterMap(to, x, y, dir); save(); wrap.classList.remove('fade'); busy = false; renderHud(); }, 220);
   }
-  const blocked = () => busy || !$('modal').hidden || !$('summary').hidden || screen !== 'game';
+  const blocked = () => busy || !$('modal').hidden || !$('summary').hidden || !$('mapview').hidden || !$('letter').hidden || screen !== 'game';
+
+  /* =====================================================
+     TELA: o jogo ocupa a janela inteira, com pixels inteiros
+     ===================================================== */
+  function fit() {
+    const c = $('scene'), W = window.innerWidth, H = window.innerHeight;
+    const k = Math.max(2, Math.min(8, Math.round(H / 270), Math.round(W / 320)));   // escala inteira: telas maiores mostram mais do mundo
+    const cw = Math.ceil(W / k), ch = Math.ceil(H / k);
+    if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+    c.style.width = cw * k + 'px'; c.style.height = ch * k + 'px';
+    c.style.left = Math.floor((W - cw * k) / 2) + 'px'; c.style.top = Math.floor((H - ch * k) / 2) + 'px';
+    World.setView(cw, ch);
+  }
+  window.addEventListener('resize', fit);
+  document.addEventListener('fullscreenchange', () => { $('btn-full').textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; fit(); });
+  $('btn-full').onclick = () => {
+    if (document.fullscreenElement) { document.exitFullscreen(); return; }
+    const r = document.documentElement.requestFullscreen;
+    if (!r) return toast('Este navegador não oferece tela cheia.');
+    document.documentElement.requestFullscreen().catch(() => toast('O navegador não permitiu a tela cheia.'));
+  };
 
   /* Obstáculos que mudam: entulho e árvores da fazenda, árvores e pedras do bosque. */
   function dynBlocked(x, y) {
@@ -313,7 +425,8 @@
     const dt = Math.min(50, t - lastT); lastT = t;
     if (screen === 'title') {
       const m = World.get('fora'), cx = 520 + Math.sin(t / 9000) * 380, cy = 250 + Math.cos(t / 7000) * 150;
-      World.render($('title-canvas').getContext('2d'), { map: m, cam: World.camera(m, cx, cy), t, state: DEMO, hens: [{ x: 180, y: 430, kind: 0 }, { x: 220, y: 446, kind: 1, flip: 1 }],
+      World.setView(256, 160);
+      World.render($('title-canvas').getContext('2d'), { map: m, cam: World.camera(m, cx, cy), t, state: DEMO, hens: [{ x: 190, y: 420, kind: 0 }, { x: 240, y: 432, kind: 1, flip: 1 }],
         actors: VILLAGERS.map(v => ({ v, p: villagerAt(v, 660) })).filter(o => o.p.where === 'fora').map(o => ({ look: o.v.look, x: o.p.x, y: o.p.y, dir: o.p.dir })) });
       return;
     }
@@ -340,7 +453,7 @@
     // o relógio só anda com o jogo livre (pausa em conversas, menus e cenas)
     if (free && S.time < 1439) { clockAcc += dt; if (clockAcc >= 700) { clockAcc -= 700; S.time++; if (S.time % 10 === 0) renderHud(); } }
     floats = floats.filter(f => t - f.t0 < 700);
-    updateHens(dt, t);
+    updateHens(dt, t); updatePet(dt, t);
     impacts = impacts.filter(f => t - f.t0 < 400);
     hover = null;
     if (free && mouse) { const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, list); if (tg) { tg.ok = reachable(tg); hover = tg; } }
@@ -359,10 +472,12 @@
   }
 
   function draw(t, list) {
-    const cam = World.camera(map, P.x, P.y), ctx = $('scene').getContext('2d');
+    const c = $('scene'); World.setView(c.width, c.height);
+    const cam = World.camera(map, P.x, P.y), ctx = c.getContext('2d');
     const me = { look: S.look, x: P.x, y: P.y, dir: P.dir, moving: P.moving, tool: P.tool, hop: P.hop && t < P.hop ? -Math.abs(Math.sin((P.hop - t) / 80)) * 4 : 0 };
     const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
-    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], cursor, tint: tint(), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [] });
+    const mk = trackedMarker();
+    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, tint: tint(), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], markers: mk ? [mk] : [] });
   }
   /* Barras de resistência dos objetos com dano parcial (o dano fica salvo). */
   function bars() {
@@ -397,10 +512,11 @@
   /* O que está sob o ponto (wx, wy) do mundo, do que está mais à frente para o mais ao fundo. */
   function targetAt(wx, wy, list) {
     for (const a of list.slice().sort((p, q) => q.y - p.y)) {
-      const r = [a.x - 9, a.y - 27, 18, 29];
+      const r = [a.x - 10, a.y - 31, 20, 33];
       if (inRect(r, wx, wy)) return { label: 'Falar com ' + a.name, rect: r, reach: a.reach > 30 ? 30 : 16, act: () => talkTo(a.v) };
     }
     if (map.id === 'fora') {
+      if (pet) { const r = [pet.x - 10, pet.y - 18, 20, 19]; if (inRect(r, wx, wy)) return { label: `Fazer carinho em ${S.pet.name}`, rect: r, act: petPet }; }
       for (let i = hens.length - 1; i >= 0; i--) { const h = hens[i], r = [h.x - 7, h.y - 15, 14, 16]; if (inRect(r, wx, wy)) return { label: S.coop.hens[i].name, rect: r, act: () => henMenu(i) }; }
       for (const key in S.farm.tiles) {                     // árvores frutíferas: a copa também é clicável
         if (S.farm.tiles[key].k !== 'tree') continue;
@@ -495,6 +611,7 @@
       case 'door': return { label: o.label, act: () => { const m = World.get(o.to); travel(o.to, m.spawn.x, m.spawn.y, 'up'); } };
       case 'exit': return { label: 'Sair', act: () => { const d = World.get('fora').doors[map.id]; travel('fora', d.x, d.y, 'down'); } };
       case 'text': return { label: o.label, act: () => run(() => say('narr', o.text)) };
+      case 'sign': return { label: o.label, act: () => run(() => say('narr', `Na placa, pintado à mão: "{fazenda}". Embaixo, em letras menores: terra do Vô ${AVO}. A ${VILA} fica a leste, seguindo a estrada.`)) };
       case 'bed': return { label: 'Dormir', act: bed };
       case 'chest': return { label: 'Abrir o baú', act: () => openModal('bau') };
       case 'wardrobe': return { label: 'Guarda-roupa e espelho', act: () => openModal('roupa') };
@@ -507,7 +624,7 @@
       } } : { label: 'Boneco de treino — use a espada', act: () => tip('Equipe a espada na barra de itens para treinar no boneco.') };
       case 'bench': return { label: 'Banco da praça', act: () => run(() => say('narr', S.world.banco ? 'O banco da praça, firme de novo. Na madeira, um entalhe discreto: "consertado com a ajuda de ' + S.name + '".' : 'O banco da praça está quebrado: falta uma tábua e um dos pés cedeu.')) };
       case 'feeder': return { label: count('racao') ? `Colocar ração (${S.coop.feed} no comedouro)` : `Comedouro (${S.coop.feed} porções)`, act: feed };
-      case 'nest': return { label: S.coop.eggs ? `Pegar ovos (${S.coop.eggs})` : 'Ninho', act: nest };
+      case 'nest': return { label: S.coop.eggs ? `Pegar ovos (${S.coop.eggs})` : 'Ninhos', act: nest };
     }
     return null;
   }
@@ -528,8 +645,9 @@
   const typing = e => /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
   window.addEventListener('keydown', e => {
     if (screen !== 'game') return;
-    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key === 'Escape') { if (!$('mapview').hidden) closeMap(); else if (!$('letter').hidden && S.letterSeen && !busy) $('letter-ok').click(); else closeModal(); return; }
     if (typing(e)) return;
+    if ((e.key === 'm' || e.key === 'M') && !e.repeat) { e.preventDefault(); toggleMap(); return; }
     if (/^Arrow|^ $/.test(e.key)) e.preventDefault();               // as setas e o espaço não rolam a página
     if (KEYMAP[e.key]) { keys[KEYMAP[e.key]] = true; return; }
     if (/^[0-9]$/.test(e.key) && !blocked()) { selectSlot(e.key === '0' ? 9 : +e.key - 1); return; }
@@ -582,7 +700,7 @@
     const sp = who === 'narr' ? { name: '', look: null } : who, pc = $('portrait');
     $('dlg-who').textContent = sp.name; $('dlg-who').hidden = !sp.name;
     pc.hidden = !sp.look;
-    if (sp.look) { const g = pc.getContext('2d'); g.clearRect(0, 0, 20, 18); Sprites.draw(g, sp.look, 0, -1); }
+    if (sp.look) { const g = pc.getContext('2d'); g.clearRect(0, 0, pc.width, pc.height); Sprites.draw(g, sp.look, 0, -3); }
     $('dlg-text').classList.toggle('narr', who === 'narr');
   }
   function say(who, text) {
@@ -604,15 +722,17 @@
       box.firstChild.focus();
     });
   }
-  /* Pede um texto curto (nome da galinha). Devolve o texto, ou o padrão se ficar vazio. */
+  /* Pede um nome curto (galinha, bicho). Valida como os outros nomes; vazio usa o padrão. */
   function askText(who, text, fallback) {
     return new Promise(resolve => {
       setSpeaker(who); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(text);
       onAdvance = null; $('dlg-more').hidden = true; $('dlg-choices').replaceChildren();
-      const form = $('dlg-form'), input = $('dlg-input'); form.hidden = false; input.value = ''; input.placeholder = fallback; input.focus();
-      form.onsubmit = e => { e.preventDefault(); form.hidden = true; form.onsubmit = null; resolve((input.value.trim() || fallback).slice(0, 12)); };
+      const form = $('dlg-form'), input = $('dlg-input'), msg = $('dlg-msg'); form.hidden = false; input.value = ''; input.placeholder = fallback; msg.textContent = ''; input.focus();
+      input.oninput = () => { const r = cleanName(input.value, 'pet'); if (r.value !== input.value) input.value = r.value; msg.textContent = r.msg; };
+      form.onsubmit = e => { e.preventDefault(); form.hidden = true; form.onsubmit = null; input.oninput = null; input.blur(); msg.textContent = ''; resolve(cleanName(input.value, 'pet').value.trim() || fallback); };
     });
   }
+  $('dlg-form').addEventListener('submit', e => e.preventDefault());     // nunca recarrega a página, mesmo com Enter repetido
   $('dialog').addEventListener('click', e => { if (!e.target.closest('button, input, form') && onAdvance) onAdvance(); });
   async function run(flow) {
     if (busy) return;
@@ -635,7 +755,9 @@
     S.quests[id] = { state: 'active', n: {} };
     if (q.start) Object.keys(q.start.items).forEach(k => gain(k, q.start.items[k]));
     if (id === 'chapeu') S.nature.hat = true;                 // o chapéu perdido aparece no bosque
+    S.track = id;
     toast('Nova missão: ' + q.title);
+    if (q.where) toast(`${q.where[3]}: marcado no mapa (${COARSE ? 'botão Mapa' : 'tecla M'})`);
   }
   function startAutoQuests() { Object.keys(QUESTS).forEach(id => { if (QUESTS[id].auto && qUnlocked(id)) startQuest(id); }); }
   /* Conta uma ação feita no mundo para as missões em andamento. */
@@ -680,8 +802,30 @@
       if (S.quests[id] && S.quests[id].state === 'active') return !q.selfDone && (q.to || q.giver) === v.id && qReady(id);
       return q.giver === v.id && !q.auto && qUnlocked(id); });
   }
+  /* Missão acompanhada: a escolhida no Diário, ou a primeira em andamento. */
+  const tracked = () => { const act = qActive(); return act.includes(S.track) ? S.track : act[0]; };
+  /* Para onde a missão leva agora: o lugar da tarefa ou, quando está pronta, quem recebe. */
+  function questTarget(id) {
+    const q = QUESTS[id]; if (!q) return null;
+    const toPerson = () => { const v = villagerById(q.to || q.giver), p = villagerAt(v, S.time); return { map: p.where, x: p.x, y: p.y - 36, label: v.name }; };
+    if (!q.selfDone && qReady(id)) return toPerson();
+    if (q.where) return { map: q.where[0], x: q.where[1], y: q.where[2], label: q.where[3] };
+    return toPerson();
+  }
+  /* Ponto no mapa externo que representa um lugar (interiores = a porta do prédio). */
+  function outdoorPoint(mapId, x, y) {
+    if (mapId === 'fora') return { x, y };
+    const d = World.get('fora').doors[mapId]; return d ? { x: d.x, y: d.y - 20 } : null;
+  }
+  /* Seta no cenário: no destino, ou na porta/saída que leva até ele. */
+  function trackedMarker() {
+    const id = tracked(), tg = id && questTarget(id); if (!tg) return null;
+    if (tg.map === map.id) return { x: tg.x, y: tg.y };
+    if (map.id === 'fora') { const d = map.doors[tg.map]; return d ? { x: d.x, y: d.y - 30 } : null; }
+    return { x: map.w / 2, y: map.h - 20 };
+  }
   function objective() {
-    const id = qActive()[0]; if (!id) return '';
+    const id = tracked(); if (!id) return '';
     const p = qProgress(id); return QUESTS[id].title + (p ? ` — ${p}` : '');
   }
 
@@ -791,6 +935,48 @@
   }
 
   /* =====================================================
+     BICHO DE ESTIMAÇÃO
+     ===================================================== */
+  const PET_AREA = { x0: 166, x1: 340, y0: 160, y1: 186 };
+  function spawnPet() { pet = S.pet && S.pet.state === 'home' ? { x: 250, y: 172, tx: 250, ty: 172, wait: 600, sp: S.pet.sp, flip: false } : null; }
+  function updatePet(dt, t) {
+    if (!pet || !map || map.id !== 'fora') return;
+    pet.heart = S.pet.petT && t < S.pet.petT;
+    const dx = pet.tx - pet.x, dy = pet.ty - pet.y, d = Math.hypot(dx, dy);
+    if (d > 1) { pet.x += dx / d * 0.03 * dt; pet.y += dy / d * 0.03 * dt; pet.moving = true; pet.flip = dx < 0; return; }
+    pet.moving = false; pet.wait -= dt;
+    if (pet.wait <= 0) { pet.wait = 2000 + Math.random() * 4000; const A = PET_AREA; pet.tx = A.x0 + Math.random() * (A.x1 - A.x0); pet.ty = A.y0 + Math.random() * (A.y1 - A.y0); }
+  }
+  function petPet() {
+    const p = S.pet; p.petT = performance.now() + 2500; pet.wait = 2500; pet.tx = pet.x; pet.ty = pet.y;
+    const first = p.lastPet !== S.day; p.lastPet = S.day; save();
+    run(() => say('narr', p.sp === 'gato' ? `${p.name} ronrona alto e se esfrega na sua perna.${first ? '' : ' Carinho nunca é demais.'}` : `${p.name} abana o rabo e lambe a sua mão.${first ? '' : ' Carinho nunca é demais.'}`));
+  }
+  /* Na manhã do dia 12 da primavera (ou na primeira manhã depois), Bia oferece o bicho favorito.
+     Acontece uma vez; se for adiado, ela volta na manhã seguinte. */
+  function petEvent() {
+    const p = S.pet;
+    if (!p || !p.sp || p.state === 'home' || S.day < PET_DAY || p.offered === S.day) return false;
+    p.offered = S.day; save();
+    const bia = villagerById('bia'), who = { name: bia.name, look: bia.look }, cat = p.sp === 'gato';
+    run(async () => {
+      await say('narr', 'Alguém bate à porta logo cedo. É Bia, com uma cestinha forrada nos braços.');
+      if (p.state === 'deferred') await say(who, `Bom dia, {nome}! Voltei, como prometi. ${cat ? 'O gatinho' : 'O filhote'} ainda está esperando uma casa...`);
+      else {
+        await say(who, `Bom dia, {nome}! Desculpa a hora. Você comentou que adora ${cat ? 'gatos' : 'cachorros'}, não foi?`);
+        await say(who, cat ? 'A gata da Dona Celeste teve gatinhos, e sobrou um sem casa. Eu pensei logo em você!' : 'A cadela do Seu Honório teve filhotes, e sobrou um sem casa. Eu pensei logo em você!');
+      }
+      const c = await choose([cat ? 'Quero! Vou cuidar bem dele' : 'Quero! Vou cuidar bem dele', 'Agora não dá. Outro dia?']);
+      if (c === 1) { p.state = 'deferred'; await say(who, 'Tudo bem! Ele fica comigo mais um pouco. Amanhã cedo eu passo aqui de novo.'); return; }
+      const name = await askText(who, `Que nome você vai dar ${cat ? 'ao gatinho' : 'ao filhote'}?`, PETS[p.sp].names[S.day % 4]);
+      p.name = name; p.state = 'home'; p.day = S.day; spawnPet();
+      await say(who, `${name}! Combina demais. Vai ficar pela fazenda, perto da varanda. Faz carinho todo dia, tá?`);
+      toast(`${name} agora mora em ${S.farmName}`);
+    });
+    return true;
+  }
+
+  /* =====================================================
      DIA: DORMIR
      ===================================================== */
   function bed() {
@@ -823,9 +1009,9 @@
     if (eggs) notes.push(`As galinhas botaram ${eggs} ovo(s). Estão no ninho.`);
     if (hungry) notes.push(`${hungry} galinha(s) ficaram sem ração e não botaram.`);
     if (!notes.length) notes.push('Uma noite tranquila no sítio.');
-    const box = $('summary-body'); box.replaceChildren(el('h3', '', `Dia ${finished} encerrado`));
+    const box = $('summary-body'); box.replaceChildren(el('h3', '', `${dateText(finished)} — dia encerrado`));
     const ul = el('ul', 'list'); notes.forEach(n => ul.append(el('li', '', n))); box.append(ul, el('p', 'dim', 'Você acorda com a energia completa.'));
-    const go = btn('btn primary', `Começar o dia ${S.day} ▶`, () => { $('summary').hidden = true; renderHud(); toast(`Dia ${S.day}`); }); go.id = 'summary-go';
+    const go = btn('btn primary', `Começar o dia ▶`, () => { $('summary').hidden = true; renderHud(); toast(dateText()); petEvent(); }); go.id = 'summary-go';
     box.append(go); $('summary').hidden = false; go.focus(); renderHud(); renderHotbar();
   }
 
@@ -837,7 +1023,7 @@
     const hud = $('hud'); hud.replaceChildren();
     const en = el('div', 'xp'), bar = el('div', 'bar' + (S.energy < 20 ? ' low' : '')), fill = el('i'); fill.style.width = S.energy + '%'; bar.append(fill);
     en.append(el('span', '', '⚡'), bar);
-    hud.append(el('span', 'name', `Dia ${S.day}`), el('span', '', clock()), en, el('span', '', `🪙 ${S.coins}`));
+    hud.append(el('span', 'name', dateText()), el('span', '', clock()), en, el('span', '', `🪙 ${S.coins}`));
     const o = objective();
     $('objective').replaceChildren(...(o ? [el('b', '', 'MISSÃO'), el('span', '', o)] : S.time >= 1260 ? [el('span', '', 'Já é tarde. A cama espera por você em casa.')] : []));
   }
@@ -860,7 +1046,10 @@
   let tab = 'mochila', picked = null;
   let modalT = 0;
   function openModal(t) { if (busy) return; $('modal').hidden = false; modalT = performance.now(); picked = null; renderTab(t); }
-  function closeModal() { $('modal').hidden = true; if (S) { renderHotbar(); renderHud(); } }
+  function closeModal() {
+    if (!$('modal').hidden && tab === 'ajuste' && S && needsSetup()) return;      // o ajuste precisa ser respondido
+    $('modal').hidden = true; if (S) { renderHotbar(); renderHud(); }
+  }
   document.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => ($('modal').hidden ? openModal(b.dataset.tab) : renderTab(b.dataset.tab)); });
   $('modal-close').onclick = closeModal;
   $('modal').addEventListener('click', e => { if (e.target === $('modal') && performance.now() - modalT > 400) closeModal(); });
@@ -901,10 +1090,16 @@
       body.append(el('p', '', 'Na mochila'), grid(S.inv, i => { moveStack(S.inv, i, S.chest); renderTab('bau'); }));
     },
     diario(body) {
+      const c = calendar();
+      body.append(el('p', 'dim', `Hoje: ${c.season}, dia ${c.day} do ano ${c.year}. ${S.farmName}, ${VILA}.`));
+      const lt = btn('btn', '✉ Reler a carta do Vô ' + AVO, () => showLetter(true)); lt.id = 'btn-letter'; body.append(lt);
       body.append(el('h3', '', 'Missões em andamento'));
       const act = qActive(), ul = el('ul', 'list');
       if (!act.length) ul.append(el('li', 'dim', 'Nenhuma missão no momento. Converse com os moradores: quem tem um pedido aparece com um "!".'));
-      act.forEach(id => { const q = QUESTS[id], li = el('li'); li.append(el('span', 'mt', q.title), el('span', 'dim', `Pedido de: ${villagerById(q.giver).name}${q.to ? ' · Entregar a: ' + villagerById(q.to).name : ''}`), el('span', '', q.desc)); const p = qProgress(id); if (p) li.append(el('span', 'ok', 'Progresso: ' + p)); li.append(el('span', 'dim', 'Recompensa: ' + rewardText(q.reward))); ul.append(li); });
+      act.forEach(id => { const q = QUESTS[id], li = el('li'); li.append(el('span', 'mt', q.title), el('span', 'dim', `Pedido de: ${villagerById(q.giver).name}${q.to ? ' · Entregar a: ' + villagerById(q.to).name : ''}`), el('span', '', q.desc)); const p = qProgress(id); if (p) li.append(el('span', 'ok', 'Progresso: ' + p)); li.append(el('span', 'dim', 'Recompensa: ' + rewardText(q.reward)));
+        const tg = questTarget(id); if (tg) li.append(el('span', '', `Destino agora: ${tg.label}${id === tracked() ? ' (marcado com a seta amarela)' : ''}`));
+        const show = btn('btn', 'Mostrar no mapa', () => { S.track = id; closeModal(); openMap(); }); show.dataset.track = id; li.append(show);
+        ul.append(li); });
       body.append(ul);
       const done = Object.keys(QUESTS).filter(qDone);
       if (done.length) { body.append(el('h3', '', 'Concluídas')); const dl = el('ul', 'list'); done.forEach(id => dl.append(el('li', 'done-task', `✔ ${QUESTS[id].title} (dia ${S.quests[id].day})`))); body.append(dl); }
@@ -927,14 +1122,33 @@
     },
     roupa(body) {
       const top = el('div', 'sheet-top'), pv = el('div', 'wardrobe-pv');
-      ['down', 'left', 'up'].forEach(d => pv.append(Sprites.canvas(S.look, d)));
+      ['down', 'left', 'up', 'right'].forEach(d => pv.append(Sprites.canvas(S.look, d)));
       top.append(pv, el('div', '', `${S.name}, ${S.age} anos`)); body.append(el('h3', '', 'Guarda-roupa e espelho'), top);
       const change = () => { save(); renderTab('roupa'); };
-      [['Cabelo', 'cabelo'], ['Cor do cabelo', 'corCabelo'], ['Roupa de cima', 'cima'], ['Roupa de baixo', 'baixo'], ['Calçado', 'calcado']].forEach(([t, k]) => { body.append(el('h3', '', t)); LOOK_SECTIONS[k](body, S.look, change); });
+      [['Cabelo', 'cabelo'], ['Cor do cabelo', 'corCabelo'], ['Roupa de cima', 'cima'], ['Roupa de baixo', 'baixo'], ['Calçado', 'calcado'], ['Acessório', 'acessorio']].forEach(([t, k]) => { body.append(el('h3', '', t)); LOOK_SECTIONS[k](body, S.look, change); });
       body.append(el('h3', '', 'Chapéu'));
       const mine = Sprites.HATS.filter(h => owns(Object.keys(ITEMS).find(k => ITEMS[k].hat === h.id)));
       optionGrid(body, [{ id: 'none', label: 'Sem chapéu' }, ...mine.map(h => ({ id: h.id, label: h.name, canvas: Sprites.canvas(Object.assign({}, S.look, { hat: h.id })) }))], S.look.hat || 'none', id => { S.look.hat = id === 'none' ? null : id; change(); }, 'many');
       if (!mine.length) body.append(el('p', 'dim', 'Você ainda não tem chapéus. O Armazém vende um, e amigos podem presentear outros.'));
+    },
+    ajuste(body) {
+      body.append(el('h3', '', 'Sua fazenda ganhou novidades'),
+        el('p', '', 'Esta versão do jogo dá um nome à sua fazenda e pergunta qual é o seu animal favorito. Todo o resto continua como estava: mochila, plantações, galinhas, amizades e missões.'));
+      const draftA = { farm: S.farmName, pet: S.pet.sp || 'gato' };
+      const ok = btn('btn primary', 'Confirmar ▶', () => {
+        const v = cleanName(draftA.farm, 'farm').value.trim(); if (!nameOk(v)) return;
+        S.farmName = v; S.pet.sp = draftA.pet; save();
+        $('modal').hidden = true; renderHud(); renderHotbar();
+        toast(`Bem-vindo de volta a ${S.farmName}`);
+        if (S.day >= PET_DAY) toast('Alguém da vila pode aparecer numa dessas manhãs...');
+        if (!S.intro) intro();
+      });
+      ok.id = 'setup-ok';
+      const f = nameField('Nome da fazenda', draftA.farm, 'farm', 'Ex.: Sítio Recanto', v => { draftA.farm = v; ok.disabled = !nameOk(v); }, 'setup-farm');
+      body.append(f.box, el('p', 'hint', 'Animal favorito'));
+      const petBox = el('div'); const drawPets = () => { petBox.replaceChildren(); petOptions(petBox, draftA.pet, id => { draftA.pet = id; drawPets(); }); }; drawPets();
+      ok.disabled = !nameOk(draftA.farm); ok.style.marginTop = '12px';
+      body.append(petBox, ok);
     },
     loja(body) {
       body.append(el('h3', '', 'Armazém da Dona Celeste'), el('p', '', `Suas moedas: ${S.coins}`));
@@ -967,14 +1181,71 @@
       body.append(sell);
     },
   };
-  const SPECIAL = ['bau', 'roupa', 'loja'];
+  const SPECIAL = ['bau', 'roupa', 'loja', 'ajuste'];
   function renderTab(t) {
     tab = TABS[t] ? t : tab;
     $('tabs').querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('on', b.dataset.tab === tab); b.hidden = SPECIAL.includes(tab); });
     const body = $('modal-body'), sc = body.scrollTop; body.replaceChildren(); TABS[tab](body);
-    if (SPECIAL.includes(tab)) body.append(closeBtn());
+    if (SPECIAL.includes(tab) && tab !== 'ajuste') body.append(closeBtn());
+    $('modal-close').hidden = tab === 'ajuste';
     body.scrollTop = sc; renderHotbar(); renderHud();
   }
+  /* =====================================================
+     MAPA (M): mostra o mapa externo de verdade, com ícones, legenda,
+     sua posição e o destino da missão. Pausa o tempo; não teleporta.
+     ===================================================== */
+  const MAP_ICON = {
+    casa: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 9, y - 4, 18, 13); g.fillStyle = '#b47c48'; g.fillRect(x - 8, y - 3, 16, 11); g.fillStyle = '#a24c32'; for (let i = 0; i < 8; i++) g.fillRect(x - 9 + i, y - 5 - i, 18 - i * 2, 1); g.fillStyle = '#ffd98a'; g.fillRect(x - 2, y + 2, 4, 6); },
+    galinha: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 5, 16, 12); g.fillStyle = '#ffffff'; g.fillRect(x - 7, y - 4, 14, 10); g.fillStyle = '#e04a3a'; g.fillRect(x + 2, y - 8, 4, 4); g.fillStyle = '#f0a020'; g.fillRect(x + 7, y - 2, 3, 2); },
+    cerca: (g, x, y) => { g.fillStyle = '#d8b078'; for (let i = -8; i <= 8; i += 4) g.fillRect(x + i, y - 6, 2, 12); g.fillRect(x - 8, y - 3, 18, 2); g.fillRect(x - 8, y + 2, 18, 2); },
+    roca: (g, x, y) => { g.fillStyle = '#6a4426'; g.fillRect(x - 9, y - 7, 18, 14); g.fillStyle = '#58b858'; for (let i = -6; i <= 6; i += 6) { g.fillRect(x + i - 1, y - 5, 3, 4); g.fillRect(x + i - 1, y + 1, 3, 4); } },
+    agua: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 9, y - 6, 18, 12); g.fillStyle = '#3f86d8'; g.fillRect(x - 8, y - 5, 16, 10); g.fillStyle = '#bfe4ff'; g.fillRect(x - 5, y - 2, 6, 1); g.fillRect(x, y + 2, 5, 1); },
+    loja: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 9, y - 7, 18, 15); g.fillStyle = '#f4e8c8'; g.fillRect(x - 8, y - 6, 16, 13); g.fillStyle = '#c8683a'; g.fillRect(x - 8, y - 6, 16, 4); g.fillStyle = '#ffd75e'; g.fillRect(x - 2, y, 4, 4); },
+    praca: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 6, 16, 12); g.fillStyle = '#3f86d8'; g.fillRect(x - 7, y - 5, 14, 10); g.fillStyle = '#e8e2d4'; g.fillRect(x - 1, y - 8, 2, 8); },
+    morador: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 6, y - 8, 12, 16); g.fillStyle = '#f6c89c'; g.fillRect(x - 4, y - 7, 8, 6); g.fillStyle = '#3f86d0'; g.fillRect(x - 5, y - 1, 10, 8); },
+    bosque: (g, x, y) => { g.fillStyle = '#143c24'; g.fillRect(x - 8, y - 9, 16, 13); g.fillStyle = '#2a8046'; g.fillRect(x - 7, y - 8, 14, 11); g.fillStyle = '#6a4426'; g.fillRect(x - 1, y + 3, 3, 5); },
+    voce: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 7, y - 16, 14, 14); g.fillStyle = '#ff5a5a'; g.fillRect(x - 6, y - 15, 12, 12); g.fillStyle = '#ffffff'; g.fillRect(x - 3, y - 12, 6, 6); g.fillStyle = '#241a2c'; g.fillRect(x - 3, y - 2, 6, 2); g.fillRect(x - 1, y, 2, 3); },
+    destino: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 18, 16, 12); g.fillRect(x - 6, y - 6, 12, 2); g.fillRect(x - 3, y - 4, 6, 2); g.fillRect(x - 1, y - 2, 2, 2); g.fillStyle = '#ffd75e'; g.fillRect(x - 7, y - 17, 14, 10); g.fillRect(x - 5, y - 7, 10, 1); g.fillRect(x - 2, y - 5, 4, 1); },
+  };
+  function legendIcon(kind) { const c = el('canvas', 'pixel'); c.width = 24; c.height = 24; MAP_ICON[kind](c.getContext('2d'), 12, kind === 'voce' || kind === 'destino' ? 22 : 12); return c; }
+  function label(g, text, x, y, size = 14) {
+    g.font = `${size}px "Press Start 2P", monospace`; g.textAlign = 'center'; g.textBaseline = 'top';
+    let t = text; while (g.measureText(t).width > 420 && t.length > 4) t = t.slice(0, -2);
+    if (t !== text) t = t.trimEnd() + '…';
+    g.lineWidth = 4; g.strokeStyle = '#241a2c'; g.strokeText(t, x, y); g.fillStyle = '#ffffff'; g.fillText(t, x, y);
+  }
+  /* Onde o personagem está, no mapa externo (dentro de um prédio = a porta dele). */
+  const playerPoint = () => (map.id === 'fora' ? { x: P.x, y: P.y } : outdoorPoint(map.id, 0, 0));
+  const PLACE_NAME = { casa: 'dentro de casa', loja: 'no Armazém', galinheiro: 'no galinheiro' };
+  function renderMap() {
+    const m = World.get('fora'), c = $('map-canvas'), g = c.getContext('2d');
+    c.width = m.w; c.height = m.h; g.imageSmoothingEnabled = false;
+    g.drawImage(m.bg, 0, 0);
+    g.fillStyle = 'rgba(16,20,40,.18)'; g.fillRect(0, 0, m.w, m.h);
+    $('map-title').textContent = `Mapa — ${S.farmName} e ${VILA}, ${REGIAO}`;
+    // nome da fazenda sobre a roça e nome da vila
+    label(g, S.farmName, 200, 186, 16); label(g, VILA, 640, 36, 16);
+    const leg = $('map-legend'); leg.replaceChildren();
+    const seenKinds = new Set();
+    World.PLACES.forEach(pl => {
+      MAP_ICON[pl.icon](g, pl.x, pl.y);
+      label(g, pl.id === 'casa' ? 'Casa' : pl.label, pl.x, pl.y + 12, 12);
+      if (!seenKinds.has(pl.icon)) { seenKinds.add(pl.icon); const li = el('li'); li.append(legendIcon(pl.icon), el('span', '', { casa: 'Sua casa', galinha: 'Galinheiro', cerca: 'Cercado das galinhas', roca: 'Roça (terra cultivável)', agua: 'Água (lago e lagoa)', loja: 'Armazém', praca: 'Praça e fonte', morador: 'Casa de morador', bosque: 'Bosque' }[pl.icon])); leg.append(li); }
+    });
+    const id = tracked(), tg = id && questTarget(id), dest = tg && outdoorPoint(tg.map, tg.x, tg.y + (tg.map === 'fora' ? 8 : 0));
+    if (dest) { MAP_ICON.destino(g, Math.round(dest.x), Math.round(dest.y) - 4); const li = el('li'); li.append(legendIcon('destino'), el('span', '', `Destino: ${tg.label}`)); leg.prepend(li); }
+    const me = playerPoint();
+    if (me) { MAP_ICON.voce(g, Math.round(me.x), Math.round(me.y) - 6); label(g, 'Você', Math.round(me.x), Math.round(me.y) + 4, 12); const li = el('li'); li.append(legendIcon('voce'), el('span', '', 'Você')); leg.prepend(li); }
+    const where = map.id === 'fora' ? '' : ` Você está ${PLACE_NAME[map.id] || 'dentro de um prédio'}.`;
+    $('map-info').textContent = `${id ? `Missão: ${QUESTS[id].title} → ${tg.label}.` : 'Nenhuma missão em andamento.'}${where} O tempo fica parado com o mapa aberto. Feche com ${COARSE ? 'o botão' : 'M, Esc ou o botão'}.`;
+  }
+  function openMap() { if (busy || screen !== 'game' || !S || !$('letter').hidden) return; if (!$('modal').hidden) closeModal(); if (!$('modal').hidden) return; renderMap(); $('mapview').hidden = false; $('map-close').focus(); }
+  function closeMap() { $('mapview').hidden = true; }
+  function toggleMap() { if ($('mapview').hidden) openMap(); else closeMap(); }
+  $('btn-map').onclick = openMap;
+  $('map-close').onclick = closeMap;
+  $('mapview').addEventListener('click', e => { if (e.target === $('mapview')) closeMap(); });
+
   function shop() {
     const c = villagerById('celeste'), at = villagerAt(c, S.time);
     if (at.where !== 'loja') return run(() => say('narr', 'O balcão está vazio. Dona Celeste atende das 6h às 18h; depois disso, costuma estar na praça.'));
@@ -984,7 +1255,7 @@
   /* Ganchos para testes automatizados e depuração. */
   window.__trilha = {
     get S() { return S; }, get P() { return P; }, get map() { return map; }, get hover() { return hover; }, get near() { return hover && hover.ok ? hover : null; }, get busy() { return blocked(); }, get hens() { return hens; }, save,
-    cam: () => World.camera(map, P.x, P.y),
+    cam: () => World.camera(map, P.x, P.y), get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), marker: () => trackedMarker(), openMap, fit, petEvent, cleanName, textWidth,
     villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
   };
