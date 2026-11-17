@@ -19,12 +19,46 @@ pelo GitHub Pages. Não precisa instalar nada.
 | --- | --- | --- |
 | Andar | Setas (ou W, A, S, D) | Direcional na tela |
 | Interagir (porta, baú, cama, morador, galinha) | Clique no alvo | Toque no alvo |
+| Abrir a porta à frente | Q (ou clique na porta) | Toque na porta |
 | Usar a ferramenta, semente ou muda | Clique na terra ou no objeto | Toque na terra ou no objeto |
 | Escolher o item da barra | Clique na barra ou teclas 1 a 9 e 0 | Toque na barra |
+| Trocar a linha da mochila usada na barra | Tab | Menu → Inventário → "Usar na barra" |
+| Menu principal (abre no Inventário) | E ou Esc (de novo fecha) | Botão ☰ Menu |
+| Diário | F | Botão Diário |
+| Mapa | M | Botão Mapa |
 | Avançar conversa | Clique na caixa, E, Espaço ou Enter | Toque na caixa de conversa |
-| Abrir/fechar o mapa | M (fecha também com Esc) | Botão Mapa |
+| Recusar numa pergunta "Sim/Não" | E ou Esc | Botão "Não" |
 | Pausar | P (ou o botão ⏸) | Botão ⏸ |
-| Fechar painel | Esc ou clique fora | Botão ✕ |
+| Fechar painel, carta ou menu | Esc (ou E) | Botão ✕ |
+
+Os atalhos ignoram a repetição de tecla segurada, não funcionam enquanto você
+digita um nome e respeitam a ordem: carta aberta → conversa → menu. Numa carta, E
+ou Esc só fecham a carta; em escolhas obrigatórias de uma cena, nada é cancelado.
+
+### Menu principal
+
+Uma janela de madeira com fundo bege e abas com ícones no alto (a aba ativa fica
+destacada e o nome aparece ao passar o mouse); o cenário fica escurecido atrás e
+o tempo para enquanto ela está aberta. Trocar de aba mantém a mesma janela.
+
+- **Inventário:** mochila em 3 linhas de 10 espaços. A linha usada na barra de
+  ferramentas fica marcada (▶). Clique num item para ver nome e descrição, clique
+  noutro espaço para mover, ou use "Usar na barra". Embaixo: prévia do
+  personagem, nome, fazenda, moedas, energia e os equipamentos (chapéu,
+  acessório e o item na mão).
+- **Amizades:** moradores conhecidos com retrato, corações e a barra até o
+  próximo coração (dados reais da partida). Selecionando um morador: descrição,
+  aniversário, gostos já descobertos e o contador de presentes com a regra
+  dele (Lúcio: 2 por semana).
+- **Mapa:** o mapa do mundo, com regiões, construções, caminhos, a sua posição e
+  o destino da missão acompanhada.
+- **Diário:** missões em andamento (objetivo, progresso, quem pediu, recompensa),
+  botão "Acompanhar" (muda o objetivo da tela), "Ver no mapa", concluídas e a
+  seção **Cartas**.
+- **Personagem:** aparência ampliada nas quatro direções, nome, fazenda,
+  equipamentos e energia.
+- **Configurações:** lista de controles, tela cheia, salvar a partida (com aviso
+  de sucesso ou falha), voltar à tela inicial (salva antes) e apagar a fazenda.
 
 **Só funciona de perto.** O alvo precisa estar ao lado do personagem (na fazenda,
 o quadrado onde você está ou um vizinho). Ao passar o mouse sobre algo, ele fica
@@ -292,8 +326,9 @@ do bosque. Preço, quantidade e total aparecem antes de confirmar.
 
 ## Itens
 
-Mochila com 20 espaços (os 10 primeiros são a barra de acesso rápido) e baú com
-20. Itens iguais empilham até 99. Se a mochila estiver cheia, o item fica onde
+Mochila com 30 espaços em 3 linhas (a barra de acesso rápido mostra uma linha por
+vez; Tab troca) e baú com 20. Saves antigos de 20 espaços ganham as vagas novas
+vazias. Itens iguais empilham até 99. Se a mochila estiver cheia, o item fica onde
 está e o jogo avisa. Três chapéus equipáveis: de palha, boina e de pescador.
 
 ## Salvamento

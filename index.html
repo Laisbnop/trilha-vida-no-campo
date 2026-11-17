@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=estacoes1">
+  <link rel="stylesheet" href="css/style.css?v=menu1">
 </head>
 <body>
 
@@ -64,10 +64,9 @@
       <div class="hud" id="hud"></div>
       <div class="objective" id="objective"></div>
       <nav class="actions" id="actions">
-        <button class="btn" type="button" data-tab="mochila">Mochila</button>
-        <button class="btn" type="button" data-tab="diario">Diário</button>
-        <button class="btn" type="button" data-tab="amizades">Amizades</button>
-        <button class="btn" type="button" id="btn-map" title="Mapa (tecla M)">Mapa</button>
+        <button class="btn" type="button" data-tab="mochila" id="btn-menu" title="Menu (E ou Esc)">☰ Menu</button>
+        <button class="btn" type="button" data-tab="diario" title="Diário (F)">Diário</button>
+        <button class="btn" type="button" data-tab="mapa" id="btn-map" title="Mapa (M)">Mapa</button>
         <button class="btn" type="button" id="btn-full" title="Tela cheia">Tela cheia</button>
         <button class="btn" type="button" id="btn-pause" title="Pausa (tecla P)" aria-label="Pausa">⏸</button>
       </nav>
@@ -108,27 +107,22 @@
     </div>
 
     <!-- painéis que abrem sob demanda -->
+    <!-- menu principal da partida: abas no alto, janela de madeira; o cenário fica escurecido atrás -->
     <div class="modal" id="modal" hidden>
-      <div class="win modal-win" role="dialog" aria-modal="true" aria-label="Menu">
-        <div class="tabs" id="tabs">
-          <button type="button" data-tab="mochila">Mochila</button>
-          <button type="button" data-tab="diario">Diário</button>
-          <button type="button" data-tab="amizades">Amizades</button>
-          <button type="button" class="close" id="modal-close" aria-label="Fechar">✕</button>
+      <div class="menu-wrap">
+        <div class="tabs" id="tabs" role="tablist" aria-label="Abas do menu">
+          <button type="button" role="tab" data-tab="mochila" data-label="Inventário" title="Inventário" aria-label="Inventário"></button>
+          <button type="button" role="tab" data-tab="amizades" data-label="Amizades" title="Amizades" aria-label="Amizades"></button>
+          <button type="button" role="tab" data-tab="mapa" data-label="Mapa" title="Mapa" aria-label="Mapa"></button>
+          <button type="button" role="tab" data-tab="diario" data-label="Diário" title="Diário" aria-label="Diário"></button>
+          <button type="button" role="tab" data-tab="personagem" data-label="Personagem" title="Personagem" aria-label="Personagem"></button>
+          <button type="button" role="tab" data-tab="config" data-label="Configurações" title="Configurações" aria-label="Configurações"></button>
         </div>
-        <div class="modal-body" id="modal-body"></div>
-      </div>
-    </div>
-
-    <!-- mapa: pausa o tempo; fecha com o botão, M ou Esc -->
-    <div class="modal" id="mapview" hidden>
-      <div class="win map-win" role="dialog" aria-modal="true" aria-label="Mapa">
-        <div class="map-head"><h3 id="map-title">Mapa</h3><button type="button" class="btn" id="map-close" aria-label="Fechar o mapa">✕ Fechar</button></div>
-        <div class="map-body">
-          <div class="map-frame"><canvas id="map-canvas" class="pixel"></canvas></div>
-          <ul class="legend" id="map-legend"></ul>
+        <div class="win modal-win" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <button type="button" class="close" id="modal-close" aria-label="Fechar (E ou Esc)" title="Fechar (E ou Esc)">✕</button>
+          <h2 class="modal-title" id="modal-title"></h2>
+          <div class="modal-body" id="modal-body"></div>
         </div>
-        <p class="map-info" id="map-info"></p>
       </div>
     </div>
 
@@ -155,10 +149,10 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=estacoes1"></script>
-  <script src="js/sprites.js?v=estacoes1"></script>
-  <script src="js/portraits.js?v=estacoes1"></script>
-  <script src="js/world.js?v=estacoes1"></script>
-  <script src="js/game.js?v=estacoes1"></script>
+  <script src="js/data.js?v=menu1"></script>
+  <script src="js/sprites.js?v=menu1"></script>
+  <script src="js/portraits.js?v=menu1"></script>
+  <script src="js/world.js?v=menu1"></script>
+  <script src="js/game.js?v=menu1"></script>
 </body>
 </html>
