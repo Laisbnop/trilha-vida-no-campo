@@ -531,8 +531,8 @@
     const cam = World.camera(map, P.x, P.y), ctx = c.getContext('2d');
     const me = { look: S.look, x: P.x, y: P.y, dir: P.dir, moving: P.moving, tool: P.tool, hop: P.hop && t < P.hop ? -Math.abs(Math.sin((P.hop - t) / 80)) * 4 : 0 };
     const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
-    const mk = trackedMarker(), lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
-    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], markers: mk ? [mk] : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
+    const lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
+    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
   }
   /* Barras de resistência dos objetos com dano parcial (o dano fica salvo). */
   function bars() {
@@ -980,13 +980,6 @@
     if (mapId === 'montanha') return { x: x + MAP_SX, y };
     const par = World.get(mapId).parent || 'fora', d = World.get(par).doors[mapId];
     return d ? outdoorPoint(par, d.x, d.y - 20) : null;
-  }
-  /* Seta no cenário: no destino, ou na porta/saída que leva até ele. */
-  function trackedMarker() {
-    const id = tracked(), tg = id && questTarget(id); if (!tg) return null;
-    if (tg.map === map.id) return { x: tg.x, y: tg.y };
-    if (map.id === 'fora') { const d = map.doors[tg.map]; return d ? { x: d.x, y: d.y - 30 } : null; }
-    return { x: map.w / 2, y: map.h - 20 };
   }
   function objective() {
     const id = tracked(); if (!id) return '';
@@ -1722,7 +1715,7 @@
   /* Ganchos para testes automatizados e depuração. */
   window.__trilha = {
     get S() { return S; }, get P() { return P; }, get map() { return map; }, get hover() { return hover; }, get near() { return hover && hover.ok ? hover : null; }, get busy() { return blocked(); }, get hens() { return hens; }, save,
-    cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), marker: () => trackedMarker(), openMap, fit, petEvent, cleanName, textWidth,
+    cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), openMap, fit, petEvent, cleanName, textWidth,
     villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
   };
