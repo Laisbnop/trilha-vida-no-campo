@@ -5,7 +5,7 @@ const START_COINS = 60;
 const DAY_START = 6 * 60;          // 06:00, em minutos
 const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem precisa descansar
 const MS_PER_GAME_MIN = 1300;      // 78 s reais por hora de jogo → 20 horas em 26 minutos ativos
-const INV_SIZE = 20, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
+const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
 /* kind: tool | seed | sapling | hat | quest | item.  sell = preço de venda. */
 const ITEMS = {

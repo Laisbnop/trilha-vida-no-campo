@@ -16,10 +16,10 @@
      ===================================================== */
   const store = {
     get(key) { try { return localStorage.getItem(key); } catch { return null; } },
-    set(key, v) { try { localStorage.setItem(key, v); } catch { /* sem armazenamento: joga sem salvar */ } },
+    set(key, v) { try { localStorage.setItem(key, v); return true; } catch { return false; /* sem armazenamento: joga sem salvar */ } },
     del(key) { try { localStorage.removeItem(key); } catch { /* ignora */ } },
   };
-  const save = () => { if (!S) return; const c = calendar(); S.cal = { year: c.year, season: c.si, day: c.day, weekday: c.wd }; store.set(SAVE_KEY, JSON.stringify(S)); };
+  const save = () => { if (!S) return false; const c = calendar(); S.cal = { year: c.year, season: c.si, day: c.day, weekday: c.wd }; return store.set(SAVE_KEY, JSON.stringify(S)); };
   const validSave = s => s && s.v === 4 && s.look && typeof s.name === 'string' && Array.isArray(s.inv) && s.farm && s.farm.tiles && s.coop && s.nature && s.quests && s.pos;
 
   function newState(look, name, farmName = '', petSp = null) {
@@ -28,7 +28,7 @@
       v: 4, look, name, farmName, age: START_AGE, coins: START_COINS, day: 1, time: DAY_START, energy: 100,
       pos: { map: 'fora', x: 100, y: 164, dir: 'down' },
       pet: { sp: petSp, state: 'pending', name: '', offered: 0 }, letterSeen: false, track: null,
-      lastNight: 0, seasonal: [], spawnDay: 0,
+      lastNight: 0, seasonal: [], spawnDay: 0, row: 0,
       inv: Array(INV_SIZE).fill(null), sel: 0, chest: Array(CHEST_SIZE).fill(null), can: 10,
       farm: { tiles: {} }, coop: { feed: 0, eggs: 0, hens: [] },
       nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
@@ -347,6 +347,10 @@
     s.time = Math.min(s.time, DAY_END - 1);
     if (typeof s.lastNight !== 'number') s.lastNight = s.day - 1;
     if (!Array.isArray(s.seasonal)) { s.seasonal = []; s.spawnDay = 0; }
+    /* mochila de 3 linhas (30 espaços): saves antigos ganham espaços vazios, nada se perde */
+    while (s.inv.length < INV_SIZE) s.inv.push(null);
+    if (!(s.sel >= 0 && s.sel < INV_SIZE)) s.sel = 0;
+    s.row = Math.floor(s.sel / HOTBAR);
     VILLAGERS.forEach(v => { if (typeof s.friends[v.id] !== 'number') s.friends[v.id] = 0; if (!s.known[v.id]) s.known[v.id] = {}; });
     /* Lúcio: conversa, presentes (dia, semana e aniversário), tenda, missões e cenas */
     s.lucio = Object.assign({ met: false, permit: false, gifts: { week: -1, n: 0 }, bday: 0, tentUp: false, found: false, fireScene: false, iara: false, last: -1, again: 0 }, s.lucio);
@@ -362,7 +366,7 @@
   function startGame() {
     upgrade(S);
     show('game'); fit();
-    closeModal(); closeMap(); setPause(false);
+    closeModal(); setPause(false);
     World.setSeason(calendar().si);
     if (!S.spawnDay) { spawnSeasonal(); save(); }                    // primeira manhã: geração inicial (uma vez só)
     enterMap(S.pos.map, S.pos.x, S.pos.y, S.pos.dir);
@@ -384,7 +388,7 @@
       }
       await say('narr', 'A carroça da manhã deixa você diante de uma casa de madeira com varanda, telhado gasto e mato por todo lado. Na placa nova do portão: {fazenda}. A ' + VILA + ' fica logo a leste.');
       await say('narr', `Você tem ${S.age} anos, a carta do seu avô no bolso e as ferramentas antigas dele na mochila. A carta fica guardada no Diário.`);
-      await say('narr', COARSE ? 'Ande com as setas da tela. Chegue perto e toque em pessoas, portas e objetos para interagir. Toque na barra para escolher o item; com uma ferramenta na mão, toque na terra ou no objeto ao seu lado. O botão Mapa mostra onde fica cada lugar.' : 'Ande com as setas (ou W, A, S, D). Chegue perto e clique em pessoas, portas e objetos para interagir. Clique na barra ou use as teclas 1 a 0 para escolher o item; com uma ferramenta na mão, clique na terra ou no objeto ao seu lado. A tecla M abre o mapa.');
+      await say('narr', COARSE ? 'Ande com as setas da tela. Chegue perto e toque em pessoas, portas e objetos para interagir. Toque na barra para escolher o item; com uma ferramenta na mão, toque na terra ou no objeto ao seu lado. O botão Menu abre o inventário, as amizades, o mapa e o diário.' : 'Ande com as setas (ou W, A, S, D). Chegue perto e clique em pessoas, portas e objetos para interagir (Q abre a porta à frente). Clique na barra ou use as teclas 1 a 0 para escolher o item; Tab troca a linha da barra. E abre o menu, F o diário e M o mapa.');
       await say('narr', 'Não há pressa nem fim: os dias passam quando você dorme. Para começar, siga a estrada para o leste e apresente-se no Armazém.');
       S.intro = true;
     });
@@ -408,7 +412,7 @@
     setTimeout(() => { enterMap(to, x, y, dir); save(); wrap.classList.remove('fade'); busy = false; renderHud(); }, 220);
   }
   const keepsakeVisible = () => qActive().includes('lembranca') && !S.lucio.found;
-  const blocked = () => busy || paused || document.hidden || !$('modal').hidden || !$('summary').hidden || !$('mapview').hidden || !$('letter').hidden || screen !== 'game';
+  const blocked = () => busy || paused || document.hidden || !$('modal').hidden || !$('summary').hidden || !$('letter').hidden || screen !== 'game';
   /* Pausa (tecla P ou botão): o tempo para e nada acontece até continuar. */
   let paused = false;
   function setPause(v) { paused = !!v && screen === 'game'; $('pause').hidden = !paused; if (paused) $('pause-go').focus(); }
@@ -418,7 +422,7 @@
   let passingOut = false;
   function passOut() {
     if (passingOut) return; passingOut = true;
-    closeModal(); closeMap();
+    closeModal();
     busy = false;
     (run(async () => { await say('narr', 'São 2h da manhã. Suas pernas pesam e os olhos fecham sozinhos: você precisa descansar. Nada foi perdido; amanhã você acorda em casa.'); }) || Promise.resolve())
       .then(() => { passingOut = false; sleep(); });
@@ -710,17 +714,43 @@
      ===================================================== */
   const KEYMAP = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right', W: 'up', S: 'down', A: 'left', D: 'right' };
   const typing = e => /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+  /* Ordem de prioridade: carta → resumo do dia → conversa/escolha → pausa → menu → exploração.
+     Atalhos ignoram a repetição de tecla segurada e não valem enquanto se digita. */
+  const dialogOpen = () => !$('dialog').hidden;
   window.addEventListener('keydown', e => {
-    if (screen !== 'game') return;
-    if (e.key === 'Escape') { if (paused) setPause(false); else if (!$('mapview').hidden) closeMap(); else if (!$('letter').hidden && S.letterSeen && !busy) $('letter-ok').click(); else closeModal(); return; }
+    if (screen !== 'game' || !S) return;
+    const k = e.key, low = k.length === 1 ? k.toLowerCase() : k;
+    // 1) carta aberta: E ou Esc só fecham a carta
+    if (!$('letter').hidden) { if ((k === 'Escape' || low === 'e') && !e.repeat) { e.preventDefault(); $('letter-ok').click(); } return; }
     if (typing(e)) return;
-    if ((e.key === 'm' || e.key === 'M') && !e.repeat) { e.preventDefault(); if (!paused) toggleMap(); return; }
-    if ((e.key === 'p' || e.key === 'P') && !e.repeat) { e.preventDefault(); setPause(!paused); return; }
-    if (/^Arrow|^ $/.test(e.key)) e.preventDefault();               // as setas e o espaço não rolam a página
-    if (KEYMAP[e.key]) { keys[KEYMAP[e.key]] = true; return; }
-    if (/^[0-9]$/.test(e.key) && !blocked()) { selectSlot(e.key === '0' ? 9 : +e.key - 1); return; }
-    // E, Espaço e Enter só avançam as conversas; no cenário, as ações são por clique
-    if ((e.key === 'e' || e.key === 'E' || e.key === ' ' || e.key === 'Enter') && onAdvance && !e.repeat) { e.preventDefault(); onAdvance(); }
+    // 2) resumo do dia: só o botão (Enter no botão em foco)
+    if (!$('summary').hidden) return;
+    // 3) conversa: E/Espaço/Enter avançam; em "Sim/Não", E e Esc valem "Não"; escolhas obrigatórias não se cancelam
+    if (dialogOpen()) {
+      if (e.repeat) return;
+      if ((k === 'Escape' || low === 'e') && cancelChoice) { e.preventDefault(); cancelChoice(); return; }
+      if ((low === 'e' || k === ' ' || k === 'Enter') && onAdvance) { e.preventDefault(); onAdvance(); }
+      return;
+    }
+    // 4) pausa
+    if (paused) { if (!e.repeat && (k === 'Escape' || low === 'p')) { e.preventDefault(); setPause(false); } return; }
+    const menuOpen = !$('modal').hidden;
+    if (['e', 'f', 'm', 'p', 'q'].includes(low) || k === 'Escape') {
+      e.preventDefault();
+      if (e.repeat) return;
+      if (k === 'Escape' || low === 'e') { if (menuOpen) closeModal(); else openMenu('mochila'); return; }
+      if (low === 'f') return toggleTab('diario');
+      if (low === 'm') return toggleTab('mapa');
+      if (low === 'p') { if (!menuOpen) setPause(true); return; }
+      if (low === 'q') { if (!menuOpen && !blocked()) useDoor(); return; }
+    }
+    // 5) dentro do menu, Tab e as demais teclas servem para navegar nos controles
+    if (menuOpen) return;
+    // 6) exploração
+    if (k === 'Tab') { e.preventDefault(); if (!e.repeat && !blocked()) cycleRow(e.shiftKey ? -1 : 1); return; }
+    if (/^Arrow|^ $/.test(k)) e.preventDefault();               // as setas e o espaço não rolam a página
+    if (KEYMAP[k]) { keys[KEYMAP[k]] = true; return; }
+    if (/^[0-9]$/.test(k) && !blocked()) { selectSlot(k === '0' ? 9 : +k - 1); return; }
   });
   window.addEventListener('keyup', e => { if (KEYMAP[e.key]) keys[KEYMAP[e.key]] = false; });
   window.addEventListener('blur', () => { Object.keys(keys).forEach(k => { keys[k] = false; }); });
@@ -744,7 +774,7 @@
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
     setMouse(e);
-    if (blocked() || P.work) return;            // conversa ou menu aberto, ou golpe em andamento: o clique não conta nem fica guardado
+    if (blocked() || P.work || performance.now() - menuClosedT < 200) return;   // menu/conversa aberta, golpe em andamento ou menu recém-fechado: o clique não conta
     const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, actors());
     if (!tg) { const it = equipped(); if (it && it.id === 'espada') { faceTo(wx, wy); useTool('espada', 0); } return; }
     if (!reachable(tg)) return tip(`Longe demais: chegue mais perto de ${tg.label.split(' — ')[0].replace(/ \(.*\)$/, '').replace(/^(Falar com|Entrar:) /, '').toLowerCase()}.`);
@@ -758,7 +788,29 @@
   let lastTip = '', lastTipT = 0;
   /* Orientação curta, sem repetir a mesma mensagem em sequência. */
   function tip(text) { const now = performance.now(); if (text === lastTip && now - lastTipT < 1200) return; lastTip = text; lastTipT = now; toast(text); }
-  function selectSlot(i) { S.sel = i; renderHotbar(); }
+  /* A barra de ferramentas mostra uma das 3 linhas da mochila (Tab troca a linha, mantendo a coluna). */
+  function selectSlot(i) { S.sel = S.row * HOTBAR + i; renderHotbar(); save(); }
+  function cycleRow(d = 1) {
+    const col = S.sel % HOTBAR; S.row = (S.row + d + 3) % 3; S.sel = S.row * HOTBAR + col;
+    renderHotbar(); save(); tip(`Barra de ferramentas: linha ${S.row + 1} de 3`);
+  }
+  /* Q: abre a porta (ou saída) logo à frente, se estiver ao alcance. */
+  function useDoor() {
+    const F = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[P.dir];
+    let best = null;
+    for (const o of map.objs) {
+      if (o.kind !== 'door' && o.kind !== 'exit') continue;
+      const r = o.hit || [o.x - 10, o.y - 20, 20, 22], a = objAction(o); if (!a) continue;
+      const tg = Object.assign({ rect: r }, a);
+      if (!reachable(tg)) continue;
+      const [cx, cy] = center(r), dx = cx - P.x, dy = cy - (P.y - 8), dot = dx * F[0] + dy * F[1];
+      if (dot < -2) continue;                                         // tem que estar à frente
+      const d = Math.hypot(dx, dy); if (!best || d < best.d) best = { d, tg };
+    }
+    if (!best) return tip('Nenhuma porta à sua frente. Chegue perto e vire-se para ela.');
+    best.tg.act();
+  }
+
 
   /* =====================================================
      DIÁLOGO
@@ -795,12 +847,17 @@
     });
   }
   /* Pergunta com opções, sem precisar avançar o texto antes. */
-  function ask(text, labels) { setSpeaker('narr'); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(text); $('dlg-form').hidden = true; return choose(labels); }
-  function choose(labels) {
+  /* Confirmação Sim/Não: E e Esc valem "Não". */
+  function ask(text, labels) { setSpeaker('narr'); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(text); $('dlg-form').hidden = true; return choose(labels, labels.findIndex(l => /^Não\b/.test(l))); }
+  /* cancel = índice da opção que E/Esc escolhem (ou -1: escolha obrigatória, sem atalho). */
+  let cancelChoice = null;
+  function choose(labels, cancel = -1) {
     return new Promise(resolve => {
       onAdvance = null; $('dlg-more').hidden = true;
       const box = $('dlg-choices'); box.replaceChildren();
-      labels.forEach((label, i) => box.append(btn('btn', fmt(label), e => { e.stopPropagation(); box.replaceChildren(); resolve(i); })));
+      const pick = i => { cancelChoice = null; box.replaceChildren(); resolve(i); };
+      labels.forEach((label, i) => box.append(btn('btn', fmt(label), e => { e.stopPropagation(); pick(i); })));
+      cancelChoice = cancel >= 0 ? () => pick(cancel) : null;
       box.firstChild.focus();
     });
   }
@@ -820,7 +877,7 @@
     if (busy) return;
     busy = true; $('dialog').hidden = false; $('dock').hidden = true;
     try { await flow(); }
-    finally { busy = false; onAdvance = null; $('dialog').hidden = true; $('dock').hidden = false; save(); renderHud(); renderHotbar(); }
+    finally { busy = false; onAdvance = null; cancelChoice = null; $('dialog').hidden = true; $('dock').hidden = false; save(); renderHud(); renderHotbar(); }
   }
   async function sayAll(who, lines) { for (const l of lines) await say(who, l); }
   function toast(text) { const t = el('div', 'toast', text); $('toasts').append(t); while ($('toasts').children.length > 4) $('toasts').firstChild.remove(); setTimeout(() => t.remove(), 2300); }
@@ -1207,7 +1264,7 @@
   function bed() {
     run(async () => {
       await say('narr', S.time >= 1140 ? 'A cama está feita e a noite caiu.' : 'Ainda é dia, mas a cama está sempre pronta.');
-      if (await choose(['Dormir até amanhã', 'Ainda não']) === 0) setTimeout(sleep, 0);
+      if (await choose(['Dormir até amanhã', 'Ainda não'], 1) === 0) setTimeout(sleep, 0);
     });
   }
   /* Processa a noite uma única vez por dia (dormindo ou desmaiando às 2h): é o único
@@ -1290,25 +1347,52 @@
   function renderHotbar() {
     if (!S) return;
     const bar = $('hotbar'); bar.replaceChildren();
-    for (let i = 0; i < HOTBAR; i++) { const b = slotNode(S.inv[i], i === S.sel ? 'sel' : ''); b.dataset.slot = i; b.append(el('u', '', String((i + 1) % 10))); b.onclick = () => selectSlot(i); bar.append(b); }
+    const base = S.row * HOTBAR;
+    for (let i = 0; i < HOTBAR; i++) { const b = slotNode(S.inv[base + i], base + i === S.sel ? 'sel' : ''); b.dataset.slot = i; b.append(el('u', '', String((i + 1) % 10))); b.onclick = () => selectSlot(i); bar.append(b); }
     const it = equipped(); $('equipped').textContent = it ? ITEMS[it.id].name : 'Mãos livres';
+    let hr = $('hotrow'); if (!hr) { hr = el('span', 'hotrow'); hr.id = 'hotrow'; hr.title = 'Linha da mochila na barra (Tab troca)'; bar.parentNode.append(hr); }
+    hr.textContent = `Linha ${S.row + 1}/3 · Tab`;
   }
 
   /* =====================================================
      PAINÉIS
      ===================================================== */
-  let tab = 'mochila', picked = null;
+  let tab = 'mochila', picked = null, friendSel = null, menuClosedT = 0;
   let modalT = 0;
+  const MENU_TABS = ['mochila', 'amizades', 'mapa', 'diario', 'personagem', 'config'];
+  const TAB_TITLE = { mochila: 'Inventário', amizades: 'Amizades', mapa: 'Mapa', diario: 'Diário', personagem: 'Personagem', config: 'Configurações', bau: 'Baú', roupa: 'Guarda-roupa e espelho', loja: 'Armazém', ajuste: 'Sua fazenda' };
   function openModal(t) { if (busy) return; $('modal').hidden = false; modalT = performance.now(); picked = null; renderTab(t); }
+  /* Menu principal: só abre com o jogo livre (sem conversa, carta, resumo ou pausa). */
+  function openMenu(t = 'mochila') { if (screen !== 'game' || !S || busy || paused || !$('letter').hidden || !$('summary').hidden) return; openModal(t); }
+  /* Atalho de aba: abre nela; se já está nela, fecha; se está em outra, troca. */
+  function toggleTab(t) {
+    if ($('modal').hidden) return openMenu(t);
+    if (tab === 'ajuste') return;
+    if (tab === t) closeModal(); else { picked = null; renderTab(t); }
+  }
   function closeModal() {
     if (!$('modal').hidden && tab === 'ajuste' && S && needsSetup()) return;      // o ajuste precisa ser respondido
     $('modal').hidden = true; if (S) { renderHotbar(); renderHud(); }
   }
-  document.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => ($('modal').hidden ? openModal(b.dataset.tab) : renderTab(b.dataset.tab)); });
-  $('modal-close').onclick = closeModal;
-  $('modal').addEventListener('click', e => { if (e.target === $('modal') && performance.now() - modalT > 400) closeModal(); });
+  // botões da tela (mouse e toque) e abas da janela
+  document.querySelectorAll('#actions [data-tab]').forEach(b => { b.onclick = () => toggleTab(b.dataset.tab); });
+  document.querySelectorAll('#tabs [data-tab]').forEach(b => { b.onclick = () => { picked = null; renderTab(b.dataset.tab); }; });
+  // fechar pelo mouse/toque: o mesmo toque não pode cair no cenário
+  $('modal-close').onclick = () => { menuClosedT = performance.now(); closeModal(); };
+  $('modal').addEventListener('click', e => { if (e.target === $('modal') && performance.now() - modalT > 400) { menuClosedT = performance.now(); closeModal(); } });
+  $('modal').addEventListener('pointerdown', e => e.stopPropagation());
   const closeBtn = () => { const b = btn('btn primary', 'Fechar', closeModal); b.style.marginTop = '12px'; return b; };
   const heartsNode = n => { const s = el('span', 'hearts'); for (let i = 0; i < 5; i++) s.append(el('i', i < n ? 'on' : '', '♥')); return s; };
+  /* Ícones das abas, desenhados em pixel art (16x16). */
+  const TAB_ICON = {
+    mochila: g => { g.fillStyle = '#5a2e14'; g.fillRect(3, 3, 10, 12); g.fillStyle = '#c8483a'; g.fillRect(4, 5, 8, 9); g.fillStyle = '#e8705a'; g.fillRect(4, 5, 8, 2); g.fillStyle = '#5a2e14'; g.fillRect(5, 1, 6, 3); g.fillStyle = '#ffd75e'; g.fillRect(7, 9, 2, 2); },
+    amizades: g => { g.fillStyle = '#5a1a1a'; [[3, 4, 4, 2], [9, 4, 4, 2], [2, 6, 12, 3], [3, 9, 10, 2], [5, 11, 6, 2], [7, 13, 2, 1]].forEach(r => g.fillRect(...r)); g.fillStyle = '#e04a5a'; [[4, 5, 3, 1], [9, 5, 3, 1], [3, 6, 10, 3], [4, 9, 8, 1], [6, 11, 4, 1], [7, 12, 2, 1]].forEach(r => g.fillRect(...r)); g.fillStyle = '#ffb0b8'; g.fillRect(4, 6, 2, 1); },
+    mapa: g => { g.fillStyle = '#5a3a1a'; g.fillRect(1, 3, 14, 11); g.fillStyle = '#e8d8a8'; g.fillRect(2, 4, 12, 9); g.fillStyle = '#58a83c'; g.fillRect(2, 4, 5, 9); g.fillStyle = '#3f86d8'; g.fillRect(10, 8, 4, 5); g.fillStyle = '#c8483a'; g.fillRect(7, 6, 2, 2); g.fillStyle = '#b4945a'; g.fillRect(2, 9, 12, 1); },
+    diario: g => { g.fillStyle = '#3a1a10'; g.fillRect(2, 2, 12, 13); g.fillStyle = '#7a3a2a'; g.fillRect(3, 3, 10, 11); g.fillStyle = '#f4e8c8'; g.fillRect(5, 4, 7, 9); g.fillStyle = '#8a6a4a'; g.fillRect(6, 6, 5, 1); g.fillRect(6, 8, 5, 1); g.fillRect(6, 10, 3, 1); g.fillStyle = '#ffd75e'; g.fillRect(3, 6, 1, 3); },
+    personagem: g => { g.fillStyle = '#3a2214'; g.fillRect(4, 1, 8, 9); g.fillStyle = '#f0b888'; g.fillRect(5, 3, 6, 6); g.fillStyle = '#5a3a24'; g.fillRect(4, 1, 8, 3); g.fillStyle = '#2a1a14'; g.fillRect(6, 5, 1, 1); g.fillRect(9, 5, 1, 1); g.fillStyle = '#3f86d0'; g.fillRect(3, 10, 10, 5); g.fillStyle = '#2a5a9a'; g.fillRect(3, 14, 10, 1); },
+    config: g => { g.fillStyle = '#3a3a44'; g.fillRect(6, 1, 4, 14); g.fillRect(1, 6, 14, 4); g.fillRect(3, 3, 10, 10); g.fillStyle = '#9a9aa8'; g.fillRect(7, 2, 2, 12); g.fillRect(2, 7, 12, 2); g.fillRect(4, 4, 8, 8); g.fillStyle = '#3a3a44'; g.fillRect(6, 6, 4, 4); g.fillStyle = '#e8d8a8'; g.fillRect(7, 7, 2, 2); },
+  };
+  document.querySelectorAll('#tabs [data-tab]').forEach(b => { const c = el('canvas', 'pixel'); c.width = 16; c.height = 16; TAB_ICON[b.dataset.tab](c.getContext('2d')); b.append(c); });
 
   function grid(arr, onClick, selIdx) {
     const g = el('div', 'slots');
@@ -1327,16 +1411,45 @@
 
   const TABS = {
     mochila(body) {
-      body.append(el('h3', '', 'Mochila'), el('p', 'dim', 'Os 10 primeiros espaços são a barra de acesso rápido (teclas 1 a 0). Toque em um item e depois em outro espaço para mover.'));
-      body.append(grid(S.inv, i => { if (picked === null) { if (S.inv[i]) picked = i; } else { [S.inv[picked], S.inv[i]] = [S.inv[i], S.inv[picked]]; picked = null; save(); } renderTab('mochila'); }, picked));
-      const s = picked !== null && S.inv[picked];
-      const info = el('div', 'item-info');
-      if (s) {
-        const it = ITEMS[s.id];
-        info.append(el('b', '', `${it.name}${s.n > 1 ? ' × ' + s.n : ''}`), el('span', 'dim', it.desc + (it.sell ? ` Vende por ${it.sell} moedas.` : '')));
-        if (it.kind === 'hat') info.append(btn('btn', S.look.hat === it.hat ? 'Tirar o chapéu' : 'Usar o chapéu', () => { S.look.hat = S.look.hat === it.hat ? null : it.hat; save(); renderTab('mochila'); }));
-      } else info.append(el('span', 'dim', `Moedas: ${S.coins} · Energia: ${S.energy}/100 · Água no regador: ${S.can}/10`));
-      body.append(info);
+      // grade de 3 linhas; a linha da barra de ferramentas fica marcada
+      const wrap = el('div', 'inv-grid');
+      let info;
+      const describe = i => {
+        const s2 = S.inv[i]; info.replaceChildren();
+        if (!s2) { info.append(el('span', 'dim', picked !== null ? 'Clique num espaço para colocar o item ali.' : 'Clique num item para ver, mover ou usar na barra.')); return; }
+        const it = ITEMS[s2.id];
+        info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}`), el('span', 'dim', it.desc + (it.sell ? ` Vende por ${it.sell} moedas.` : '')));
+        if (i === picked) {
+          const use = btn('btn', i === S.sel ? 'Na mão ✔' : 'Usar na barra', () => { S.row = Math.floor(i / HOTBAR); S.sel = i; picked = null; save(); renderTab('mochila'); }); use.dataset.use = i; info.append(use);
+          if (it.kind === 'hat') info.append(btn('btn', S.look.hat === it.hat ? 'Tirar o chapéu' : 'Usar o chapéu', () => { S.look.hat = S.look.hat === it.hat ? null : it.hat; save(); renderTab('mochila'); }));
+        }
+      };
+      for (let r = 0; r < 3; r++) {
+        const line = el('div', 'inv-row' + (r === S.row ? ' row-on' : '')), mark = el('span', 'row-mark', r === S.row ? '▶' : String(r + 1));
+        mark.title = r === S.row ? 'Linha usada na barra de ferramentas' : `Linha ${r + 1}`; line.append(mark);
+        for (let c = 0; c < HOTBAR; c++) {
+          const i = r * HOTBAR + c, b2 = slotNode(S.inv[i], [i === picked ? 'sel' : '', i === S.sel ? 'equip' : ''].join(' ')); b2.dataset.i = i;
+          b2.onmouseenter = () => describe(i); b2.onfocus = () => describe(i);
+          b2.onclick = () => {
+            if (picked === null) { if (S.inv[i]) picked = i; }
+            else if (picked === i) picked = null;
+            else { [S.inv[picked], S.inv[i]] = [S.inv[i], S.inv[picked]]; if (S.sel === picked) S.sel = i; else if (S.sel === i) S.sel = picked; S.row = Math.floor(S.sel / HOTBAR); picked = null; save(); }
+            renderTab('mochila');
+          };
+          line.append(b2);
+        }
+        wrap.append(line);
+      }
+      body.append(wrap);
+      info = el('div', 'item-info'); body.append(info); describe(picked !== null ? picked : S.sel);
+      // personagem, fazenda, moedas e equipamentos
+      const foot = el('div', 'inv-foot'), pv = el('div', 'inv-pv'); pv.append(Sprites.canvas(S.look, 'down'));
+      const who = el('div', 'inv-who'); who.append(el('b', '', S.name), el('span', '', S.farmName), el('span', 'coins', `🪙 ${S.coins} moedas`), el('span', 'dim', `Energia ${Math.round(S.energy)}/100 · Água no regador ${S.can}/10`));
+      const eq = el('div', 'equip-slots');
+      const eqSlot = (lbl, id, txt) => { const d = el('div', 'eq'); const sl = el('div', 'slot'); if (id) sl.append(cloneIcon(id)); d.append(sl, el('span', '', `${lbl}: ${txt}`)); return d; };
+      const hatItem = S.look.hat && Object.keys(ITEMS).find(k => ITEMS[k].hat === S.look.hat), acc = Sprites.ACCESSORIES.find(a => a.id === S.look.accessory), hand = equipped();
+      eq.append(eqSlot('Chapéu', hatItem, hatItem ? ITEMS[hatItem].name : 'nenhum'), eqSlot('Acessório', null, acc ? acc.name : 'nenhum'), eqSlot('Na mão', hand && hand.id, hand ? ITEMS[hand.id].name : 'nada'));
+      foot.append(pv, who, eq); body.append(foot);
     },
     bau(body) {
       body.append(el('h3', '', 'Baú'), el('p', 'dim', 'Toque em um item para passar a pilha inteira para o outro lado.'));
@@ -1345,45 +1458,105 @@
     },
     diario(body) {
       const c = calendar();
-      body.append(el('p', 'dim', `Hoje: ${c.season}, dia ${c.day} do ano ${c.year}. ${S.farmName}, ${VILA}.`));
-      const lt = btn('btn', '✉ Reler a carta do Vô ' + AVO, () => showLetter(true)); lt.id = 'btn-letter'; body.append(lt);
+      body.append(el('p', 'dim', `Hoje: ${c.weekday}, ${c.day} de ${c.season}, ano ${c.year}. ${S.farmName}, ${VILA}.`));
       const bdays = VILLAGERS.filter(v => v.birthday && (!v.hidden || S.lucio.met));
       if (bdays.length) body.append(el('p', 'dim', 'Aniversários: ' + bdays.map(v => `${v.name}, ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' (hoje!)' : ''}`).join(' · ')));
       body.append(el('h3', '', 'Missões em andamento'));
       const act = qActive(), ul = el('ul', 'list');
       if (!act.length) ul.append(el('li', 'dim', 'Nenhuma missão no momento. Converse com os moradores: quem tem um pedido aparece com um "!".'));
-      act.forEach(id => { const q = QUESTS[id], li = el('li'); li.append(el('span', 'mt', q.title), el('span', 'dim', `Pedido de: ${villagerById(q.giver).name}${q.to ? ' · Entregar a: ' + villagerById(q.to).name : ''}`), el('span', '', q.desc)); const p = qProgress(id); if (p) li.append(el('span', 'ok', 'Progresso: ' + p)); li.append(el('span', 'dim', 'Recompensa: ' + rewardText(q.reward)));
-        const tg = questTarget(id); if (tg) li.append(el('span', '', `Destino agora: ${tg.label}${id === tracked() ? ' (marcado com a seta amarela)' : ''}`));
-        const show = btn('btn', 'Mostrar no mapa', () => { S.track = id; closeModal(); openMap(); }); show.dataset.track = id; li.append(show);
-        ul.append(li); });
-      body.append(ul);
-      const done = Object.keys(QUESTS).filter(qDone);
-      if (done.length) { body.append(el('h3', '', 'Concluídas')); const dl = el('ul', 'list'); done.forEach(id => dl.append(el('li', 'done-task', `✔ ${QUESTS[id].title} (dia ${S.quests[id].day})`))); body.append(dl); }
-    },
-    amizades(body) {
-      body.append(el('h3', '', 'Moradores'), el('p', 'dim', 'A primeira conversa do dia e um presente por dia aumentam a amizade. Cada morador tem seus gostos.'));
-      const ul = el('ul', 'list');
-      VILLAGERS.forEach(v => {
-        if (v.hidden && !(v.id === 'lucio' && S.lucio.met)) { ul.append(el('li', 'dim', 'Dizem na vila que alguém mora numa tenda na serra, ao norte. A trilha começa entre a vila e o bosque.')); return; }
-        const li = el('li', 'friend'), top = el('div', 'friend-top'), txt = el('div');
-        li.dataset.id = v.id;
-        txt.append(el('b', '', v.name), heartsNode(hearts(v.id)), el('span', 'dim', v.bio));
-        const pic = v.portrait ? Sprites.portrait(v.portrait, hearts(v.id) >= 3 ? 'contente' : 'neutro') : Sprites.canvas(v.look);
-        if (v.portrait) pic.classList.add('portrait-pic');
-        top.append(pic, txt); li.append(top);
-        li.append(el('span', 'dim', `Costuma ficar ${v.place}.`));
-        if (v.birthday) li.append(el('span', '', `🎂 Aniversário: ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' — é hoje!' : ''}`));
-        if (GIFT_RULES[v.id]) {
-          const R = GIFT_RULES[v.id], L = S.lucio, n = L.gifts.week === weekOf(S.day) ? L.gifts.n : 0;
-          li.append(el('span', 'gift-week', `Presentes nesta semana: ${n}/${R.perWeek} · hoje: ${S.daily.gift[v.id] ? '1' : '0'}/${R.perDay}${isBirthday(v) ? ` · presente de aniversário: ${L.bday === calendar().year ? 'entregue' : 'disponível (amizade x8)'}` : ''}. A semana vira toda segunda-feira.`));
-          li.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'}`));
-        } else li.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'} · presente ${S.daily.gift[v.id] ? '✔' : '—'}`));
-        const kn = Object.keys(S.known[v.id] || {});
-        if (kn.length) li.append(el('span', 'ok', 'Você já sabe: ' + kn.map(k => `${ITEMS[k].name} (${{ love: 'adora', like: 'gosta', neutral: 'aceita', dislike: 'não gosta' }[S.known[v.id][k]]})`).join(', ')));
-        ul.append(li);
+      act.forEach(id => {
+        const q = QUESTS[id], li = el('li' + '', id === tracked() ? 'tracked' : ''); li.dataset.quest = id;
+        li.append(el('span', 'mt', (id === tracked() ? '★ ' : '') + q.title), el('span', 'dim', `Pedido de: ${villagerById(q.giver).name}${q.to ? ' · Entregar a: ' + villagerById(q.to).name : ''}`), el('span', '', q.desc));
+        const pr = qProgress(id); if (pr) li.append(el('span', 'ok', 'Progresso: ' + pr));
+        li.append(el('span', 'dim', 'Recompensa: ' + rewardText(q.reward)));
+        const tg = questTarget(id); if (tg) li.append(el('span', '', `Destino agora: ${tg.label}`));
+        const row = el('div', 'li-actions');
+        const tr = btn('btn', id === tracked() ? 'Acompanhando ✔' : 'Acompanhar', () => { S.track = id; save(); renderTab('diario'); renderHud(); }); tr.dataset.trackBtn = id;
+        const show = btn('btn', 'Ver no mapa', () => { S.track = id; renderTab('mapa'); }); show.dataset.track = id;
+        row.append(tr, show); li.append(row); ul.append(li);
       });
       body.append(ul);
-      const reset = btn('btn ghost', 'Apagar esta fazenda e voltar ao título', () => { if (!confirm('Apagar a fazenda salva neste navegador e voltar ao título?')) return; store.del(SAVE_KEY); closeModal(); initTitle(); });
+      const done = Object.keys(QUESTS).filter(qDone);
+      body.append(el('h3', '', 'Concluídas'));
+      const dl = el('ul', 'list'); if (!done.length) dl.append(el('li', 'dim', 'Nenhuma ainda.')); done.forEach(id => dl.append(el('li', 'done-task', `✔ ${QUESTS[id].title} (dia ${S.quests[id].day})`))); body.append(dl);
+      body.append(el('h3', '', 'Cartas'));
+      const cl = el('ul', 'list letters'), li = el('li');
+      li.append(el('span', 'mt', '✉ Carta do Vô ' + AVO), el('span', 'dim', 'Recebida antes de chegar a ' + VILA + '.'));
+      const lt = btn('btn', 'Ler a carta', () => showLetter(true)); lt.id = 'btn-letter'; li.append(lt); cl.append(li); body.append(cl);
+    },
+    amizades(body) {
+      body.append(el('p', 'dim', 'A primeira conversa do dia e os presentes aumentam a amizade (100 pontos por coração, até 5). Cada morador tem seus gostos.'));
+      const known = VILLAGERS.filter(v => !v.hidden || (v.id === 'lucio' && S.lucio.met));
+      if (!friendSel || !known.some(v => v.id === friendSel)) friendSel = known[0].id;
+      const box = el('div', 'friends'), list = el('ul', 'friend-list'), det = el('div', 'friend-detail');
+      known.forEach(v => {
+        const li = el('li', 'friend' + (v.id === friendSel ? ' sel' : '')); li.dataset.id = v.id; li.tabIndex = 0;
+        const pic = v.portrait ? Sprites.portrait(v.portrait, hearts(v.id) >= 3 ? 'contente' : 'neutro') : Sprites.canvas(v.look);
+        if (v.portrait) pic.classList.add('portrait-pic');
+        const pts = S.friends[v.id] || 0, h = hearts(v.id), frac = h >= 5 ? 1 : (pts % 100) / 100;
+        const txt = el('div', 'fl-txt'), bar = el('div', 'fbar'), fill = el('i'); fill.style.width = Math.round(frac * 100) + '%'; bar.append(fill);
+        bar.title = h >= 5 ? 'Amizade máxima' : `${pts % 100}/100 pontos para o próximo coração`;
+        txt.append(el('b', '', v.name), heartsNode(h), bar);
+        li.append(pic, txt);
+        li.onclick = () => { friendSel = v.id; renderTab('amizades'); };
+        li.onkeydown = e => { if (e.key === 'Enter') li.onclick(); };
+        list.append(li);
+      });
+      if (VILLAGERS.some(v => v.hidden && !(v.id === 'lucio' && S.lucio.met))) list.append(el('li', 'dim hint-li', 'Dizem na vila que alguém mora numa tenda na serra, ao norte.'));
+      const v = villagerById(friendSel), pts = S.friends[v.id] || 0;
+      det.dataset.id = v.id;
+      det.append(el('h3', '', v.name), heartsNode(hearts(v.id)), el('span', 'dim', `${pts} pontos de amizade · ${hearts(v.id)} de 5 corações`), el('p', '', v.bio), el('span', 'dim', `Costuma ficar ${v.place}.`));
+      if (v.birthday) det.append(el('span', '', `🎂 Aniversário: ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' — é hoje!' : ''}`));
+      if (GIFT_RULES[v.id]) {
+        const R = GIFT_RULES[v.id], L = S.lucio, n = L.gifts.week === weekOf(S.day) ? L.gifts.n : 0;
+        det.append(el('span', 'gift-week', `Presentes nesta semana: ${n}/${R.perWeek} · hoje: ${S.daily.gift[v.id] ? '1' : '0'}/${R.perDay}${isBirthday(v) ? ` · presente de aniversário: ${L.bday === calendar().year ? 'entregue' : 'disponível (amizade x8)'}` : ''}. A semana vira toda segunda-feira.`));
+        det.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'}`));
+      } else det.append(el('span', 'gift-week', `Presentes: 1 por dia · hoje: ${S.daily.gift[v.id] ? '1/1 ✔' : '0/1'} · conversa hoje: ${S.daily.talk[v.id] ? '✔' : '—'}`));
+      const kn = Object.keys(S.known[v.id] || {});
+      det.append(el('h3', '', 'Gostos descobertos'));
+      det.append(kn.length ? el('span', 'ok', kn.map(k => `${ITEMS[k].name} (${{ love: 'adora', like: 'gosta', neutral: 'aceita', dislike: 'não gosta' }[S.known[v.id][k]]})`).join(', ')) : el('span', 'dim', 'Ainda não sabe. Dê presentes para descobrir.'));
+      box.append(list, det); body.append(box);
+    },
+    mapa(body) {
+      const head = el('div', 'map-head'), h = el('h3', ''); h.id = 'map-title'; head.append(h);
+      const mb = el('div', 'map-body'), fr = el('div', 'map-frame'), cv = el('canvas', 'pixel'); cv.id = 'map-canvas'; fr.append(cv);
+      const leg = el('ul', 'legend'); leg.id = 'map-legend'; mb.append(fr, leg);
+      const info = el('p', 'map-info'); info.id = 'map-info';
+      body.append(head, mb, info); renderMap();
+    },
+    personagem(body) {
+      const top = el('div', 'sheet-top'), pv = el('div', 'wardrobe-pv big');
+      ['down', 'left', 'up', 'right'].forEach(d => pv.append(Sprites.canvas(S.look, d)));
+      const info = el('div', 'sheet-info');
+      const hatItem = S.look.hat && Object.keys(ITEMS).find(k => ITEMS[k].hat === S.look.hat), acc = Sprites.ACCESSORIES.find(a => a.id === S.look.accessory), hand = equipped();
+      const en = el('div', 'xp'), bar = el('div', 'bar' + (S.energy < 20 ? ' low' : '')), fill = el('i'); fill.style.width = S.energy + '%'; bar.append(fill); en.append(el('span', '', `⚡ Energia ${Math.round(S.energy)}/100`), bar);
+      info.append(el('b', 'sheet-name', S.name), el('span', '', `${S.age} anos · ${S.farmName}, ${VILA}`), en,
+        el('span', '', `Chapéu: ${hatItem ? ITEMS[hatItem].name : 'nenhum'}`), el('span', '', `Acessório: ${acc ? acc.name : 'nenhum'}`), el('span', '', `Na mão: ${hand ? ITEMS[hand.id].name : 'nada'}`),
+        el('span', 'dim', 'Para trocar cabelo, roupas e acessório, use o guarda-roupa de casa.'));
+      top.append(pv, info); body.append(top);
+    },
+    config(body) {
+      body.append(el('h3', '', 'Controles'));
+      const t = el('table', 'controls');
+      [['Andar', 'Setas ou W A S D (celular: direcional)'], ['Interagir e usar ferramentas', 'Clique (ou toque) perto do alvo'], ['Escolher item da barra', '1 a 0, ou clique na barra'], ['Trocar a linha da barra', 'Tab'],
+        ['Menu (Inventário)', 'E ou Esc (de novo fecha)'], ['Diário', 'F'], ['Mapa', 'M'], ['Abrir porta à frente', 'Q'], ['Avançar conversa', 'E, Espaço, Enter ou clique'], ['Recusar em "Sim/Não"', 'E ou Esc'], ['Pausa', 'P ou o botão ⏸']]
+        .forEach(([a, b2]) => { const tr = el('tr'); tr.append(el('td', '', a), el('td', '', b2)); t.append(tr); });
+      body.append(t, el('h3', '', 'Tela'));
+      body.append(btn('btn', document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia', () => { $('btn-full').click(); setTimeout(() => renderTab('config'), 300); }));
+      body.append(el('h3', '', 'Partida'));
+      const msg = el('p', 'save-msg'); msg.id = 'save-msg';
+      const sv = btn('btn primary', 'Salvar partida', () => {
+        const okSave = save();
+        msg.textContent = okSave ? `✔ Partida salva às ${clock()} do jogo (${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}).` : '✖ Não foi possível salvar: o navegador bloqueou o armazenamento.';
+        msg.className = 'save-msg ' + (okSave ? 'ok' : 'bad');
+      }); sv.id = 'btn-save';
+      const back = btn('btn', 'Voltar à tela inicial', () => {
+        if (!confirm('Voltar à tela inicial? A partida é salva antes, e você continua de onde parou com "Continuar".')) return;
+        save(); closeModal(); initTitle();
+      }); back.id = 'btn-title';
+      const row = el('div', 'li-actions'); row.append(sv, back); body.append(row, msg);
+      body.append(el('p', 'dim', 'O jogo não tem áudio por enquanto. O progresso também é salvo sozinho, de tempos em tempos.'));
+      const reset = btn('btn ghost', 'Apagar esta fazenda e voltar ao título', () => { if (!confirm('Apagar a fazenda salva neste navegador e voltar ao título? Isso não pode ser desfeito.')) return; store.del(SAVE_KEY); closeModal(); initTitle(); });
       reset.style.marginTop = '16px'; body.append(reset);
     },
     roupa(body) {
@@ -1449,9 +1622,12 @@
   };
   const SPECIAL = ['bau', 'roupa', 'loja', 'ajuste'];
   function renderTab(t) {
+    const prev = tab;
     tab = TABS[t] ? t : tab;
-    $('tabs').querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('on', b.dataset.tab === tab); b.hidden = SPECIAL.includes(tab); });
-    const body = $('modal-body'), sc = body.scrollTop; body.replaceChildren(); TABS[tab](body);
+    $('tabs').querySelectorAll('[data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.hidden = SPECIAL.includes(tab); });
+    $('modal-title').textContent = TAB_TITLE[tab] || '';
+    $('modal').dataset.tab = tab;
+    const body = $('modal-body'), sc = prev === tab ? body.scrollTop : 0; body.replaceChildren(); TABS[tab](body);
     if (SPECIAL.includes(tab) && tab !== 'ajuste') body.append(closeBtn());
     $('modal-close').hidden = tab === 'ajuste';
     body.scrollTop = sc; renderHotbar(); renderHud();
@@ -1494,7 +1670,7 @@
     for (let i = 0; i < 40; i++) { g.fillStyle = i % 2 ? '#56604a' : '#6a6a5a'; const x = (i * 97) % m.w, y = (i * 53) % (MAP_FY - 40); for (let r = 0; r < 18; r++) g.fillRect(x - r, y + r, r * 2, 1); }   // morros
     g.drawImage(mt.bg, MAP_SX, 0); g.drawImage(m.bg, 0, MAP_FY);
     g.fillStyle = 'rgba(16,20,40,.18)'; g.fillRect(0, 0, c.width, c.height);
-    $('map-title').textContent = `Mapa — ${S.farmName}, ${VILA} e a serra, ${REGIAO}`;
+    $('map-title').textContent = `${S.farmName}, ${VILA} e a serra — ${REGIAO}`;
     // nomes de regiões
     label(g, S.farmName, 200, 186 + MAP_FY, 16); label(g, VILA, 640, 36 + MAP_FY, 16); label(g, 'Serra', MAP_SX + 320, 90, 16);
     const leg = $('map-legend'); leg.replaceChildren();
@@ -1511,14 +1687,11 @@
     const me = playerPoint();
     if (me) { MAP_ICON.voce(g, Math.round(me.x), Math.round(me.y) - 6); label(g, 'Você', Math.round(me.x), Math.round(me.y) + 4, 12); const li = el('li'); li.append(legendIcon('voce'), el('span', '', 'Você')); leg.prepend(li); }
     const where = map.id === 'fora' ? '' : map.id === 'montanha' ? ' Você está na serra.' : ` Você está ${PLACE_NAME[map.id] || 'dentro de um prédio'}.`;
-    $('map-info').textContent = `${id ? `Missão: ${QUESTS[id].title} → ${tg.label}.` : 'Nenhuma missão em andamento.'}${where} O tempo fica parado com o mapa aberto. Feche com ${COARSE ? 'o botão' : 'M, Esc ou o botão'}.`;
+    $('map-info').textContent = `${id ? `Missão: ${QUESTS[id].title} → ${tg.label}.` : 'Nenhuma missão em andamento.'}${where} O tempo fica parado com o menu aberto. Feche com ${COARSE ? 'o ✕' : 'M, E, Esc ou o ✕'}.`;
   }
-  function openMap() { if (busy || screen !== 'game' || !S || !$('letter').hidden) return; if (!$('modal').hidden) closeModal(); if (!$('modal').hidden) return; renderMap(); $('mapview').hidden = false; $('map-close').focus(); }
-  function closeMap() { $('mapview').hidden = true; }
-  function toggleMap() { if ($('mapview').hidden) openMap(); else closeMap(); }
-  $('btn-map').onclick = openMap;
-  $('map-close').onclick = closeMap;
-  $('mapview').addEventListener('click', e => { if (e.target === $('mapview')) closeMap(); });
+  /* O mapa é a aba "Mapa" do menu principal. */
+  function openMap() { if (!$('modal').hidden && tab !== 'ajuste') renderTab('mapa'); else openMenu('mapa'); }
+  function closeMap() { if (!$('modal').hidden && tab === 'mapa') closeModal(); }
 
   function shop() {
     const c = villagerById('celeste'), at = villagerAt(c, S.time);
