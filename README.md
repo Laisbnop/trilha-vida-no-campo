@@ -150,10 +150,15 @@ humor discreto que aparece com a confiança. Já encontrou a tenda rasgada e as
 coisas espalhadas, sem saber por quem, e por isso desconfia no começo — mas tem
 orgulho da vida que construiu e não quer ser "salvo" de nada.
 
-**Aparência:** retrato próprio em pixel art (rosto e ombros) com quatro
-expressões — neutro, desconfiado, contente e emocionado —, usadas conforme a
-fala, e sprite de corpo inteiro com cabelo grisalho volumoso, barba cheia e um
-manto de folhas sobre a roupa terrosa, nas quatro direções.
+**Aparência:** retrato próprio em pixel art, numa grade nativa de 64×64
+(`js/portraits.js`), montado forma por forma: mechas de cabelo com direção e
+divisões, testa com entradas, sobrancelhas grossas, pálpebras, nariz e maçãs do
+rosto com volume, bigode separado da barba, tufos de barba com laterais cheias e
+base arredondada, e um manto de folhas sobrepostas nos ombros por cima de uma
+túnica marrom. Quatro expressões — neutro, desconfiado, contente e emocionado —
+mudam só sobrancelhas, pálpebras e boca, conforme a fala. O sprite de corpo
+inteiro usa os mesmos tons (cinza quente, folhas laranja e marrom), com bigode e
+barba distintos, nas quatro direções e andando.
 
 **Rotina:** de manhã perto da tenda e colhendo na mata; à tarde na nascente; à
 noite junto à fogueira. Ele só anda por lugares livres.

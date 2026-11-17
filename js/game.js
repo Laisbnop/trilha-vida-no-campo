@@ -729,9 +729,10 @@
     $('dlg-who').textContent = sp.name; $('dlg-who').hidden = !sp.name;
     pc.hidden = !sp.look;
     if (sp.portrait) {
-      if (pc.width !== 32) { pc.width = 32; pc.height = 32; }
+      const src = Sprites.PORTRAITS[sp.portrait](expr || 'neutro');
+      if (pc.width !== src.width) { pc.width = src.width; pc.height = src.height; }
       pc.dataset.expr = expr || 'neutro'; pc.classList.add('square');
-      const g = pc.getContext('2d'); g.clearRect(0, 0, 32, 32); g.drawImage(Sprites.PORTRAITS[sp.portrait](expr || 'neutro'), 0, 0);
+      const g = pc.getContext('2d'); g.clearRect(0, 0, pc.width, pc.height); g.drawImage(src, 0, 0);
     } else if (sp.look) {
       if (pc.width !== 24) { pc.width = 24; pc.height = 20; }
       delete pc.dataset.expr; pc.classList.remove('square');
