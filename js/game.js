@@ -433,7 +433,7 @@
      ===================================================== */
   function fit() {
     const c = $('scene'), W = window.innerWidth, H = window.innerHeight;
-    const k = Math.max(2, Math.min(8, Math.round(H / 270), Math.round(W / 320)));   // escala inteira: telas maiores mostram mais do mundo
+    const k = Math.max(2, Math.min(4, Math.round(H / 210), Math.round(W / 300)));   // escala inteira (pixels maiores, como num jogo de fazenda clássico)
     const cw = Math.ceil(W / k), ch = Math.ceil(H / k);
     if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
     c.style.width = cw * k + 'px'; c.style.height = ch * k + 'px';
