@@ -9,7 +9,7 @@ const World = (() => {
   let VW = 256, VH = 160;            // área visível (a câmera); muda com o tamanho da janela
   function setView(w, h) { VW = w; VH = h; }
   const CELL = 8;                    // célula de colisão
-  const OUT = '#241a2c';
+  const OUT = '#2c1a12';                     // contorno marrom-escuro, quente
   let W = VW, H = VH, g, rand;
 
   function rng(seed) { return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
@@ -39,7 +39,21 @@ const World = (() => {
       '#3f86d8': '#7aa6cc', '#3478cc': '#6a96c0', '#bfe4ff': '#eef6ff', '#86764c': '#9a9894',
       '#dcc48c': '#d8d0c2', '#b4945a': '#a8a090', '#c8ac70': '#c6beb0', '#f0e0b0': '#f4f0ea' },
   ];
-  const SC = c => (paintSeason > 0 && SMAP[paintSeason][c]) || c;
+  /* Paleta-base dos cenários externos: cores vivas e quentes (verde-folha, terra
+     dourada, água turquesa). As estações trocam por cima dela. */
+  const BASE = {
+    '#58a83c': '#5cab3c', '#4f9c38': '#4b9632', '#63b444': '#72bd48', '#468c32': '#3f8a2c', '#78c452': '#9ad25a', '#3a7e2c': '#2f7424',
+    '#143c24': '#1d3d17', '#267a3a': '#3d8a2c', '#369a48': '#58a838', '#58b858': '#80c646', '#84d470': '#b0de60', '#1c5c30': '#2a6422',
+    '#2a8046': '#2f7a36', '#58b860': '#62ac48', '#2f8a40': '#408c2e', '#2f7028': '#2e6a22',
+    '#0f3020': '#1a3414', '#1f6a34': '#357a26', '#2a7e40': '#4c962e', '#3f9a52': '#6cb440', '#175428': '#24561c',
+    '#3f86d8': '#3aa6c8', '#3478cc': '#2c90b6', '#bfe4ff': '#c8f2ec', '#86764c': '#9a7844',
+    '#dcc48c': '#e2ba68', '#b4945a': '#a8783a', '#c8ac70': '#cc9a4e', '#f0e0b0': '#f4d48e',
+    '#cdbfa4': '#ccb690', '#8e8068': '#7a6450', '#b4a68a': '#ab966e', '#e6dcc6': '#ecdcbc',
+    '#b88448': '#b8763a', '#d8a868': '#dca05a',
+  };
+  const SC = c => (paintSeason >= 0 ? (SMAP[paintSeason][c] || BASE[c] || c) : c);
+  /* Sorteio separado para enfeites: não mexe no sorteio que posiciona árvores, arbustos e caminhos. */
+  let rand2 = Math.random;
   const R = (x, y, w, h, c) => { g.fillStyle = SC(c); g.fillRect(Math.round(x), Math.round(y), w, h); };
   /* Neve sobre um telhado (inverno): faixa branca com borda irregular e sombra azulada. */
   function snowCap(x0, y0, w, rows) {
@@ -53,6 +67,7 @@ const World = (() => {
   }
 
   function grass(worn) {
+    rand2 = rng(W * 7 + H * 13 + 5);
     R(0, 0, W, H, '#58a83c');
     for (let i = 0; i < 26 * (W * H) / 40960; i++) {                         // manchas mais escuras e mais claras
       const cx = rand() * W, cy = rand() * H, rx = 8 + rand() * 18, ry = 4 + rand() * 8;
@@ -66,6 +81,13 @@ const World = (() => {
     for (let i = 0; i < 90 * (W * H) / 40960; i++) {                         // tufos de capim
       const x = Math.floor(rand() * W), y = Math.floor(rand() * H);
       R(x, y, 1, 2, '#3a7e2c'); R(x + 2, y, 1, 2, '#3a7e2c'); R(x + 1, y + 1, 1, 1, '#3a7e2c');
+    }
+    // textura de gramado: tufos em "v" com ponta clara e folhinhas
+    for (let i = 0; i < 260 * (W * H) / 40960; i++) {
+      const x = Math.floor(rand2() * W), y = Math.floor(rand2() * H), k = rand2();
+      if (k < 0.5) { R(x, y + 1, 1, 2, '#3a7e2c'); R(x + 2, y + 1, 1, 2, '#3a7e2c'); R(x + 1, y + 2, 1, 1, '#3a7e2c'); R(x, y, 1, 1, '#78c452'); R(x + 2, y, 1, 1, '#78c452'); }
+      else if (k < 0.8) { R(x, y, 2, 1, '#63b444'); R(x + 1, y + 1, 2, 1, '#468c32'); }
+      else { R(x, y, 1, 3, '#3a7e2c'); R(x + 1, y + 1, 1, 2, '#468c32'); R(x - 1, y + 1, 1, 2, '#468c32'); R(x, y, 1, 1, '#78c452'); }
     }
     if (worn) for (let i = 0; i < 14; i++) {               // chão batido
       const x = rand() * W, y = rand() * H;
@@ -100,6 +122,8 @@ const World = (() => {
     if (kind === 'terra') {
       for (let i = 0; i < w * h / 10; i++) R(x + rand() * (w - 2), y + rand() * (h - 1), 2, 1, rand() < 0.5 ? P[2] : P[3]);
       for (let i = x; i < x + w; i += 3) if (rand() < 0.4) { R(i, y - 1, 2, 1, '#58a83c'); R(i + 1, y + h, 2, 1, '#58a83c'); }
+      // pedrinhas e marcas de terra dourada
+      for (let i = 0; i < w * h / 70; i++) { const px = x + 1 + Math.floor(rand2() * (w - 3)), py = y + 1 + Math.floor(rand2() * (h - 2)); R(px, py, 2, 1, '#f0e0b0'); R(px, py + 1, 2, 1, '#b4945a'); }
       if (paintSeason === 3) for (let i = x; i < x + w; i += 2) { R(i, y, 1, 1 + ((i * 7) % 3), '#eef3f8'); R(i + 1, y + h - 1 - ((i * 5) % 2), 1, 1 + ((i * 5) % 2), '#eef3f8'); }   // neve nas bordas
       if (paintSeason === 2) for (let i = x + 2; i < x + w; i += 9) { R(i, y + ((i * 3) % Math.max(1, h - 1)), 2, 1, '#c8581e'); R(i + 4, y + ((i * 7) % Math.max(1, h - 1)), 1, 1, '#8a3a18'); }
     } else if (kind === 'asfalto') {
@@ -156,7 +180,8 @@ const World = (() => {
   }
   function tree(x, y, r = 11) {            // (x, y) = base do tronco
     shadowOval(x, y, r, 3);
-    R(x - 3, y - 9, 6, 9, OUT); R(x - 2, y - 9, 4, 8, '#6a4426'); R(x - 2, y - 9, 1, 8, '#8a5e36');
+    R(x - 4, y - 10, 8, 10, OUT); R(x - 3, y - 10, 6, 9, '#6a4426'); R(x - 3, y - 10, 2, 9, '#8a5e36'); R(x + 1, y - 8, 1, 6, '#4a2c18');
+    R(x - 5, y - 2, 2, 2, OUT); R(x + 3, y - 2, 2, 2, OUT); R(x - 4, y - 2, 1, 1, '#6a4426'); R(x + 3, y - 2, 1, 1, '#6a4426');   // raízes
     const cy = y - 8 - r;
     if (paintSeason === 3) {                                   // inverno: sem folhas
       bareBranches(x, cy - r + 2, r);
@@ -166,8 +191,13 @@ const World = (() => {
     // no outono, cada árvore tem um tom: laranja, vermelho ou amarelo
     const AUT = [{ '#267a3a': '#b8521c', '#369a48': '#d06e22', '#58b858': '#e89a34' }, { '#267a3a': '#9a2e1c', '#369a48': '#c0442a', '#58b858': '#de6a3a' }, { '#267a3a': '#b88a1c', '#369a48': '#d8a82a', '#58b858': '#f0c848' }][Math.abs(treeSeed) % 3];
     const L = c => (paintSeason === 2 ? AUT[c] || c : c);
-    blob(x, cy, r + 1, '#143c24'); blob(x, cy, r, L('#267a3a'));
-    blob(x - 2, cy - 2, r - 3, L('#369a48')); blob(x - 4, cy - 4, r - 6, L('#58b858'));
+    // copa feita de cachos de folhas: contorno, base, luz no alto à esquerda e brilho
+    const lobes = [[0, -0.55, 0.6], [-0.58, -0.12, 0.56], [0.58, -0.12, 0.56], [-0.32, 0.42, 0.56], [0.34, 0.42, 0.56], [0, 0.05, 0.62]].map(([a, b2, k]) => [x + a * r, cy + b2 * r, Math.max(3, Math.round(k * r))]);
+    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx), Math.round(ly), rr + 1, '#143c24'));
+    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx), Math.round(ly), rr, L('#267a3a')));
+    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx - rr * 0.25), Math.round(ly - rr * 0.3), Math.max(1, Math.round(rr * 0.62)), L('#369a48')));
+    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx - rr * 0.42), Math.round(ly - rr * 0.48), Math.max(1, Math.round(rr * 0.28)), L('#58b858')));
+    lobes.forEach(([lx, ly, rr]) => { R(lx + rr * 0.2, ly + rr * 0.62, 3, 1, L('#1c5c30')); R(lx + rr * 0.5, ly + rr * 0.3, 1, 2, L('#1c5c30')); });
     for (let i = 0; i < r * 2; i++) {
       const a = rand() * 6.28, d = rand() * (r - 2), px = x + Math.cos(a) * d, py = cy + Math.sin(a) * d;
       if (paintSeason === 0 && i % 3 === 0) { R(px, py, 2, 2, i % 2 ? '#ffc2d8' : '#fff4f8'); R(px + 1, py, 1, 1, '#f090b0'); }   // florada
@@ -201,8 +231,10 @@ const World = (() => {
     if (paintSeason === 0) { R(x - 1, y - r - 1, 1, 1, '#ffffff'); R(x + 3, y - r, 1, 1, '#ff9ec0'); }
   }
   function fence(x0, x1, y, c = '#b88448') {
-    for (let x = x0; x <= x1; x += 6) { R(x - 1, y - 7, 4, 9, OUT); R(x, y - 6, 2, 7, c); R(x, y - 6, 1, 7, shade(c, 1.25)); }
-    R(x0, y - 4, x1 - x0 + 2, 1, shade(c, 0.75)); R(x0, y - 2, x1 - x0 + 2, 1, shade(c, 0.75));
+    const C = SC(c), D = shade(C, 0.7), Lc = shade(C, 1.2);
+    R(x0, y - 5, x1 - x0 + 3, 3, OUT); R(x0, y - 4, x1 - x0 + 3, 1, Lc); R(x0, y - 3, x1 - x0 + 3, 1, D);       // travessa
+    for (let x = x0; x <= x1; x += 6) { R(x - 1, y - 8, 4, 10, OUT); R(x, y - 7, 2, 8, C); R(x, y - 7, 1, 8, Lc); R(x, y - 7, 2, 1, shade(C, 1.35)); R(x + 1, y, 1, 1, D); }
+    if (paintSeason === 3) for (let x = x0; x <= x1; x += 6) R(x - 1, y - 9, 4, 2, '#f4f8fc');
   }
   function lamp(x, y) {
     R(x - 1, y - 20, 3, 20, OUT); R(x, y - 19, 1, 19, '#6a6a7a');
@@ -243,7 +275,8 @@ const World = (() => {
       for (let r = 0; r < wh; r += 3) { R(x, wy + r + 2, w, 1, shade(wall, 0.78));
         for (let c = (r / 3 % 2) * 3; c < w; c += 6) R(x + c, wy + r, 1, 2, shade(wall, 0.78)); }
     } else {
-      R(x, wy + wh - 4, w, 4, shade(wall, 0.86));
+      for (let r = 3; r < wh - 4; r += 3) R(x, wy + r, w, 1, shade(wall, 0.92));      // tábuas da parede
+      R(x, wy + wh - 4, w, 4, shade(wall, 0.86)); R(x, wy + wh - 4, w, 1, shade(wall, 0.78));
       if (o.timber !== false) { const t = o.timber || '#7a5a3a'; R(x, wy, 2, wh, t); R(x + w - 2, wy, 2, wh, t); R(x, wy + Math.floor(wh / 2) - 1, w, 1, shade(wall, 0.9)); }
     }
     R(x, wy, w, 3, shade(wall, 0.72));                       // sombra do beiral
@@ -486,6 +519,12 @@ const World = (() => {
       const k2 = Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry))), hw2 = Math.round(rx * k2);
       if (Math.abs(y) <= ry && hw2 > 1) { R(cx - hw2, cy + y, hw2 * 2, 1, '#bfe4ff'); R(cx - hw2 + 1, cy + y, hw2 * 2 - 2, 1, '#3f86d8'); if (hw2 > 6) R(cx - hw2 + 5, cy + y, hw2 * 2 - 10, 1, '#3478cc'); }
     }
+    // margem clara por dentro e vitórias-régias (não no inverno)
+    for (let y = -ry; y <= ry; y++) { const hw2 = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)))); if (hw2 > 3 && y < ry - 1) { R(cx - hw2 + 1, cy + y, 2, 1, '#bfe4ff'); } }
+    if (paintSeason !== 3) for (let i = 0; i < Math.max(1, Math.round(rx / 14)); i++) {
+      const lx = Math.round(cx - rx * 0.6 + rand2() * rx * 1.2), ly = Math.round(cy - ry * 0.4 + rand2() * ry * 0.8);
+      R(lx - 3, ly - 2, 6, 4, '#2c6a22'); R(lx - 2, ly - 2, 4, 3, '#58a838'); R(lx, ly - 2, 1, 2, '#2c6a22'); if (paintSeason === 0 && i % 2 === 0) { R(lx + 2, ly - 3, 2, 2, '#ffb8d0'); R(lx + 2, ly - 3, 1, 1, '#ffffff'); }
+    }
     solid(cx - rx + 2, cy - ry + 4, rx * 2 - 4, ry * 2 - 6); keep(cx - rx - 8, cy - ry - 8, rx * 2 + 16, ry * 2 + 16);
     cur.waters.push({ cx, cy, rx, ry });
   }
@@ -500,7 +539,6 @@ const World = (() => {
     road('terra', 450, 176, 20, 124); road('terra', 622, 232, 20, 68); road('terra', 440, 300, 392, 22);
     // ---------- fazenda ----------
     keep(GRID.x0 - 6, GRID.y0 - 6, GRID.cols * GRID.s + 12, GRID.rows * GRID.s + 12);
-    R(GRID.x0 - 2, GRID.y0 - 2, GRID.cols * GRID.s + 4, GRID.rows * GRID.s + 4, '#4f9c38');
     {
       const d = farmhouse(52, 56);                                                   // casa: x 52..148, varanda até y 150
       solid(46, 50, 108, 86); solid(52, 144, 34, 8); solid(114, 144, 34, 8); solid(52, 136, 6, 10); solid(142, 136, 6, 10);
@@ -873,7 +911,7 @@ const World = (() => {
       if (fruit) [[-7, -22], [5, -28], [6, -18], [-2, -16], [-9, -30], [1, -33]].forEach(([x, y]) => { box(x, y, 3, 3, fr); R(x, y, 1, 1, shade(fr, 1.3)); });
     });
   }
-  const wildTree = () => fig('wild', 34, 50, 17, () => { shadowOval(0, 0, 11, 3); R(-3, -14, 6, 14, OUT); R(-2, -14, 4, 13, '#5a3a22'); R(-2, -14, 1, 13, '#7a5230'); if (paintSeason === 3) return bareBranches(0, -40, 13); blob(0, -28, 13, '#0f3020'); blob(0, -28, 12, '#1f6a34'); blob(-3, -31, 8, '#2a7e40'); blob(-5, -34, 4, '#3f9a52'); blob(5, -22, 4, '#175428'); });
+  const wildTree = () => fig('wild', 34, 50, 17, () => { shadowOval(0, 0, 11, 3); R(-3, -14, 6, 14, OUT); R(-2, -14, 4, 13, '#5a3a22'); R(-2, -14, 1, 13, '#7a5230'); if (paintSeason === 3) return bareBranches(0, -40, 13); return tree(0, 0, 13); blob(0, -28, 13, '#0f3020'); blob(0, -28, 12, '#1f6a34'); blob(-3, -31, 8, '#2a7e40'); blob(-5, -34, 4, '#3f9a52'); blob(5, -22, 4, '#175428'); });
   const stump = () => fig('stump', 16, 14, 8, () => { box(-5, -6, 10, 6, '#7a5230'); R(-5, -6, 10, 2, '#c8a070'); R(-3, -5, 6, 1, '#a88050'); R(-6, -1, 2, 1, '#5a3a22'); R(5, -1, 2, 1, '#5a3a22'); });
   const dummyFig = () => fig('dummy', 22, 34, 11, () => { R(-1, -22, 2, 22, '#6a4426'); box(-6, -22, 12, 12, '#d8b878'); R(-6, -22, 12, 2, '#f0d8a0'); R(-3, -18, 2, 2, OUT); R(2, -18, 2, 2, OUT); R(-9, -17, 18, 2, '#8a5e36'); blob(0, -26, 5, OUT); blob(0, -26, 4, '#e8c888'); blob(0, -16, 2, '#c8483a'); });
   const HEN = [['#f8f8f0', '#d8d8c8'], ['#c8843a', '#a06428'], ['#4a4a52', '#2e2e36'], ['#e8c878', '#c8a050']];
@@ -984,7 +1022,7 @@ const World = (() => {
 
     if (map.id === 'fora') {
       const ph = Math.floor(t / 280);
-      map.waters.forEach((w, k) => { for (let i = 0; i < 9; i++) { const y = w.cy - w.ry + 4 + (i * 7 + ph + k * 3) % (w.ry * 2 - 8), hw = w.rx * Math.sqrt(1 - ((y - w.cy) ** 2) / (w.ry * w.ry)) - 8; if (hw > 4) R(w.cx - hw + (i * 13 + ph * 2) % (hw * 2), y, 3 + i % 2, 1, i % 2 ? '#bfe4ff' : '#8cc4f8'); } });
+      map.waters.forEach((w, k) => { for (let i = 0; i < 9; i++) { const y = w.cy - w.ry + 4 + (i * 7 + ph + k * 3) % (w.ry * 2 - 8), hw = w.rx * Math.sqrt(1 - ((y - w.cy) ** 2) / (w.ry * w.ry)) - 8; if (hw > 4) R(w.cx - hw + (i * 13 + ph * 2) % (hw * 2), y, 3 + i % 2, 1, i % 2 ? '#e4fbf6' : '#9fe0e4'); } });
       for (let i = 0; i < 4; i++) { const k = ((t / 900) + i / 4) % 1; ctx.fillStyle = `rgba(255,255,255,${0.8 * (1 - k)})`; ctx.fillRect(Math.round(628 + Math.sin(k * 5 + i) * 5), Math.round(126 - k * 8), 2, 2); }
       // terra, plantas e entulho da fazenda
       const tiles = S.farm.tiles;

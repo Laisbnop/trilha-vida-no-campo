@@ -371,6 +371,16 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `js/world.js` | Mapa, interiores, colisão, câmera, ícones e desenho do mundo |
 | `js/game.js` | Salvamento, criação, ferramentas, fazenda, moradores, missões e painéis |
 
+## Visual
+
+Pixel art de fazenda em cores vivas e quentes: grama verde-folha com tufos em
+"v", caminhos de terra dourada com pedrinhas, lagos turquesa com margem clara e
+vitórias-régias, árvores de copa em cachos de folhas (floridas na primavera,
+coloridas no outono, nuas e com neve no inverno), cercas de troncos, paredes de
+tábuas e contornos marrom-escuros. Os pixels aparecem maiores em telas grandes
+(escala inteira, sem borrar). As cores do cenário saem de uma paleta-base única,
+que as estações trocam por cima.
+
 Toda a arte é desenhada por código, sem imagens de terceiros.
 
 ## Atualizações e cache

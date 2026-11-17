@@ -11,7 +11,7 @@
 
 const Sprites = (() => {
   const W = 24, H = 32;
-  const OUT = '#231a2a';
+  const OUT = '#2a1a14';
 
   /* [base, sombra, luz] */
   const SKINS = [
