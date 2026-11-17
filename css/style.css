@@ -313,3 +313,24 @@ body.playing { overflow: hidden; height: 100%; }
 @media (max-width: 640px) { .portrait.square { height: 60px; } }
 #map-canvas { max-height: 74vh; width: auto; max-width: 100%; margin: 0 auto; }
 .map-frame { display: flex; justify-content: center; }
+
+/* ---------- painel do relógio (canto superior esquerdo) ---------- */
+.hud { display: flex; flex-direction: column; gap: 2px; padding: 5px 8px 6px; min-width: 196px;
+  background: #f3e3bd; color: #3a2614; border: 3px solid #7a4a26; border-radius: 4px;
+  box-shadow: 0 0 0 2px #3a2214, inset 0 0 0 2px #e0c890, 3px 4px 0 rgba(0,0,0,.35); font-size: 19px; line-height: 1.1; }
+.hud .cp-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.hud .cp-sky { width: 45px; height: 24px; border: 2px solid #7a4a26; border-radius: 2px; flex: none; }
+.hud .cp-date { font-family: var(--px); font-weight: normal; font-size: 10px; color: #3a2614; }
+.hud .cp-time { font-family: var(--px); font-size: 11px; color: #7a2a14; background: #fff4d8; border: 2px solid #c8a060; border-radius: 3px; padding: 2px 4px; }
+.hud .cp-season { font-size: 18px; }
+.hud .cp-season.s0 { color: #2f7a2a; } .hud .cp-season.s1 { color: #a86a10; } .hud .cp-season.s2 { color: #a8401a; } .hud .cp-season.s3 { color: #3a6aa8; }
+.hud .cp-coins { color: #6a4a10; }
+.hud .xp span { color: #a86a10; }
+.hud .bar { border-color: #7a4a26; background: #e8d2a0; }
+.objective { top: 86px; }
+.pause-win { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; min-width: 240px; }
+@media (max-width: 760px) {
+  .hud { min-width: 0; right: auto; }
+  .actions { top: 84px; }
+  .objective { top: 118px; }
+}

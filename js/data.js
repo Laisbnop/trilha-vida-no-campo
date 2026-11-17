@@ -3,6 +3,8 @@
 const START_AGE = 22;
 const START_COINS = 60;
 const DAY_START = 6 * 60;          // 06:00, em minutos
+const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem precisa descansar
+const MS_PER_GAME_MIN = 1300;      // 78 s reais por hora de jogo → 20 horas em 26 minutos ativos
 const INV_SIZE = 20, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
 /* kind: tool | seed | sapling | hat | quest | item.  sell = preço de venda. */
@@ -30,7 +32,12 @@ const ITEMS = {
   pedra:   { name: 'Pedra',   sell: 3, desc: 'De pedras quebradas.' },
   racao:   { name: 'Ração',   price: 5, desc: 'Coloque no comedouro do galinheiro.' },
   ovo:     { name: 'Ovo',     sell: 14, desc: 'Fresquinho.' },
-  amora:    { name: 'Amora silvestre', sell: 7, desc: 'Colhida no bosque.' },
+  amora:    { name: 'Amora silvestre', sell: 7, desc: 'Colhida no bosque, na serra e, no outono, pela vila.' },
+  narciso:        { name: 'Narciso',          sell: 30,  desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila.' },
+  ervilha_cheiro: { name: 'Ervilha-de-cheiro', sell: 45, desc: 'Flor perfumada do verão, em tons de rosa e lilás.' },
+  acafrao:        { name: 'Flor de açafrão',  sell: 55,  desc: 'Flor roxa que fura a neve no inverno.' },
+  azevinho:       { name: 'Azevinho',         sell: 70,  desc: 'Ramo de folhas pontudas com bagas vermelhas. Enfeite de inverno.' },
+  fruta_cristal:  { name: 'Fruta de cristal', sell: 130, desc: 'Rara. Fria e translúcida, aparece só no inverno.' },
   cogumelo: { name: 'Cogumelo',        sell: 9, desc: 'Encontrado à sombra das árvores.' },
   flor:     { name: 'Flor-do-campo',   sell: 6, desc: 'Simples e bonita.' },
 
@@ -76,7 +83,20 @@ const LETTER = {
   sign: 'Com todo o amor,\nVô ' + AVO,
 };
 const SEASONS = ['Primavera', 'Verão', 'Outono', 'Inverno'];
-const SEASON_DAYS = 28;
+const SEASON_DAYS = 29;                            // cada estação tem exatamente 29 dias
+/* A partida começa numa segunda-feira; a semana continua entre estações. */
+const WEEKDAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+const WEEKDAYS_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+/* Coletáveis sazonais da Vila Acapulco.
+   count(r) = quantos surgem numa noite (r = sorteio de 0 a 1);
+   items = espécie e peso: escolhida depois de saber a quantidade. */
+const SEASONAL_FORAGE = [
+  { count: r => 1 + (r < 0.2 ? 1 : 0), items: [['narciso', 1]] },                 // primavera: média 1,2
+  { count: r => 1 + (r < 0.2 ? 1 : 0), items: [['ervilha_cheiro', 1]] },          // verão: média 1,2
+  { count: r => (r < 0.9 ? 1 : 0), items: [['amora', 1]] },                       // outono: média 0,9
+  { count: r => (r < 0.7 ? 1 : 0), items: [['acafrao', 0.54], ['azevinho', 0.38], ['fruta_cristal', 0.08]] },   // inverno: média 0,7
+];
+const SEASONAL_MAX = 12;                           // limite de coletáveis sazonais no chão da vila
 const PET_DAY = 12;                                // dia 12 da primavera do ano 1
 const PETS = { gato: { name: 'Gato', baby: 'gatinho', names: ['Bolinha', 'Pipoca', 'Tigrinho', 'Mingau'] }, cachorro: { name: 'Cachorro', baby: 'filhote', names: ['Paçoca', 'Bolota', 'Caramelo', 'Faísca'] } };
 
@@ -89,7 +109,7 @@ const VILLAGERS = [
   { id: 'celeste', name: 'Dona Celeste', place: 'no Armazém, na vila',
     bio: 'Dona do Armazém. Prática, acolhedora e sabe de tudo o que se planta na região.',
     look: mkLook('s4', 'coque', 'grisalho', 'blusa', '#c8683a', 'saia', '#5a4a6a'),
-    love: ['laranja', 'flor'], like: ['tomate', 'ovo', 'goiaba'], dislike: ['pedra', 'madeira'],
+    love: ['laranja', 'flor'], like: ['tomate', 'ovo', 'goiaba', 'narciso'], dislike: ['pedra', 'madeira'],
     sched: [[360, 'loja'], [1080, [[510, 160], [590, 186]]]],
     talk: [['Precisando de semente, é só falar. Rabanete é o mais rápido para começar.', 'O lago da sua fazenda serve para encher o regador. Planta sem água não cresce.', '{fazenda} ficou parado tanto tempo... É bom ver fumaça naquela chaminé de novo.'],
       ['Guardei umas mudas boas para você. Árvore dá trabalho no começo e alegria por anos.', 'Sabe que a vila anda mais animada desde que você chegou?', 'Meu marido plantou a laranjeira da praça. Toda florada eu lembro dele.'],
@@ -111,7 +131,7 @@ const VILLAGERS = [
   { id: 'bia', name: 'Bia', place: 'perto da porteira da fazenda de manhã, na praça à tarde',
     bio: 'Cria galinhas desde pequena. Falante, curiosa e apaixonada por bicho.',
     look: mkLook('s2', 'rabo', 'ruivo', 'jardineira', '#3fa070', 'short', '#3a4a8a'),
-    love: ['ovo', 'amora'], like: ['rabanete', 'flor', 'laranja'], dislike: ['pedra'],
+    love: ['ovo', 'amora'], like: ['rabanete', 'flor', 'laranja', 'fruta_cristal'], dislike: ['pedra'],
     sched: [[360, [[515, 312]]], [510, [[460, 312], [460, 164], [428, 164]]], [840, [[460, 164], [596, 176]]], [1140, [[460, 164], [460, 312], [515, 312]]]],
     talk: [['Oi! Você é quem ficou com {fazenda}, né? Tem um galinheiro lá no sul do terreno, sabia?', 'Galinha feliz bota melhor. É ciência! Quer dizer, é o que eu acho.', 'Se precisar de ração, a Dona Celeste vende.'],
       ['Como estão as meninas do galinheiro? Fez carinho hoje?', 'Eu dou nome para todas as minhas. A mais brava se chama Dona Encrenca.', 'Um dia eu quero ter cabras também. E um burrinho. E...'],
@@ -122,7 +142,7 @@ const VILLAGERS = [
   { id: 'tome', name: 'Tomé', place: 'na beira do rio de manhã, na praça à tarde',
     bio: 'Vive numa cabana no bosque. Fala pouco, observa muito e conhece cada trilha.',
     look: mkLook('s3', 'medio', 'castanho', 'camisa', '#5a7a5a', 'calca', '#5a4a3a'),
-    love: ['amora', 'cogumelo'], like: ['laranja', 'ovo'], dislike: ['tomate'],
+    love: ['amora', 'cogumelo'], like: ['laranja', 'ovo', 'azevinho'], dislike: ['tomate'],
     sched: [[360, [[1056, 322]]], [780, [[1000, 180], [900, 166], [668, 180]]], [1080, [[900, 166], [1010, 150]]]],
     talk: [['...Bom dia.', 'O bosque dá amora e cogumelo. Cada dia num canto diferente.', 'Árvore cortada volta. Demora uns dias, mas volta.'],
       ['O rio estava claro hoje. Sinal de tempo firme.', 'Você pisa leve no bosque. Os bichos nem se assustam.', 'Quase ninguém vem até a cabana. Pode vir.'],
@@ -133,7 +153,7 @@ const VILLAGERS = [
   { id: 'iara', name: 'Iara', place: 'em casa de manhã, junto à fonte à tarde',
     bio: 'Pinta paisagens da vila. Distraída, gentil e sempre com tinta nos dedos.',
     look: mkLook('s6', 'longoCacheado', 'preto', 'blusa', '#8a5ad9', 'saia', '#e0a23a'),
-    love: ['flor', 'goiaba'], like: ['amora', 'laranja', 'abobora'], dislike: ['madeira', 'racao'],
+    love: ['flor', 'goiaba', 'narciso', 'ervilha_cheiro', 'acafrao'], like: ['amora', 'laranja', 'abobora'], dislike: ['madeira', 'racao'],
     sched: [[360, [[725, 312]]], [660, [[632, 312], [632, 224], [656, 204]]], [1140, [[632, 224], [632, 312], [725, 312]]]],
     talk: [['Ah, oi! Desculpa, eu estava olhando a luz na fonte. Você é de {fazenda}?', 'Estou sempre sem tinta. E sem flor para pintar.', 'A vila tem umas cores que só aparecem de manhã cedinho.'],
       ['Pintei {fazenda} visto de longe. Ainda falta o telhado.', 'Sabia que a cor da goiaba madura não existe em nenhum tubo de tinta?', 'Você repara nas coisas. Pouca gente repara.'],

@@ -19,7 +19,7 @@
     set(key, v) { try { localStorage.setItem(key, v); } catch { /* sem armazenamento: joga sem salvar */ } },
     del(key) { try { localStorage.removeItem(key); } catch { /* ignora */ } },
   };
-  const save = () => { if (S) store.set(SAVE_KEY, JSON.stringify(S)); };
+  const save = () => { if (!S) return; const c = calendar(); S.cal = { year: c.year, season: c.si, day: c.day, weekday: c.wd }; store.set(SAVE_KEY, JSON.stringify(S)); };
   const validSave = s => s && s.v === 4 && s.look && typeof s.name === 'string' && Array.isArray(s.inv) && s.farm && s.farm.tiles && s.coop && s.nature && s.quests && s.pos;
 
   function newState(look, name, farmName = '', petSp = null) {
@@ -28,6 +28,7 @@
       v: 4, look, name, farmName, age: START_AGE, coins: START_COINS, day: 1, time: DAY_START, energy: 100,
       pos: { map: 'fora', x: 100, y: 164, dir: 'down' },
       pet: { sp: petSp, state: 'pending', name: '', offered: 0 }, letterSeen: false, track: null,
+      lastNight: 0, seasonal: [], spawnDay: 0,
       inv: Array(INV_SIZE).fill(null), sel: 0, chest: Array(CHEST_SIZE).fill(null), can: 10,
       farm: { tiles: {} }, coop: { feed: 0, eggs: 0, hens: [] },
       nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
@@ -129,7 +130,7 @@
      ===================================================== */
   let DEMO = null;
   function initTitle() {
-    S = null; show('title');
+    S = null; show('title'); World.setSeason(0);
     if (!DEMO) { DEMO = newState(DEFAULT_LOOK, ''); upgrade(DEMO); [0, 1, 2].forEach(i => { DEMO.farm.tiles[i] = { k: 'soil', w: 1, crop: 'tomate', g: i + 2 }; }); DEMO.coop.hens = [{ name: '', well: 80 }, { name: '', well: 80 }]; }
     const found = inspectSaves(), notice = $('save-notice'), cont = $('btn-continue');
     notice.hidden = true; cont.hidden = true; cont.textContent = 'Continuar';
@@ -285,18 +286,21 @@
   let map = null;
   const P = { x: 0, y: 0, dir: 'down', moving: false, work: 0, tool: null, hop: 0 };
   const keys = {};
-  let busy = false, hover = null, lastSave = 0, clockAcc = 0, floats = [], dummyHit = 0, hens = [], impacts = [], shake = null, pet = null;
+  let busy = false, hover = null, lastSave = 0, floats = [], dummyHit = 0, hens = [], impacts = [], shake = null, pet = null;
   const COARSE = window.matchMedia && matchMedia('(pointer: coarse)').matches;
 
   const hearts = id => Math.floor((S.friends[id] || 0) / 100);
   const addFriend = (id, pts) => { const before = hearts(id); S.friends[id] = Math.max(0, Math.min(FRIEND.max, (S.friends[id] || 0) + pts)); if (hearts(id) > before) toast(`${villagerById(id).name}: ${hearts(id)} coração(ões)`); };
-  const clock = () => `${String(Math.floor(S.time / 60)).padStart(2, '0')}:${String(S.time % 60).padStart(2, '0')}`;
+  /* Relógio interno contínuo (minutos com fração); a tela mostra de 10 em 10 minutos. 02:00 = 26*60. */
+  const clock = (m = S.time) => { const t = Math.floor(m / 10) * 10; return `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
   const fmt = t => String(t)
     .replace(/\{g:([^|}]*)\|([^|}]*)\|([^}]*)\}/g, (_, m, f, n) => (S && S.look.gender === 'm' ? m : S && S.look.gender === 'f' ? f : n))
     .replace(/\{nome\}/g, S ? S.name : '').replace(/\{fazenda\}/g, (S && S.farmName) || 'o sítio').replace(/\{pet\}/g, (S && S.pet && S.pet.name) || '');
   /* Calendário: estações de 28 dias. */
-  const calendar = (d = S.day) => ({ season: SEASONS[Math.floor((d - 1) / SEASON_DAYS) % 4], day: (d - 1) % SEASON_DAYS + 1, year: Math.floor((d - 1) / (SEASON_DAYS * 4)) + 1 });
-  const dateText = (d = S.day) => { const c = calendar(d); return `${c.season} ${c.day} · Ano ${c.year}`; };
+  /* Calendário: 4 estações de 29 dias. O dia absoluto (S.day, começando em 1 numa
+     segunda-feira) é a referência de tudo: estação, ano, dia da semana, aniversários e limites semanais. */
+  const calendar = (d = S.day) => { const si = Math.floor((d - 1) / SEASON_DAYS) % 4; return { si, season: SEASONS[si], day: (d - 1) % SEASON_DAYS + 1, year: Math.floor((d - 1) / (SEASON_DAYS * 4)) + 1, wd: (d - 1) % 7, weekday: WEEKDAYS[(d - 1) % 7] }; };
+  const dateText = (d = S.day) => { const c = calendar(d); return `${WEEKDAYS_SHORT[c.wd]}, ${c.day} de ${c.season} · Ano ${c.year}`; };
 
   /* Onde cada morador está agora: segue a rotina do dia, andando pelos caminhos. */
   function villagerAt(v, tm) {
@@ -317,7 +321,7 @@
   const shownName = v => (v.id === 'lucio' && !(S.lucio && S.lucio.met) ? 'homem da serra' : v.name);
   const speaker = v => ({ name: v.id === 'lucio' && !S.lucio.met ? 'Homem da serra' : v.name, look: v.look, portrait: v.portrait });
   function actors() {
-    const tm = S.time + clockAcc / 700, list = [];
+    const tm = S.time, list = [];
     VILLAGERS.forEach(v => {
       const p = villagerAt(v, tm);
       if (p.where !== map.id) return;
@@ -338,6 +342,11 @@
     if (!s.pet) s.pet = { sp: null, state: 'pending', name: '', offered: 0 };
     if (s.letterSeen === undefined) s.letterSeen = !!s.intro;           // quem já jogava não vê a cena de abertura de novo
     if (s.track === undefined) s.track = null;
+    /* calendário de 29 dias: o dia absoluto já guardado continua valendo (é só reinterpretado) */
+    if (typeof s.time !== 'number' || !(s.time >= DAY_START)) s.time = DAY_START;
+    s.time = Math.min(s.time, DAY_END - 1);
+    if (typeof s.lastNight !== 'number') s.lastNight = s.day - 1;
+    if (!Array.isArray(s.seasonal)) { s.seasonal = []; s.spawnDay = 0; }
     VILLAGERS.forEach(v => { if (typeof s.friends[v.id] !== 'number') s.friends[v.id] = 0; if (!s.known[v.id]) s.known[v.id] = {}; });
     /* Lúcio: conversa, presentes (dia, semana e aniversário), tenda, missões e cenas */
     s.lucio = Object.assign({ met: false, permit: false, gifts: { week: -1, n: 0 }, bday: 0, tentUp: false, found: false, fireScene: false, iara: false, last: -1, again: 0 }, s.lucio);
@@ -353,7 +362,9 @@
   function startGame() {
     upgrade(S);
     show('game'); fit();
-    closeModal(); closeMap();
+    closeModal(); closeMap(); setPause(false);
+    World.setSeason(calendar().si);
+    if (!S.spawnDay) { spawnSeasonal(); save(); }                    // primeira manhã: geração inicial (uma vez só)
     enterMap(S.pos.map, S.pos.x, S.pos.y, S.pos.dir);
     spawnHens(); spawnPet();
     startAutoQuests();
@@ -397,7 +408,21 @@
     setTimeout(() => { enterMap(to, x, y, dir); save(); wrap.classList.remove('fade'); busy = false; renderHud(); }, 220);
   }
   const keepsakeVisible = () => qActive().includes('lembranca') && !S.lucio.found;
-  const blocked = () => busy || !$('modal').hidden || !$('summary').hidden || !$('mapview').hidden || !$('letter').hidden || screen !== 'game';
+  const blocked = () => busy || paused || document.hidden || !$('modal').hidden || !$('summary').hidden || !$('mapview').hidden || !$('letter').hidden || screen !== 'game';
+  /* Pausa (tecla P ou botão): o tempo para e nada acontece até continuar. */
+  let paused = false;
+  function setPause(v) { paused = !!v && screen === 'game'; $('pause').hidden = !paused; if (paused) $('pause-go').focus(); }
+  $('btn-pause').onclick = () => setPause(true);
+  $('pause-go').onclick = () => setPause(false);
+  /* Às 2h o personagem precisa descansar: transição curta e a manhã seguinte em casa, sem perder nada. */
+  let passingOut = false;
+  function passOut() {
+    if (passingOut) return; passingOut = true;
+    closeModal(); closeMap();
+    busy = false;
+    (run(async () => { await say('narr', 'São 2h da manhã. Suas pernas pesam e os olhos fecham sozinhos: você precisa descansar. Nada foi perdido; amanhã você acorda em casa.'); }) || Promise.resolve())
+      .then(() => { passingOut = false; sleep(); });
+  }
 
   /* =====================================================
      TELA: o jogo ocupa a janela inteira, com pixels inteiros
@@ -465,8 +490,13 @@
       }
     }
     if (P.work && t > P.work) { P.work = 0; P.tool = null; }
-    // o relógio só anda com o jogo livre (pausa em conversas, menus e cenas)
-    if (free && S.time < 1439) { clockAcc += dt; if (clockAcc >= 700) { clockAcc -= 700; S.time++; if (S.time % 10 === 0) renderHud(); } }
+    // o relógio só anda com o jogo livre (para em conversas, menus, mapa, cenas, pausa e aba escondida)
+    if (free && S.time < DAY_END) {
+      const before = Math.floor(S.time / 10);
+      S.time = Math.min(DAY_END, S.time + dt / MS_PER_GAME_MIN);
+      if (Math.floor(S.time / 10) !== before) renderHud();
+      if (S.time >= DAY_END) passOut();
+    }
     floats = floats.filter(f => t - f.t0 < 700);
     updateHens(dt, t); updatePet(dt, t);
     impacts = impacts.filter(f => t - f.t0 < 400);
@@ -477,14 +507,20 @@
     if (t - lastSave > 2500) { lastSave = t; S.pos.x = Math.round(P.x); S.pos.y = Math.round(P.y); S.pos.dir = P.dir; save(); }
   }
 
-  /* Cor do dia: manhã clara, fim de tarde dourado, noite azulada. */
-  function tint() {
-    const m = S.time, inside = map.id !== 'fora';
-    if (m < 420) return inside ? null : 'rgba(255,190,120,.10)';
-    if (m >= 1020 && m < 1140) return `rgba(255,140,60,${(inside ? 0.04 : 0.07) + (m - 1020) / 120 * 0.1})`;
-    if (m >= 1140) return `rgba(22,26,88,${Math.min(inside ? 0.22 : 0.5, 0.17 + (m - 1140) / 150 * 0.33)})`;
-    return null;
+  /* Luz ao longo do dia, interpolada minuto a minuto (sem saltos):
+     6h–8h amanhecer quente · 8h–16h dia · 16h–19h entardecer · 19h–21h anoitecer · 21h–2h noite.
+     [minuto, r, g, b, opacidade da camada]. glow = quanto janelas, postes e fogueiras brilham. */
+  const SKY = [[360, 74, 62, 124, 0.40], [400, 240, 150, 120, 0.22], [450, 255, 196, 140, 0.10], [480, 255, 226, 190, 0], [960, 255, 226, 190, 0],
+    [1050, 255, 170, 90, 0.10], [1140, 236, 110, 70, 0.20], [1200, 110, 70, 130, 0.34], [1260, 40, 42, 105, 0.48], [1560, 22, 26, 82, 0.56]];
+  function lightAt(m, inside) {
+    let i = 0; while (i < SKY.length - 2 && m > SKY[i + 1][0]) i++;
+    const A = SKY[i], B = SKY[i + 1], k = Math.max(0, Math.min(1, (m - A[0]) / (B[0] - A[0])));
+    const mix = j => A[j] + (B[j] - A[j]) * k;
+    const night = Math.max(0, Math.min(1, m < 480 ? (450 - m) / 90 : (m - 1110) / 150));
+    if (inside) return { r: 70, g: 46, b: 30, a: 0.10 * night, glow: 0 };            // interiores: luz própria, só um pouco mais quente à noite
+    return { r: Math.round(mix(1)), g: Math.round(mix(2)), b: Math.round(mix(3)), a: +mix(4).toFixed(3), glow: +night.toFixed(3) };
   }
+  const outdoor = () => map.id === 'fora' || map.id === 'montanha';
 
   function draw(t, list) {
     const c = $('scene'); World.setView(c.width, c.height);
@@ -492,7 +528,7 @@
     const me = { look: S.look, x: P.x, y: P.y, dir: P.dir, moving: P.moving, tool: P.tool, hop: P.hop && t < P.hop ? -Math.abs(Math.sin((P.hop - t) / 80)) * 4 : 0 };
     const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
     const mk = trackedMarker(), lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
-    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, tint: tint(), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], markers: mk ? [mk] : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible() });
+    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], markers: mk ? [mk] : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
   }
   /* Barras de resistência dos objetos com dano parcial (o dano fica salvo). */
   function bars() {
@@ -555,6 +591,10 @@
       for (let n = 0; n < World.FORAGE.length; n++) {
         const id = S.nature.forage[n], [x, y] = World.FORAGE[n], r = [x - 8, y - 12, 16, 14];
         if (id && inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[id].name.toLowerCase(), rect: r, act: () => { if (gain(id)) { delete S.nature.forage[n]; bang(x, y - 6, 'leaf'); save(); } } };
+      }
+      for (let n = S.seasonal.length - 1; n >= 0; n--) {
+        const o = S.seasonal[n], r = [o.x - 8, o.y - 14, 16, 16];
+        if (inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[o.id].name.toLowerCase(), rect: r, act: () => collectSeasonal(o) };
       }
       const [hx, hy] = World.SPOT.hat, hr = [hx - 8, hy - 12, 16, 14];
       if (S.nature.hat && inRect(hr, wx, wy)) return { label: 'Pegar o chapéu velho', rect: hr, act: () => { if (gain('chapeu_tome')) { S.nature.hat = false; save(); } } };
@@ -672,9 +712,10 @@
   const typing = e => /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
   window.addEventListener('keydown', e => {
     if (screen !== 'game') return;
-    if (e.key === 'Escape') { if (!$('mapview').hidden) closeMap(); else if (!$('letter').hidden && S.letterSeen && !busy) $('letter-ok').click(); else closeModal(); return; }
+    if (e.key === 'Escape') { if (paused) setPause(false); else if (!$('mapview').hidden) closeMap(); else if (!$('letter').hidden && S.letterSeen && !busy) $('letter-ok').click(); else closeModal(); return; }
     if (typing(e)) return;
-    if ((e.key === 'm' || e.key === 'M') && !e.repeat) { e.preventDefault(); toggleMap(); return; }
+    if ((e.key === 'm' || e.key === 'M') && !e.repeat) { e.preventDefault(); if (!paused) toggleMap(); return; }
+    if ((e.key === 'p' || e.key === 'P') && !e.repeat) { e.preventDefault(); setPause(!paused); return; }
     if (/^Arrow|^ $/.test(e.key)) e.preventDefault();               // as setas e o espaço não rolam a página
     if (KEYMAP[e.key]) { keys[KEYMAP[e.key]] = true; return; }
     if (/^[0-9]$/.test(e.key) && !blocked()) { selectSlot(e.key === '0' ? 9 : +e.key - 1); return; }
@@ -1131,6 +1172,36 @@
   }
 
   /* =====================================================
+     COLETÁVEIS SAZONAIS DA VILA
+     ===================================================== */
+  /* Gera os coletáveis de uma noite (ou a geração inicial). Só roda uma vez por dia:
+     entrar na vila, abrir menus ou recarregar a página não geram nada. */
+  function spawnSeasonal(rnd = Math.random) {
+    if (S.spawnDay === S.day) return 0;
+    S.spawnDay = S.day;
+    const si = calendar().si, rule = SEASONAL_FORAGE[si];
+    S.seasonal = S.seasonal.filter(o => o.s === si);                // mudou a estação: o que ficou no chão some
+    const n = rule.count(rnd());
+    const pts = World.get('fora').spawns.filter(([x, y]) => !S.seasonal.some(o => Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14));
+    let made = 0;
+    for (let i = 0; i < n; i++) {
+      if (S.seasonal.length >= SEASONAL_MAX || !pts.length) break;  // excedente da noite é descartado
+      const [x, y] = pts.splice(Math.floor(rnd() * pts.length), 1)[0];
+      let r = rnd() * rule.items.reduce((a, it) => a + it[1], 0), id = rule.items[0][0];
+      for (const [it, w] of rule.items) { if (r < w) { id = it; break; } r -= w; }
+      S.seasonal.push({ id, x, y, s: si }); made++;
+    }
+    return made;
+  }
+  /* Colhe: o objeto só sai do chão depois que o item entra na mochila. */
+  function collectSeasonal(o) {
+    const name = ITEMS[o.id].name;
+    if (!canAdd(o.id)) return tip(`Mochila cheia: ${name.toLowerCase()} continua aqui no chão.`);
+    if (!gain(o.id)) return;
+    S.seasonal = S.seasonal.filter(q => q !== o); bang(o.x, o.y - 6, 'leaf'); save();
+  }
+
+  /* =====================================================
      DIA: DORMIR
      ===================================================== */
   function bed() {
@@ -1139,8 +1210,11 @@
       if (await choose(['Dormir até amanhã', 'Ainda não']) === 0) setTimeout(sleep, 0);
     });
   }
-  /* Processa a noite uma única vez: é o único lugar onde plantas, árvores e galinhas avançam. */
-  function sleep() {
+  /* Processa a noite uma única vez por dia (dormindo ou desmaiando às 2h): é o único
+     lugar onde plantas, árvores, galinhas e coletáveis da vila avançam. */
+  function processNight() {
+    if (S.lastNight === S.day) return null;                   // esta noite já foi processada
+    S.lastNight = S.day;
     const notes = [];
     let grew = 0, ripe = 0, fruits = 0, eggs = 0, hungry = 0;
     for (const key in S.farm.tiles) {
@@ -1150,10 +1224,13 @@
     }
     S.coop.hens.forEach(h => { if (S.coop.feed > 0) { S.coop.feed--; h.well = Math.min(100, h.well + 6); if (S.coop.eggs < S.coop.hens.length * 3) { S.coop.eggs++; eggs++; } } else { h.well = Math.max(0, h.well - 12); hungry++; } });
     const finished = S.day;
-    S.day++; S.time = DAY_START; clockAcc = 0; S.energy = 100; S.daily = { talk: {}, gift: {} };
+    S.day++; S.time = DAY_START; S.energy = 100; S.daily = { talk: {}, gift: {} };
     Object.keys(S.nature.trees).forEach(k => { if (S.day >= S.nature.trees[k]) { delete S.nature.trees[k]; delete S.nature.cleared[k]; delete S.dmg['s' + k]; } });
     Object.keys(S.nature.rocks).forEach(k => { if (S.day >= S.nature.rocks[k]) delete S.nature.rocks[k]; });
     refreshForage(S);
+    const newSeason = calendar().si !== calendar(finished).si;
+    const spawned = spawnSeasonal();
+    World.setSeason(calendar().si);
     const b = World.get('casa').objs.find(o => o.kind === 'bed');
     enterMap('casa', b.x + 20, b.y + 10, 'down');
     save();
@@ -1162,7 +1239,14 @@
     if (fruits) notes.push(`${fruits} árvore(s) amanheceram com frutos.`);
     if (eggs) notes.push(`As galinhas botaram ${eggs} ovo(s). Estão no ninho.`);
     if (hungry) notes.push(`${hungry} galinha(s) ficaram sem ração e não botaram.`);
+    if (newSeason) notes.push(`Chegou ${calendar().season === 'Verão' ? 'o' : 'a'} ${calendar().season}! A paisagem mudou${spawned ? ' e há coisas novas para colher na vila' : ''}.`);
+    else if (spawned) notes.push(`${spawned} coisa(s) nova(s) para colher apareceram pela vila.`);
     if (!notes.length) notes.push('Uma noite tranquila no sítio.');
+    return { notes, finished };
+  }
+  function sleep() {
+    const r = processNight(); if (!r) return;
+    const { notes, finished } = r;
     const box = $('summary-body'); box.replaceChildren(el('h3', '', `${dateText(finished)} — dia encerrado`));
     const ul = el('ul', 'list'); notes.forEach(n => ul.append(el('li', '', n))); box.append(ul, el('p', 'dim', 'Você acorda com a energia completa.'));
     const go = btn('btn primary', `Começar o dia ▶`, () => { $('summary').hidden = true; renderHud(); toast(dateText()); VILLAGERS.forEach(v => { if (isBirthday(v) && (!v.hidden || S.lucio.met)) toast(`Hoje é aniversário de ${v.name}!`); }); petEvent(); }); go.id = 'summary-go';
@@ -1175,11 +1259,27 @@
   function renderHud() {
     if (!S) return;
     const hud = $('hud'); hud.replaceChildren();
-    const en = el('div', 'xp'), bar = el('div', 'bar' + (S.energy < 20 ? ' low' : '')), fill = el('i'); fill.style.width = S.energy + '%'; bar.append(fill);
+    const c = calendar(), en = el('div', 'xp'), bar = el('div', 'bar' + (S.energy < 20 ? ' low' : '')), fill = el('i'); fill.style.width = S.energy + '%'; bar.append(fill);
     en.append(el('span', '', '⚡'), bar);
-    hud.append(el('span', 'name', dateText()), el('span', '', clock()), en, el('span', '', `🪙 ${S.coins}`));
+    const top = el('div', 'cp-row'), sky = el('canvas', 'pixel cp-sky'); sky.width = 30; sky.height = 16; drawSky(sky.getContext('2d'), S.time);
+    top.append(sky, el('b', 'cp-date', `${WEEKDAYS_SHORT[c.wd]}, ${c.day}`), el('span', 'cp-time', clock()));
+    const mid = el('div', 'cp-row'); mid.append(el('span', 'cp-season s' + c.si, `${c.season} · Ano ${c.year}`), el('span', 'cp-coins', `🪙 ${S.coins}`));
+    hud.append(top, mid, en);
+    hud.title = `${c.weekday}, ${c.day} de ${c.season}, ano ${c.year} — ${clock()}`;
     const o = objective();
     $('objective').replaceChildren(...(o ? [el('b', '', 'MISSÃO'), el('span', '', o)] : S.time >= 1260 ? [el('span', '', 'Já é tarde. A cama espera por você em casa.')] : []));
+  }
+  /* Indicador de dia/noite: o sol (ou a lua) percorre um arco no céu do painel. */
+  function drawSky(g, m) {
+    const L = lightAt(m, false), night = L.glow;
+    const day = [126, 200, 240], dusk = [240, 150, 100], dark = [30, 34, 80];
+    const k = m < 480 ? Math.max(0, (480 - m) / 120) : m > 1050 ? Math.min(1, (m - 1050) / 210) : 0;
+    const c = k < 0.5 ? day.map((v, i) => v + (dusk[i] - v) * k * 2) : dusk.map((v, i) => v + (dark[i] - v) * (k - 0.5) * 2);
+    g.fillStyle = `rgb(${c.map(Math.round).join(',')})`; g.fillRect(0, 0, 30, 16);
+    g.fillStyle = night > 0.5 ? '#2a3a2a' : '#4a8a3a'; g.fillRect(0, 13, 30, 3);
+    const sun = m < 1170, f = sun ? (m - 360) / 810 : (m - 1170) / 390, x = Math.round(3 + f * 24), y = Math.round(12 - Math.sin(Math.max(0, Math.min(1, f)) * Math.PI) * 9);
+    if (sun) { g.fillStyle = '#ffd75e'; g.fillRect(x - 2, y - 2, 4, 4); g.fillStyle = '#fff4b0'; g.fillRect(x - 1, y - 1, 2, 2); }
+    else { g.fillStyle = '#f0f0ff'; g.fillRect(x - 2, y - 2, 4, 4); g.fillStyle = `rgb(${c.map(Math.round).join(',')})`; g.fillRect(x, y - 2, 2, 2); g.fillStyle = '#ffffff'; g.fillRect(6, 3, 1, 1); g.fillRect(21, 5, 1, 1); g.fillRect(14, 2, 1, 1); }
   }
   function slotNode(s, cls) {
     const b = el('button', 'slot ' + (cls || '')); b.type = 'button';
@@ -1275,7 +1375,7 @@
         if (v.birthday) li.append(el('span', '', `🎂 Aniversário: ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' — é hoje!' : ''}`));
         if (GIFT_RULES[v.id]) {
           const R = GIFT_RULES[v.id], L = S.lucio, n = L.gifts.week === weekOf(S.day) ? L.gifts.n : 0;
-          li.append(el('span', 'gift-week', `Presentes nesta semana: ${n}/${R.perWeek} · hoje: ${S.daily.gift[v.id] ? '1' : '0'}/${R.perDay}${isBirthday(v) ? ` · presente de aniversário: ${L.bday === calendar().year ? 'entregue' : 'disponível (amizade x8)'}` : ''}. A semana vira nos dias 1, 8, 15 e 22 de cada estação.`));
+          li.append(el('span', 'gift-week', `Presentes nesta semana: ${n}/${R.perWeek} · hoje: ${S.daily.gift[v.id] ? '1' : '0'}/${R.perDay}${isBirthday(v) ? ` · presente de aniversário: ${L.bday === calendar().year ? 'entregue' : 'disponível (amizade x8)'}` : ''}. A semana vira toda segunda-feira.`));
           li.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'}`));
         } else li.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'} · presente ${S.daily.gift[v.id] ? '✔' : '—'}`));
         const kn = Object.keys(S.known[v.id] || {});
@@ -1433,6 +1533,22 @@
     villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
   };
+
+  /* Modo de desenvolvimento (só com ?dev=1 na URL): avançar tempo e noites, e ver
+     os pontos de surgimento da vila. Não aparece na versão normal. */
+  let DEV = null;
+  if (/[?&]dev=1\b/.test(location.search)) {
+    DEV = { markers: true };
+    window.__trilha.dev = {
+      addMinutes: m => { S.time = Math.min(DAY_END, S.time + m); if (S.time >= DAY_END) passOut(); renderHud(); },
+      setTime: m => { S.time = m; renderHud(); },
+      night: (n = 1) => { for (let i = 0; i < n; i++) processNight(); renderHud(); return S.day; },
+      setDay: d => { S.day = d; S.lastNight = d - 1; World.setSeason(calendar().si); enterMap(map.id === 'fora' || map.id === 'montanha' ? map.id : map.id, P.x, P.y, P.dir); renderHud(); },
+      spawn: rnd => { S.spawnDay = 0; return spawnSeasonal(rnd); },
+      lightAt, calendar, dateText, clock,
+      set markers(v) { DEV.markers = v; },
+    };
+  }
 
   initTitle();
   requestAnimationFrame(loop);
