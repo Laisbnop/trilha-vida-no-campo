@@ -39,6 +39,7 @@ const ITEMS = {
   chapeu_pescador: { name: 'Chapéu de pescador', kind: 'hat', hat: 'pescador', desc: 'Feito por Tomé.' },
   encomenda:   { name: 'Encomenda de tintas', kind: 'quest', desc: 'Para entregar a Iara.' },
   chapeu_tome: { name: 'Chapéu velho de Tomé', kind: 'quest', desc: 'Encontrado no bosque.' },
+  apito: { name: 'Apito de madeira', kind: 'quest', desc: 'Pequeno, gasto de tanto uso, com um entalhe de passarinho. É de Lúcio.' },
 };
 
 /* days = dias regados até a colheita. */
@@ -140,7 +141,52 @@ const VILLAGERS = [
     again: 'Já conversamos hoje, não foi? Perdão, eu me distraio.',
     gift: { love: 'Que cor! Que perfume! Vou pintar isto antes que mude.', like: 'Que delicadeza. Obrigada!', neutral: 'Obrigada, que gentil.', dislike: 'Ah... obrigada. Vou... achar um lugar para isso.' },
     scene: { lines: ['Terminei! Quer dizer, quase. Mas isto aqui é para você.', 'Todo artista precisa de uma boina. E todo amigo de artista também.'], item: 'boina' } },
+
+  /* Lúcio vive na serra. As falas começam com [expressão] do retrato: neutro, desconfiado, contente, emocionado.
+     talk tem quatro faixas: 0 coração, 1–2, 3–4 e 5. Presentes e aniversário têm regras próprias (ver game.js). */
+  { id: 'lucio', name: 'Lúcio', map: 'montanha', portrait: 'lucio', hidden: true,
+    place: 'na serra, ao norte da vila: perto da tenda de manhã, na mata ou na nascente à tarde, e junto à fogueira à noite',
+    bio: 'Vive numa tenda na serra. Conhece plantas, o jeito do tempo e trilhas que pouca gente usa. Fala pouco e escolhe bem as palavras.',
+    look: mkLook('s3', 'juba', 'grisalho', 'folhas', '#7a5232', 'calca', '#5a4630', { gender: 'm', beard: 'cheia', shoeColor: '#3a2a22' }),
+    birthday: { season: 3, day: 9 },                                         // 9 do Inverno
+    love: ['goiaba'], like: ['laranja', 'amora', 'ovo'], neutral: ['madeira', 'pedra'], dislike: ['racao'],
+    /* rotina (coordenadas da serra): manhã perto da tenda e na mata, tarde na nascente, noite na fogueira */
+    sched: [[360, [[200, 196]]], [480, [[200, 198], [322, 200], [322, 258], [150, 258], [118, 256]]],
+      [780, [[150, 258], [322, 260], [462, 260]]], [1080, [[322, 260], [322, 226], [276, 228]]]],
+    talk: [
+      ['[desconfiado]Se veio conhecer a trilha, pode seguir. Só peço que deixe minhas coisas onde estão.',
+        '[neutro]O vento virou pro sul hoje cedo. Amanhã cai sereno na serra, pode apostar.',
+        '[desconfiado]A nascente é de quem precisar. A tenda, não. Fique à vontade na primeira.',
+        '[neutro]Essa folha larga aí é tanchagem. Serve pra corte. Não arranque à toa.'],
+      ['[neutro]Você voltou. Já estava achando que aquela conversa tinha sido só por educação.',
+        '[contente]Os sabiás estão fazendo ninho no paredão. Barulhentos, mas chegaram antes de mim. Não reclamo.',
+        '[neutro]Ouvi dizer que você está limpando o sítio do seu Antero. Terra cansada agradece quem tem paciência.',
+        '[contente]Fiz chá de capim-cidreira. Não ofereço porque a caneca é uma só. Ainda.'],
+      ['[desconfiado]Uma vez encontrei a lona rasgada quando voltei. Desde então, qualquer barulho à noite me acorda.',
+        '[neutro]Aprendi a ler o céu com um tropeiro, faz muito tempo. Nuvem esfiapada no fim da tarde é chuva em dois dias.',
+        '[contente]A Bia subiu aqui atrás de uma galinha fujona. Achamos a danada dormindo dentro da minha bota.',
+        '[neutro]Não é que eu não goste da vila. Gosto de descer. Só gosto mais ainda de voltar pra cá.'],
+      ['[contente]Tem lugar junto da fogueira. Hoje a conversa pode durar um pouco mais.',
+        '[contente]Guardei as sementes da última goiaba que você trouxe. Vão virar muda, se a serra deixar.',
+        '[emocionado]Passei anos dizendo que não precisava de ninguém. Ainda digo. Mas é bom quando alguém aparece.',
+        '[contente]Se o seu telhado pingar, me chama. Lona eu entendo. Telha, eu aprendo.']],
+    again: ['[neutro]Já conversamos hoje. A serra não sai do lugar até amanhã.', '[neutro]Ainda por aqui? Cuidado com a trilha quando escurecer.', '[contente]Se for ficar, pelo menos não pise no alecrim.'],
+    meet: ['[desconfiado]Ninguém sobe até aqui sem motivo. Qual é o seu?'],
+    gift: { love: '[contente]Você reparou no que eu gosto. Isso tem valor.', like: '[contente]Boa escolha. Vou aproveitar.', neutral: '[neutro]Obrigado por lembrar de mim.', dislike: '[desconfiado]Agradeço a intenção, mas isso não serve muito para mim.' },
+    bdayGift: { good: '[emocionado]Você lembrou do meu aniversário? Faz tempo que alguém não aparece por esse motivo.', neutral: '[contente]Um presente de aniversário? Obrigado por lembrar.', bad: '[neutro]É pelo meu aniversário? Entendi… obrigado por vir.' },
+    limit: { day: '[neutro]Hoje você já me trouxe uma coisa. Guarde isso aí, que um por dia está de bom tamanho.', week: '[neutro]Essa semana você já me trouxe bastante. Guarde pra outra hora, que eu não fujo daqui.' } },
 ];
+/* Aniversários: Lúcio faz aniversário no dia 9 do Inverno. */
+const GIFT_RULES = { lucio: { perDay: 1, perWeek: 2, birthdayMult: 8 } };
+/* Conversa de Iara sobre Lúcio: disponível depois que o jogador conhece Lúcio (uma vez). */
+const IARA_LUCIO = {
+  lines: ['Você conhece o Lúcio, das montanhas? Às vezes a gente se acostuma tanto a não chamar alguém que esquece de perguntar se essa pessoa queria vir.',
+    'Eu pinto a serra quase toda semana e nunca subi para dar um oi. Fico olhando as coisas de longe, e depois acho que conheço.',
+    'Não estou dizendo que a culpa é só da vila. É minha também. Como ele é, de perto?'],
+  choices: ['Reservado, mas sabe tudo de plantas.', 'Acho melhor você conhecer por conta própria.'],
+  answers: ['Plantas! Então eu já tenho assunto. Quem sabe eu levo umas tintas lá pra cima e peço para ele me ensinar o nome das cores do mato.',
+    'É, tem razão. Ninguém conhece ninguém por recado. Vou subir num dia de sol. Com licença, se ele quiser dar.'],
+};
 const villagerById = id => VILLAGERS.find(v => v.id === id);
 
 /* Missões.
@@ -189,9 +235,28 @@ const QUESTS = {
   omelete: { where: ['galinheiro', 196, 70, 'Ninhos do galinheiro'], giver: 'bia', title: 'Ovos para a festa', hearts: 2, after: 'primeiro_ovo',
     offer: ['Vou fazer um bolo enorme para a vila e minhas galinhas entraram em greve!', 'Você consegue 3 ovos para mim?'],
     desc: 'Entregue 3 ovos a Bia.', goal: { deliver: { ovo: 3 } }, done: ['Salvou o bolo! Vou guardar o maior pedaço para você.'], reward: { coins: 80, friend: 100 } },
+
+  /* Missões pessoais de Lúcio (1, 3 e 5 corações). */
+  lona: { where: ['montanha', 250, 128, 'Lona da tenda de Lúcio'], giver: 'lucio', title: 'Antes da próxima chuva', hearts: 1, need: { madeira: 4 },
+    offer: ['[neutro]O tempo está virando. Lá pelo meio da semana chove grosso, e a lona do lado de cá não aguenta outra.', '[desconfiado]Não estou pedindo favor. É uma troca: quatro pedaços de madeira e uma mão firme. Eu pago em moedas e em conselho.'],
+    desc: 'Leve 4 madeiras até a tenda de Lúcio, na serra (trilha ao norte da vila). Clique na lona, do lado direito da tenda: no primeiro clique você usa a madeira; depois são 3 reparos, um clique cada. Então fale com Lúcio.',
+    goal: { count: { repair: 3 } },
+    done: ['[contente]Olha só. Ficou mais firme do que quando era nova.', '[neutro]Agora pode chover. Tome: trabalho bem feito se paga. E o conselho: madeira de galho seco racha menos.'],
+    reward: { coins: 50, friend: 80 } },
+  lembranca: { where: ['montanha', 588, 158, 'Trilha do rochedo, a leste da nascente'], giver: 'lucio', title: 'O que ficou pelo caminho', hearts: 3, after: 'lona',
+    offer: ['[neutro]Perdi uma coisa pequena. Um apito de madeira, deste tamanho.', '[desconfiado]Deve ter caído quando subi o rochedo do leste, depois da nascente. Meus joelhos não querem voltar lá. Os seus ainda querem?'],
+    desc: 'Procure o apito de madeira de Lúcio na trilha do rochedo, a leste da nascente, na serra. Clique nele para pegar e devolva a Lúcio.',
+    goal: { deliver: { apito: 1 } },
+    done: ['[emocionado]É ele...', '[emocionado]Meu irmão que entalhou, quando a gente tinha mais ou menos a sua idade. A gente assobiava de um morro pro outro pra avisar que estava tudo bem.', '[neutro]Ele desceu pro litoral faz muito tempo. Eu fiquei.', '[contente]Às vezes ainda assobio. Vai que o vento leva.'],
+    reward: { coins: 30, friend: 100 } },
+  fogo: { where: ['montanha', 262, 214, 'Fogueira de Lúcio (18h às 22h)'], giver: 'lucio', title: 'Um lugar junto ao fogo', hearts: 5, after: 'lembranca', selfDone: true,
+    offer: ['[contente]Hoje, quando escurecer, passa na fogueira. Sem pressa. Tem batata-doce na brasa.'],
+    desc: 'Vá até a fogueira de Lúcio, na serra, entre 18h e 22h, e clique na fogueira ou fale com ele. Se perder o horário, a conversa fica para a noite seguinte.',
+    goal: { count: { scene: 1 } },
+    reward: { friend: 60, items: { muda_goiaba: 1 } } },
 };
 
-const COUNT_LABEL = { till: 'canteiros arados', plant: 'sementes plantadas', water: 'canteiros regados', harvest: 'cultivos colhidos', feed: 'porções no comedouro' };
+const COUNT_LABEL = { till: 'canteiros arados', plant: 'sementes plantadas', water: 'canteiros regados', harvest: 'cultivos colhidos', feed: 'porções no comedouro', repair: 'reparos na lona', scene: 'conversa na fogueira' };
 
 /* Objetos que exigem vários golpes. hp = golpes necessários; energy = energia por golpe;
    tools = ferramentas que funcionam; drop = o que rende ao quebrar; fx = tipo de lasca. */

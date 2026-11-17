@@ -82,7 +82,8 @@ const Sprites = (() => {
     const [Hb, Hd, Hl] = byId(HAIR_COLORS, look.hairColor).c;
     const Hdd = shade(Hd, 0.75);
     const robe = look.top === 'manto';
-    const top = robe ? 'manto' : byId(TOPS, look.top).id, bottom = byId(BOTTOMS, look.bottom).id;
+    const leaves = look.top === 'folhas';                    // traje de Lúcio: camisa de mangas longas + manto de folhas
+    const top = robe ? 'manto' : leaves ? 'camisa' : byId(TOPS, look.top).id, bottom = byId(BOTTOMS, look.bottom).id;
     const T = look.topColor || '#3f86d0', Td = shade(T, 0.74), Tl = mix(T, '#ffffff', 0.28);
     const B = look.bottomColor || '#6a5038', Bd = shade(B, 0.72), Bl = mix(B, '#ffffff', 0.22);
     const SHOE = look.shoeColor || '#3a2a22', SHOEl = mix(SHOE, '#ffffff', 0.25);
@@ -124,6 +125,8 @@ const Sprites = (() => {
           case 'trancas': crown(8, 0.3); for (const x of [4, 6, 17, 19]) addRect(x, 8, x, x === 4 || x === 19 ? 21 : 23); add(5, 8); add(18, 8); for (let y = 15; y <= 23; y++) for (let x = 6; x <= 17; x++) backLayer.add(x + ',' + y); break;
           case 'rabo': crown(8, 0.1); add(7, 9); add(16, 9); addRect(17, 8, 18, 16); add(19, 12); add(19, 13); add(18, 17); break;
           case 'coque': crown(8, 0.1); addEll(11.5, 2.4, 2.8, 2.2); add(7, 9); add(7, 10); add(16, 9); break;
+          case 'juba': tex = HAIR.wavy; crown(8, 0.9); addRect(5, 8, 7, 15); addRect(16, 8, 18, 15);
+            [[4, 10], [19, 10], [4, 13], [19, 14], [6, 3], [17, 3], [9, 2], [14, 2], [8, 9], [10, 9], [13, 9], [15, 9], [5, 16], [18, 16]].forEach(([x, y]) => add(x, y)); break;
         }
       } else if (up) {
         const nape = { raspado: 14, curtoLiso: 15, topete: 14, curtoOndulado: 15, curtoCacheado: 15, crespoCurto: 15, rabo: 14, coque: 14 }[hair];
@@ -144,6 +147,7 @@ const Sprites = (() => {
         if (hair === 'trancas') { for (const x of [6, 9, 14, 17]) addRect(x, 9, x + 1, 23); }
         if (hair === 'rabo') { addRect(10, 9, 13, 20); add(11, 21); add(12, 21); add(11, 22); }
         if (hair === 'coque') addEll(11.5, 2.4, 2.8, 2.2);
+        if (hair === 'juba') { tex = HAIR.wavy; addEll(11.5, 9.5, 6.8, 7.2); addRect(6, 9, 17, 15); [[5, 12], [18, 13], [7, 16], [10, 16], [13, 16], [16, 16], [6, 3], [17, 4], [11, 2]].forEach(([x, y]) => add(x, y)); }
       } else {                                            // perfil, olhando para a esquerda
         const sideCrown = (vol = 0) => addEll(12, 9.6, 5.4 + vol, 6.4 + vol, (x, y) => y <= 8 || x >= 12);
         switch (hair) {
@@ -162,6 +166,7 @@ const Sprites = (() => {
           case 'trancas': sideCrown(0.3); for (const x of [13, 15, 17]) addRect(x, 9, x, 23); add(14, 22); add(16, 23); break;
           case 'rabo': sideCrown(0.1); cut((x, y) => y > 13); addRect(16, 9, 18, 18); add(19, 12); add(19, 13); add(17, 19); break;
           case 'coque': sideCrown(0.1); cut((x, y) => y > 13); addEll(15, 3.4, 2.6, 2.2); break;
+          case 'juba': tex = HAIR.wavy; sideCrown(0.9); addRect(12, 9, 17, 15); [[19, 12], [19, 15], [13, 18], [16, 18], [7, 8], [8, 9], [10, 2], [16, 3]].forEach(([x, y]) => add(x, y)); break;
         }
       }
       if (hat) cut((x, y) => y < 5 || (y < 6 && x > 5 && x < 18));          // o chapéu assenta sobre o cabelo
@@ -256,6 +261,16 @@ const Sprites = (() => {
       if (!robe) legs();
     }
 
+    /* ---------- manto de folhas sobre os ombros (Lúcio) ---------- */
+    if (leaves) {
+      const LF = ['#e0a530', '#c8701e', '#8a4a1a', '#f0c050', '#a85a1e'];
+      const x0 = side ? 8 : 5, x1 = side ? 16 : 18;
+      for (let x = x0; x <= x1; x++) { const bot = 20 + ((x * 7) % 3); for (let y = 17; y <= bot; y++) p(x, y, LF[(x * 3 + y * 2) % 5]); }
+      for (let x = x0 + 1; x < x1; x += 3) p(x, 17, '#f0c050');
+      row(23, side ? 9 : 7, side ? 15 : 16, '#6a3a1a');                      // cinto de corda
+      if (down) { p(11, 23, '#e0a530'); p(12, 23, '#e0a530'); }
+    }
+
     /* ---------- pescoço e cabeça ---------- */
     if (side) {
       box(11, 16, 13, 17, Sd);
@@ -337,7 +352,20 @@ const Sprites = (() => {
       else if (up) { row(8, 6, 17, A); p(11, 9, Ad); p(12, 9, Ad); p(11, 10, A); p(12, 10, A); }
       else { row(8, 9, 16, A); p(16, 9, Ad); p(17, 9, A); p(17, 10, Ad); }
     }
-    if (look.beard) { for (let y = 12; y <= 18; y++) row(y, y < 16 ? 7 : 9 + (y - 16), y < 16 ? 16 : 14 - (y - 16), y % 2 ? '#eeeef4' : '#d8d8e4'); p(11, 14, '#b8b8c8'); p(12, 14, '#b8b8c8'); }
+    /* ---------- barba cheia e grisalha (Lúcio) ---------- */
+    if (look.beard === 'cheia') {
+      const BG = ['#d4d4dc', '#a8a8b2', '#eeeef3'], bc = (x, y) => (x + (y >> 1)) % 3 === 0 ? BG[1] : y <= 14 && x < 12 ? BG[2] : BG[0];
+      if (down) {
+        for (let y = 12; y <= 22; y++) { const w = y <= 15 ? 0 : Math.floor((y - 15) / 2); const a = 7 + w, b = 16 - w; for (let x = a; x <= b; x++) if (y > 12 || x <= 8 || x >= 15) p(x, y, bc(x, y)); }
+        row(13, 9, 14, '#d8d8e0'); p(10, 13, '#ffffff'); p(13, 13, '#ffffff'); p(11, 14, '#5a4a4a'); p(12, 14, '#5a4a4a');   // bigode e boca
+        p(7, 10, '#c8c8d0'); p(16, 10, '#c8c8d0'); p(7, 11, '#a4a4ae'); p(16, 11, '#a4a4ae');
+        row(9, 8, 10, '#e8e8ee'); row(9, 13, 15, '#e8e8ee');                     // sobrancelhas grossas
+      } else if (side) {
+        for (let y = 11; y <= 21; y++) { const a = 5 + Math.max(0, y - 18), b = y <= 13 ? 13 : 11; for (let x = a; x <= b; x++) if (y > 11 || x >= 11) p(x, y, bc(x, y)); }
+        row(12, 5, 8, '#d8d8e0'); p(5, 13, '#ffffff'); row(9, 7, 9, '#e8e8ee');
+      } else { p(6, 15, '#c8c8d0'); p(17, 15, '#c8c8d0'); p(6, 16, '#a4a4ae'); p(17, 16, '#a4a4ae'); }
+    }
+    if (look.beard === true) { for (let y = 12; y <= 18; y++) row(y, y < 16 ? 7 : 9 + (y - 16), y < 16 ? 16 : 14 - (y - 16), y % 2 ? '#eeeef4' : '#d8d8e4'); p(11, 14, '#b8b8c8'); p(12, 14, '#b8b8c8'); }
 
     /* ---------- contorno ---------- */
     const filled = grid.map(r => r.map(Boolean));
@@ -350,6 +378,92 @@ const Sprites = (() => {
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (grid[y][x]) { g.fillStyle = grid[y][x]; g.fillRect(x, y, 1, 1); }
     return c;
   }
+
+  /* Retrato de Lúcio (32x32): rosto e ombros, com quatro expressões.
+     expr: 'neutro' | 'desconfiado' | 'contente' | 'emocionado'. */
+  const portraitCache = {};
+  function lucioPortrait(expr = 'neutro') {
+    if (portraitCache[expr]) return portraitCache[expr];
+    const N = 32, grid = Array.from({ length: N }, () => Array(N).fill(null));
+    const p = (x, y, c) => { if (x >= 1 && x < N - 1 && y >= 0 && y < N) grid[y][x] = c; };
+    const row = (y, a, b, c) => { for (let x = a; x <= b; x++) p(x, y, c); };
+    const SK = ['#d8956a', '#b5714a', '#eaae80', '#94573a'];                 // pele queimada de sol: base, sombra, luz, ruga
+    const HG = ['#c9c9d1', '#a3a3ae', '#ececf1', '#7c7c88'];                 // cabelo/barba: base, sombra, luz, sombra funda
+    const LF = ['#e0a530', '#c8701e', '#8a4a1a', '#f2c860'];
+    /* tom do cabelo/barba: luz no alto à esquerda, sombra embaixo à direita, mechas */
+    const tone = (x, y, cx, cy, rx, ry, strand) => {
+      const dx = (x - cx) / rx, dy = (y - cy) / ry, r = dx * dx + dy * dy;
+      if (r > 0.78) return HG[3];
+      if (strand(x, y)) return HG[1];
+      if (dx + dy < -0.75) return HG[2];
+      if (dx + dy > 0.55) return HG[1];
+      return HG[0];
+    };
+    // manto de folhas nos ombros
+    for (let y = 23; y < N; y++) for (let x = 1; x < N - 1; x++) {
+      const w = 10 + Math.min(14, (y - 23) * 3); if (Math.abs(x - 15.5) > w) continue;
+      const leaf = ((x + (y >> 1) * 2) % 5);
+      p(x, y, leaf === 0 ? LF[2] : leaf === 1 ? LF[3] : leaf < 4 ? LF[0] : LF[1]);
+    }
+    // cabelo volumoso, despenteado, atrás do rosto
+    const TUFTS = []; for (let k = 0; k < 11; k++) { const ang = Math.PI * (0.95 + k * 0.11), r = 2 + (k % 3); TUFTS.push([15.5 + Math.cos(ang) * 12.6 * (k % 2 ? 1 : 1.06), 11.5 + Math.sin(ang) * 10.6, r]); }
+    for (let k = 0; k < 11; k++) TUFTS.push([31 - TUFTS[k][0], TUFTS[k][1] + (k % 2), TUFTS[k][2]]);
+    const hairStrand = (x, y) => (x * 2 + y) % 5 === 0 && y > 2;
+    for (let y = 0; y < 26; y++) for (let x = 0; x < N; x++) {
+      const inH = ell(x, y, 15.5, 11.5, 12.4, 10.4) || ell(x, y, 5, 17, 4, 6.5) || ell(x, y, 26, 17, 4, 6.5) || TUFTS.some(([tx, ty, r]) => ell(x, y, tx, ty, r, r));
+      if (inH) p(x, y, tone(x, y, 15.5, 12, 14, 13, hairStrand));
+    }
+    [[3, 4], [28, 5], [1, 11], [30, 12], [8, 0], [23, 0], [16, 0], [12, 0]].forEach(([x, y]) => { p(x, y, HG[0]); p(x, y + 1, HG[1]); });
+    // rosto
+    for (let y = 7; y <= 22; y++) for (let x = 7; x <= 24; x++) if (ell(x, y, 15.5, 14.5, 8, 8.4)) p(x, y, x >= 21 ? SK[1] : y <= 9 ? SK[2] : SK[0]);
+    for (let x = 9; x <= 22; x++) { if (x % 4) p(x, 7, HG[2]); p(x, 8, x % 3 ? HG[0] : SK[2]); }                // franja caída
+    row(10, 12, 14, SK[3]); row(10, 17, 19, SK[3]); row(11, 13, 18, SK[0]);                                // rugas da testa
+    p(7, 14, SK[1]); p(7, 15, SK[1]); p(24, 14, SK[1]); p(24, 15, SK[1]);                                  // orelhas
+    // sobrancelhas grossas e grisalhas (a posição muda com a expressão)
+    const bw = { neutro: [12, 12, 12, 12], desconfiado: [11, 12, 13, 13], contente: [12, 11, 11, 12], emocionado: [13, 12, 11, 11] }[expr];
+    for (let i = 0; i < 5; i++) { const y = bw[Math.min(3, i)]; p(9 + i, y, HG[2]); p(9 + i, y + 1, HG[0]); p(22 - i, y, HG[2]); p(22 - i, y + 1, HG[0]); }
+    // olhos
+    const EY = '#3a2620';
+    if (expr === 'contente') { [[10, 16], [11, 15], [12, 15], [13, 16]].forEach(([x, y]) => p(x, y, EY)); [[18, 16], [19, 15], [20, 15], [21, 16]].forEach(([x, y]) => p(x, y, EY)); }
+    else if (expr === 'desconfiado') { row(15, 10, 13, SK[3]); row(16, 11, 12, EY); row(15, 18, 21, SK[3]); row(16, 19, 20, EY); }
+    else {
+      row(15, 10, 13, '#f4ece0'); p(11, 15, EY); p(12, 15, EY); p(11, 16, EY); p(12, 16, '#6a4030'); row(16, 10, 10, SK[1]); p(13, 16, SK[1]);
+      row(15, 18, 21, '#f4ece0'); p(19, 15, EY); p(20, 15, EY); p(19, 16, EY); p(20, 16, '#6a4030'); p(18, 16, SK[1]); p(21, 16, SK[1]);
+      p(11, 15, '#ffffff'); p(19, 15, '#ffffff');
+      if (expr === 'emocionado') { p(10, 17, '#9fd4ff'); p(10, 18, '#cfeaff'); p(21, 17, '#9fd4ff'); }
+    }
+    p(9, 16, SK[3]); p(22, 16, SK[3]); p(9, 17, SK[3]); p(22, 17, SK[3]);                                  // pés de galinha
+    // nariz
+    p(15, 16, SK[1]); p(15, 17, SK[1]); p(16, 16, SK[2]); p(16, 17, SK[0]); row(18, 14, 17, SK[1]); p(14, 18, SK[3]); p(17, 18, SK[3]);
+    if (expr === 'contente' || expr === 'emocionado') { p(10, 19, '#e08a6a'); p(21, 19, '#e08a6a'); }
+    // barba e bigode cheios, caindo sobre o peito
+    const beardStrand = (x, y) => (x + (y >> 2)) % 3 === 0 && y > 21;
+    for (let y = 18; y < N; y++) for (let x = 2; x < 30; x++) {
+      const inB = (y >= 20 && ell(x, y, 15.5, 24, 10.5, 8.2)) || (y >= 17 && (x <= 9 || x >= 22) && ell(x, y, 15.5, 18, 9.5, 5.5));
+      if (inB) p(x, y, tone(x, y, 15.5, 23, 11, 9.5, beardStrand));
+    }
+    for (let x = 10; x <= 21; x++) { p(x, 19, x < 15 || x > 16 ? HG[2] : HG[0]); p(x, 20, HG[0]); }      // bigode
+    p(9, 20, HG[0]); p(22, 20, HG[0]); p(10, 21, HG[1]); p(21, 21, HG[1]);
+    // boca na barba
+    const MO = '#5a3430';
+    if (expr === 'contente') { p(13, 21, MO); row(22, 14, 17, MO); p(18, 21, MO); }
+    else if (expr === 'emocionado') { row(21, 14, 17, MO); row(22, 14, 17, '#7a4a44'); }
+    else if (expr === 'desconfiado') { row(21, 14, 16, MO); p(17, 22, MO); }
+    else row(21, 14, 17, MO);
+    // contorno
+    const OUTL = '#231a2a', filled = grid.map(r => r.map(Boolean));
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      if (filled[y][x]) continue;
+      if ((filled[y - 1] && filled[y - 1][x]) || (filled[y + 1] && filled[y + 1][x]) || filled[y][x - 1] || filled[y][x + 1]) grid[y][x] = OUTL;
+    }
+    const c = document.createElement('canvas'); c.width = N; c.height = N;
+    const g = c.getContext('2d');
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (grid[y][x]) { g.fillStyle = grid[y][x]; g.fillRect(x, y, 1, 1); }
+    return (portraitCache[expr] = c);
+  }
+  const PORTRAITS = { lucio: lucioPortrait };
+  /* Canvas novo (para painéis) com o retrato. */
+  function portrait(id, expr) { const src = PORTRAITS[id](expr), c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.className = 'pixel'; c.getContext('2d').drawImage(src, 0, 0); return c; }
 
   const flipped = img => {
     const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -397,5 +511,5 @@ const Sprites = (() => {
     return look;
   }
 
-  return { W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
+  return { portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
 })();

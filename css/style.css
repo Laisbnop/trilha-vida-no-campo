@@ -305,3 +305,11 @@ body.playing { overflow: hidden; height: 100%; }
 .letter-body .sign { text-align: right; white-space: pre-line; font-style: italic; }
 .letter-body .stamp { float: right; width: 44px; height: 54px; margin: 0 0 6px 10px; background: #c8503a; border: 3px dashed #f6ecd2; outline: 2px solid #c8503a; }
 .paper .btn { display: block; margin: 10px auto 0; }
+
+/* ---------- retratos próprios (Lúcio) ---------- */
+.portrait.square { height: 80px; }
+.friend-top canvas.portrait-pic { width: 56px; height: 56px; background: #2a3a5a; }
+.gift-week { color: var(--gold); }
+@media (max-width: 640px) { .portrait.square { height: 60px; } }
+#map-canvas { max-height: 74vh; width: auto; max-width: 100%; margin: 0 auto; }
+.map-frame { display: flex; justify-content: center; }

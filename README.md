@@ -93,7 +93,8 @@ Um mapa externo maior que a tela, com a câmera acompanhando o personagem:
   parte tomada por mato, galhos, pedras e tocos —, lago para encher o regador,
   placa com o nome da fazenda, boneco de treino e, no sul, o **galinheiro**
   (celeiro vermelho com porta para a estrada) ao lado do cercado das galinhas.
-- **Vila** (centro): praça com fonte, Armazém e as casas dos moradores.
+- **Vila** (centro): praça com fonte, Armazém e as casas dos moradores. Entre a
+  vila e o bosque, uma **trilha** sobe para o norte, até a serra.
 - **Bosque** (leste): árvores comuns, rochas, amoras, cogumelos e flores.
 
 Interiores: a **casa** (cama, baú e guarda-roupa), o **Armazém** e o
@@ -134,13 +135,70 @@ na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 - **Bosque**: a árvore cortada deixa um toco, que também pode ser removido;
   ela volta em 4 dias e as rochas em 3. Os itens de coleta mudam de lugar todo dia.
 
+## A serra e Lúcio
+
+Pela trilha ao norte da vila chega-se à **serra**: um paredão de rocha (com uma
+fenda fechada por tábuas, que ninguém usa), a mata, uma nascente onde dá para
+encher o regador, amoras e flores para colher e o acampamento de **Lúcio** — a
+tenda, a fogueira com troncos para sentar e os pertences dele, arrumados num
+canto. No mapa (M), a serra aparece acima da vila; depois que você conhece
+Lúcio, a tenda é identificada pelo nome.
+
+**Quem é:** um homem mais velho que vive ali há muitos anos. Conhece plantas, o
+jeito do tempo e trilhas que pouca gente usa. É reservado, observador e tem um
+humor discreto que aparece com a confiança. Já encontrou a tenda rasgada e as
+coisas espalhadas, sem saber por quem, e por isso desconfia no começo — mas tem
+orgulho da vida que construiu e não quer ser "salvo" de nada.
+
+**Aparência:** retrato próprio em pixel art (rosto e ombros) com quatro
+expressões — neutro, desconfiado, contente e emocionado —, usadas conforme a
+fala, e sprite de corpo inteiro com cabelo grisalho volumoso, barba cheia e um
+manto de folhas sobre a roupa terrosa, nas quatro direções.
+
+**Rotina:** de manhã perto da tenda e colhendo na mata; à tarde na nascente; à
+noite junto à fogueira. Ele só anda por lugares livres.
+
+**Tenda:** clique na entrada. Na primeira vez, Lúcio pergunta e dá permissão
+numa conversa curta; depois, você entra direto.
+
+**Amizade e falas:** 0 a 5 corações, como os outros moradores, com falas
+próprias em quatro faixas (0, 1–2, 3–4 e 5 corações), sem repetir a anterior.
+Só a primeira conversa do dia dá pontos.
+
+**Presentes (regras só dele):** no máximo 1 por dia e 2 por semana. A semana
+vira nos dias 1, 8, 15 e 22 de cada estação. Antes de entregar, o jogo pergunta
+"Presentear Lúcio com [item]?". Se o limite já foi atingido, ele recusa com
+gentileza e o item fica na mochila. No **aniversário (9 do Inverno)** ele aceita
+um presente a mais, mesmo com os limites esgotados, e os pontos valem **8
+vezes** (inclusive os negativos). Ama goiaba; gosta de laranja, amora e ovo;
+madeira e pedra são neutras; não gosta de ração. As preferências aparecem no
+painel de amizades conforme você descobre. Entregas de missão não contam como
+presente.
+
+**Missões pessoais:**
+
+- **Antes da próxima chuva** (1 coração): leve 4 madeiras e clique na lona da
+  tenda. No primeiro clique a madeira é usada; depois vêm 3 reparos, com
+  animação e barra de progresso. A tenda ganha cobertura nova para sempre.
+  Fale com Lúcio para concluir.
+- **O que ficou pelo caminho** (3 corações): procure o apito de madeira na
+  trilha do rochedo, a leste da nascente, e devolva. Ele conta uma lembrança. O
+  apito não volta a aparecer.
+- **Um lugar junto ao fogo** (5 corações): vá à fogueira entre 18h e 22h. Uma
+  conversa curta em que os dois contam um pouco de si; no fim, ele dá uma muda
+  de goiabeira. Se perder o horário, a conversa fica para a noite seguinte.
+
+**Iara:** depois que você conhece Lúcio, Iara puxa uma conversa sobre ele: acha
+que a vila esquece de chamá-lo, e que ela mesma também precisa se aproximar. Ela
+não conta nada que Lúcio ainda não tenha contado a você.
+
 ## Moradores e amizade
 
-Cinco moradores, cada um com rotina, personalidade e gostos: Dona Celeste
-(Armazém), Seu Honório, Bia, Tomé e Iara. A amizade vai de 0 a 5 corações:
+Seis moradores, cada um com rotina, personalidade e gostos: Dona Celeste
+(Armazém), Seu Honório, Bia, Tomé, Iara e Lúcio (na serra). A amizade vai de 0 a 5 corações:
 
 - clique no morador para conversar; a primeira conversa do dia dá pontos; as seguintes continuam disponíveis, sem pontos;
-- cada morador aceita um presente por dia (com um produto na mão, a conversa oferece a opção), e os preferidos rendem mais;
+- cada morador aceita um presente por dia (com um produto na mão, a conversa oferece a opção), e os preferidos rendem mais; Lúcio tem regras próprias (acima);
 - com 1 coração surge o pedido pessoal de cada um; com 3, uma pequena cena e um presente;
 - as falas mudam conforme a amizade. Não há romance.
 
@@ -174,8 +232,13 @@ está e o jogo avisa. Três chapéus equipáveis: de palha, boina e de pescador.
 
 O progresso fica no navegador (`localStorage`): personagem e aparência, posição,
 dia e horário, mochila, baú, moedas, canteiros, árvores, galinhas, amizades,
-limites diários, missões e mudanças no mapa. Use o mesmo navegador e aparelho
-para continuar.
+limites diários, missões e mudanças no mapa. De Lúcio: amizade, conversa do
+dia, presentes do dia e da semana (com a semana de referência), presente de
+aniversário do ano, permissão da tenda, etapas das missões, melhoria da tenda,
+apito encontrado e entregue, cenas vistas e a conversa de Iara. Recarregar a
+página não reinicia limites nem repete eventos. Use o mesmo navegador e
+aparelho para continuar. Jogos salvos antes de Lúcio ganham esses campos
+zerados, sem perder nada.
 
 Jogos salvos da versão anterior da fazenda continuam: o jogo pede só o nome da
 fazenda e o animal favorito, sem recomeçar nem mexer em mochila, plantações,
