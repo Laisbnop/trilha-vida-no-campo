@@ -147,7 +147,7 @@ const VILLAGERS = [
   { id: 'lucio', name: 'Lúcio', map: 'montanha', portrait: 'lucio', hidden: true,
     place: 'na serra, ao norte da vila: perto da tenda de manhã, na mata ou na nascente à tarde, e junto à fogueira à noite',
     bio: 'Vive numa tenda na serra. Conhece plantas, o jeito do tempo e trilhas que pouca gente usa. Fala pouco e escolhe bem as palavras.',
-    look: mkLook('s3', 'juba', 'grisalho', 'folhas', '#7a5232', 'calca', '#5a4630', { gender: 'm', beard: 'cheia', shoeColor: '#3a2a22' }),
+    look: mkLook('s3', 'juba', 'cinzaQuente', 'folhas', '#7a5232', 'calca', '#5a4630', { gender: 'm', beard: 'cheia', shoeColor: '#3a2a22' }),
     birthday: { season: 3, day: 9 },                                         // 9 do Inverno
     love: ['goiaba'], like: ['laranja', 'amora', 'ovo'], neutral: ['madeira', 'pedra'], dislike: ['racao'],
     /* rotina (coordenadas da serra): manhã perto da tenda e na mata, tarde na nascente, noite na fogueira */
