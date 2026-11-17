@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=lucio2">
+  <link rel="stylesheet" href="css/style.css?v=estacoes1">
 </head>
 <body>
 
@@ -69,6 +69,7 @@
         <button class="btn" type="button" data-tab="amizades">Amizades</button>
         <button class="btn" type="button" id="btn-map" title="Mapa (tecla M)">Mapa</button>
         <button class="btn" type="button" id="btn-full" title="Tela cheia">Tela cheia</button>
+        <button class="btn" type="button" id="btn-pause" title="Pausa (tecla P)" aria-label="Pausa">⏸</button>
       </nav>
       <div class="toasts" id="toasts" aria-live="polite"></div>
       <div class="hint-bar" id="hint" hidden></div>
@@ -131,6 +132,15 @@
       </div>
     </div>
 
+    <!-- pausa: o tempo para -->
+    <div class="modal" id="pause" hidden>
+      <div class="win pause-win" role="dialog" aria-modal="true" aria-label="Pausa">
+        <h2>Pausado</h2>
+        <p class="dim">O tempo do jogo está parado.</p>
+        <button type="button" class="btn primary" id="pause-go">Continuar ▶</button>
+      </div>
+    </div>
+
     <!-- carta do avô -->
     <div class="modal" id="letter" hidden>
       <div class="paper" role="dialog" aria-modal="true" aria-label="Carta">
@@ -145,10 +155,10 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=lucio2"></script>
-  <script src="js/sprites.js?v=lucio2"></script>
-  <script src="js/portraits.js?v=lucio2"></script>
-  <script src="js/world.js?v=lucio2"></script>
-  <script src="js/game.js?v=lucio2"></script>
+  <script src="js/data.js?v=estacoes1"></script>
+  <script src="js/sprites.js?v=estacoes1"></script>
+  <script src="js/portraits.js?v=estacoes1"></script>
+  <script src="js/world.js?v=estacoes1"></script>
+  <script src="js/game.js?v=estacoes1"></script>
 </body>
 </html>

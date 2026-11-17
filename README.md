@@ -23,6 +23,7 @@ pelo GitHub Pages. Não precisa instalar nada.
 | Escolher o item da barra | Clique na barra ou teclas 1 a 9 e 0 | Toque na barra |
 | Avançar conversa | Clique na caixa, E, Espaço ou Enter | Toque na caixa de conversa |
 | Abrir/fechar o mapa | M (fecha também com Esc) | Botão Mapa |
+| Pausar | P (ou o botão ⏸) | Botão ⏸ |
 | Fechar painel | Esc ou clique fora | Botão ✕ |
 
 **Só funciona de perto.** O alvo precisa estar ao lado do personagem (na fazenda,
@@ -113,7 +114,7 @@ comedouro (cada clique põe 1 porção da mochila), ponha 2 e volte a falar com
 Bia: ela dá uma galinha para você batizar. Com ração no comedouro, a galinha bota
 de noite, e o ovo aparece nos ninhos de manhã.
 
-**Calendário e bicho:** as estações têm 28 dias. Na manhã do dia 12 da primavera
+**Bicho de estimação:** na manhã do dia 12 da primavera
 do ano 1, Bia traz o seu animal favorito. Aceite e dê um nome; se adiar, ela volta
 na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
@@ -171,7 +172,7 @@ próprias em quatro faixas (0, 1–2, 3–4 e 5 corações), sem repetir a anter
 Só a primeira conversa do dia dá pontos.
 
 **Presentes (regras só dele):** no máximo 1 por dia e 2 por semana. A semana
-vira nos dias 1, 8, 15 e 22 de cada estação. Antes de entregar, o jogo pergunta
+vira toda segunda-feira. Antes de entregar, o jogo pergunta
 "Presentear Lúcio com [item]?". Se o limite já foi atingido, ele recusa com
 gentileza e o item fica na mochila. No **aniversário (9 do Inverno)** ele aceita
 um presente a mais, mesmo com os limites esgotados, e os pontos valem **8
@@ -218,10 +219,72 @@ recompensa é dada uma única vez.
 
 ## Dias, energia e loja
 
-O relógio vai das 6h até o fim da noite, com a luz mudando entre manhã, tarde e
-noite, e para enquanto há conversa ou painel aberto. Nada de ruim acontece se anoitecer: o dia só termina quando você dorme, o
-que recupera a energia e mostra um resumo da noite. Andar e conversar não
-gastam energia.
+### Calendário
+
+Quatro estações de **29 dias**: Primavera → Verão → Outono → Inverno → Primavera
+do ano seguinte. O jogo começa numa **segunda-feira, dia 1 da Primavera, ano 1**,
+e a semana continua normalmente de uma estação para a outra. O painel no canto
+de cima mostra dia da semana, data, estação, ano, horário (de 10 em 10 minutos),
+moedas, energia e um pequeno céu com o sol ou a lua. O dia absoluto da partida é a
+referência de tudo: aniversários (Lúcio, 9 do Inverno), eventos, rotinas e o
+limite semanal de presentes, que vira **toda segunda-feira**.
+
+### Duração do dia
+
+Das **6h às 2h da madrugada**: 20 horas de jogo em **26 minutos de tempo real
+ativo** (cada hora dura 78 segundos). O relógio interno é contínuo, e a luz muda
+aos poucos. O tempo para em conversas, mochila, loja, baú e outros painéis, no
+mapa, nas cenas, na pausa (P) e com a aba do navegador em segundo plano. Fechar e
+voltar ao jogo não soma o tempo que passou fora. Dormir antes das 2h encerra o
+dia; às 2h, uma transição curta avisa que o personagem precisa descansar e a
+manhã seguinte começa em casa, sem perder itens nem dinheiro. A noite (plantas,
+árvores, galinhas, coletáveis) é processada uma única vez por dia.
+
+### Luz
+
+Amanhecer (6h–8h) com luz suave e quente; dia claro (8h–16h); entardecer
+dourado (16h–19h); anoitecer (19h–21h) e noite azulada (21h–2h), tudo em
+transições graduais. À noite, janelas, postes, o lampião da varanda e a fogueira
+do Lúcio acendem; caminhos e objetos continuam legíveis. Interiores têm luz
+própria e não escurecem como lá fora. Painel, textos e menus nunca escurecem.
+
+### Estações no cenário
+
+Os cenários externos são redesenhados em cada estação (não é um filtro): grama
+verde e árvores floridas na primavera; verdes mais intensos, copas cheias e
+capim alto no verão; copas laranja, vermelhas e amarelas, folhas no chão e
+vegetação seca no outono; neve no chão, nos telhados, nos pinheiros e nos
+arbustos, árvores de galhos nus e água mais fria no inverno. Caminhos, portas,
+pontes e colisões são os mesmos em todas as estações. A neve é só visual, e as
+regras dos cultivos não mudaram.
+
+### Coletáveis sazonais da Vila Acapulco
+
+Toda noite podem surgir plantas pela vila (beira de caminhos, gramados, perto de
+árvores e entre as casas), para colher com um clique de perto:
+
+| Estação | O que surge | Quantos por noite |
+| --- | --- | --- |
+| Primavera | Narciso | 1 garantido + 20% de chance de outro |
+| Verão | Ervilha-de-cheiro | 1 garantido + 20% de chance de outro |
+| Outono | Amora | 90% de chance de 1 |
+| Inverno | Flor de açafrão (54%), azevinho (38%), fruta de cristal (8%) | 70% de chance de 1 |
+
+No máximo 12 ficam no chão ao mesmo tempo; o que passar disso naquela noite é
+descartado. O que não for colhido fica até o fim da estação; na virada, some do
+chão (o que já está na mochila ou no baú continua). Com a mochila cheia, a planta
+fica onde está e o jogo avisa. Nada é gerado ao entrar na vila, abrir menus ou
+recarregar a página. Os itens podem ser guardados, vendidos e dados de presente
+(Iara adora flores; Tomé gosta de azevinho; Bia, de fruta de cristal).
+
+**Modo de desenvolvimento:** abra o jogo com `?dev=1` no fim do endereço para ver
+os pontos de surgimento em vermelho e usar `window.__trilha.dev` (avançar horas,
+noites e dias). Nada disso aparece na versão normal.
+
+### Energia
+
+Andar e conversar não gastam energia. Dormir recupera tudo e mostra um resumo da
+noite.
 
 O Armazém (Dona Celeste atende das 6h às 18h) vende sementes, mudas, ração,
 galinhas e um chapéu, e compra colheitas, ovos, frutos, madeira, pedra e itens
@@ -237,7 +300,10 @@ está e o jogo avisa. Três chapéus equipáveis: de palha, boina e de pescador.
 
 O progresso fica no navegador (`localStorage`): personagem e aparência, posição,
 dia e horário, mochila, baú, moedas, canteiros, árvores, galinhas, amizades,
-limites diários, missões e mudanças no mapa. De Lúcio: amizade, conversa do
+limites diários, missões e mudanças no mapa; ano, estação, dia, dia absoluto,
+horário interno, última noite processada e os coletáveis no chão (item e
+posição). Jogos salvos antes do calendário de 29 dias são convertidos pelo dia
+absoluto, sem perder nada. De Lúcio: amizade, conversa do
 dia, presentes do dia e da semana (com a semana de referência), presente de
 aniversário do ano, permissão da tenda, etapas das missões, melhoria da tenda,
 apito encontrado e entregue, cenas vistas e a conversa de Iara. Recarregar a
