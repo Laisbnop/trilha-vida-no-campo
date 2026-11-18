@@ -448,3 +448,37 @@ table.controls td:first-child { color: #7a3a14; }
 #modal .menu-wrap { flex: none; width: min(1040px, calc(100vw - 24px)); height: min(740px, calc(100vh - 24px)); }
 #modal .list li .btn, #modal .li-actions .btn { align-self: flex-start; }
 @media (max-width: 760px) { #modal .menu-wrap { width: calc(100vw - 12px); height: calc(100vh - 12px); } }
+
+/* ---------- pesca ---------- */
+.fish-panel { position: absolute; top: 50%; right: max(16px, 12%); transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: rgba(10, 16, 64, .82); border: 3px solid #fff; border-radius: 8px; box-shadow: 0 0 0 3px #1a1a3a; padding: 10px 12px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.fish-title { font-family: var(--px); font-size: 11px; color: var(--gold); text-shadow: 2px 2px 0 #000; }
+#fish-canvas { width: 180px; height: 450px; max-height: calc(100vh - 170px); aspect-ratio: 60 / 150; image-rendering: pixelated; }
+.fish-help { margin: 0; text-align: center; font-size: 18px; line-height: 1.1; color: var(--muted); }
+.fish-tut { position: absolute; inset: 6px; background: rgba(10, 16, 64, .95); border: 2px solid var(--gold); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px; justify-content: center; text-align: center; }
+.fish-tut b { font-family: var(--px); font-size: 10px; line-height: 1.5; color: var(--gold); }
+.fish-tut p { margin: 0; font-size: 19px; line-height: 1.1; }
+.fish-cancel { position: absolute; left: 50%; bottom: 128px; transform: translateX(-50%); z-index: 4; font-size: 19px; }
+.catch { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 5; width: min(440px, calc(100% - 24px)); max-height: calc(100% - 150px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.catch-top { display: flex; gap: 12px; align-items: center; }
+.catch-pic { width: 64px; height: 64px; flex: none; background: var(--deep); border: 2px solid #fff; border-radius: 6px; image-rendering: pixelated; }
+.catch-txt { display: flex; flex-direction: column; gap: 2px; }
+.catch-name { font-family: var(--px); font-size: 12px; line-height: 1.6; color: var(--gold); }
+.catch-size { font-size: 24px; }
+.catch-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 18px; padding: 0 6px; border-radius: 4px; border: 2px solid #fff; }
+.tag.new { background: #2f7a48; } .tag.rec { background: #a8642a; }
+.catch-full { margin: 0; color: #ffd0a0; }
+.catch-inv { display: flex; flex-wrap: wrap; gap: 4px; }
+.catch-inv .slot { width: 38px; height: 38px; }
+.catch-inv .slot.locked { opacity: .45; }
+.catch-btns { display: flex; gap: 10px; justify-content: center; }
+.btn.danger { background: #a83a2e; }
+.stamp.stamp-green { background: #3f8a4a; outline-color: #3f8a4a; }
+.fish-row { flex-direction: row !important; align-items: center; justify-content: space-between; gap: 8px; }
+@media (max-width: 640px), (max-height: 560px) {
+  .fish-panel { right: 50%; transform: translate(50%, -55%); padding: 8px; }
+  #fish-canvas { width: 120px; height: 300px; }
+  .catch { bottom: 150px; }
+  .fish-cancel { top: 118px; bottom: auto; }
+}

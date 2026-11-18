@@ -34,6 +34,7 @@
       nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
       friends: {}, daily: { talk: {}, gift: {} }, known: {}, scenes: {},
       quests: {}, world: { banco: false }, dummy: 0, intro: false, seed,
+      fish: newFishState(2),
     };
     ['enxada', 'regador', 'machado', 'picareta', 'foice', 'espada'].forEach((id, i) => { s.inv[i] = { id, n: 1 }; });
     // a terra começa tomada por mato, galhos e pedras; perto da casa há um trecho limpo
@@ -47,6 +48,9 @@
     refreshForage(s);
     return s;
   }
+  /* Pesca: vara recebida, carta de Tomé (dia em que chega), presente guardado (mochila cheia),
+     tutorial visto, experiência e espécies descobertas { id: { n, max } }. */
+  const newFishState = letterDay => ({ rod: false, letterDay, letter: false, pending: false, tut: false, xp: 0, dex: {} });
   /* Frutos e flores da serra, sorteados a cada dia. */
   function refreshMountain(s) {
     let sd = (s.seed + s.day * 104729) >>> 0; const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -260,7 +264,7 @@
      ===================================================== */
   /* Coloca n itens no conjunto de espaços; devolve quantos NÃO couberam. */
   function addTo(arr, id, n) {
-    for (const s of arr) { if (n && s && s.id === id && s.n < STACK) { const k = Math.min(n, STACK - s.n); s.n += k; n -= k; } }
+    for (const s of arr) { if (n && s && s.id === id && s.n < STACK && !s.cm) { const k = Math.min(n, STACK - s.n); s.n += k; n -= k; } }
     for (let i = 0; i < arr.length && n; i++) if (!arr[i]) { const k = Math.min(n, STACK); arr[i] = { id, n: k }; n -= k; }
     return n;
   }
@@ -286,6 +290,7 @@
   let map = null;
   const P = { x: 0, y: 0, dir: 'down', moving: false, work: 0, tool: null, hop: 0 };
   const keys = {};
+  let fishing = null;                                     // tentativa de pesca em andamento (só na memória)
   let busy = false, hover = null, lastSave = 0, floats = [], dummyHit = 0, hens = [], impacts = [], shake = null, pet = null;
   const COARSE = window.matchMedia && matchMedia('(pointer: coarse)').matches;
 
@@ -354,6 +359,10 @@
     VILLAGERS.forEach(v => { if (typeof s.friends[v.id] !== 'number') s.friends[v.id] = 0; if (!s.known[v.id]) s.known[v.id] = {}; });
     /* Lúcio: conversa, presentes (dia, semana e aniversário), tenda, missões e cenas */
     s.lucio = Object.assign({ met: false, permit: false, gifts: { week: -1, n: 0 }, bday: 0, tentUp: false, found: false, fireScene: false, iara: false, last: -1, again: 0 }, s.lucio);
+    /* pesca: quem já jogava recebe a carta de Tomé na manhã seguinte à atualização */
+    s.fish = Object.assign(newFishState(s.day + 1), s.fish);
+    if (!s.fish.dex || typeof s.fish.dex !== 'object') s.fish.dex = {};
+    if (s.inv.some(x => x && x.id === 'vara') || s.chest.some(x => x && x.id === 'vara')) { s.fish.rod = true; s.fish.pending = false; }
     if (!s.nature.mforage) refreshMountain(s);
     s.nature.cleared = s.nature.cleared || {};
     if (!s.stumps) {                                    // alguns tocos em grama livre, longe da casa
@@ -365,6 +374,7 @@
   const needsSetup = () => !S.farmName || !S.pet.sp;
   function startGame() {
     upgrade(S);
+    endFishing();
     show('game'); fit();
     closeModal(); setPause(false);
     World.setSeason(calendar().si);
@@ -393,9 +403,9 @@
       S.intro = true;
     });
   }
-  function showLetter(reread) {
+  function showLetter(reread, L = LETTER) {
     return new Promise(resolve => {
-      const b = $('letter-body'); b.replaceChildren(el('div', 'stamp'), el('p', 'greet', fmt(LETTER.greet)), ...LETTER.body.map(t => el('p', '', fmt(t))), el('p', 'sign', LETTER.sign));
+      const b = $('letter-body'); b.replaceChildren(el('div', 'stamp' + (L === LETTER ? '' : ' stamp-green')), el('p', 'greet', fmt(L.greet)), ...L.body.map(t => el('p', '', fmt(t))), el('p', 'sign', L.sign));
       $('letter-ok').textContent = reread ? 'Fechar a carta' : 'Guardar a carta ▶';
       $('letter').hidden = false; $('letter').scrollTop = 0; $('letter-ok').focus();
       $('letter-ok').onclick = () => { $('letter').hidden = true; resolve(); };
@@ -412,10 +422,10 @@
     setTimeout(() => { enterMap(to, x, y, dir); save(); wrap.classList.remove('fade'); busy = false; renderHud(); }, 220);
   }
   const keepsakeVisible = () => qActive().includes('lembranca') && !S.lucio.found;
-  const blocked = () => busy || paused || document.hidden || !$('modal').hidden || !$('summary').hidden || !$('letter').hidden || screen !== 'game';
+  const blocked = () => busy || paused || document.hidden || !$('modal').hidden || !$('summary').hidden || !$('letter').hidden || screen !== 'game' || fishPaused();
   /* Pausa (tecla P ou botão): o tempo para e nada acontece até continuar. */
   let paused = false;
-  function setPause(v) { paused = !!v && screen === 'game'; $('pause').hidden = !paused; if (paused) $('pause-go').focus(); }
+  function setPause(v) { if (v && fishing) return tip('Termine a pesca ou recolha a linha (Esc) antes de pausar.'); paused = !!v && screen === 'game'; $('pause').hidden = !paused; if (paused) $('pause-go').focus(); }
   $('btn-pause').onclick = () => setPause(true);
   $('pause-go').onclick = () => setPause(false);
   /* Às 2h o personagem precisa descansar: transição curta e a manhã seguinte em casa, sem perder nada. */
@@ -483,7 +493,8 @@
   function update(dt, t, list) {
     P.moving = false;
     const free = !blocked();
-    if (free && !P.work) {
+    if (fishing && !paused && !document.hidden && !busy) updateFishing(dt, t);
+    if (free && !P.work && !fishing) {
       let dx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), dy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
       if (dx || dy) {
         P.dir = dx ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
@@ -499,14 +510,16 @@
       const before = Math.floor(S.time / 10);
       S.time = Math.min(DAY_END, S.time + dt / MS_PER_GAME_MIN);
       if (Math.floor(S.time / 10) !== before) renderHud();
-      if (S.time >= DAY_END) passOut();
+      if (S.time >= DAY_END) { if (fishing) { endFishing(); toast('São 2h: você recolhe a linha.'); } passOut(); }
     }
+    // carta de Tomé com a vara de pesca (uma vez só)
+    if (free && !fishing && !passingOut && S.intro && !needsSetup() && !S.fish.letter && S.day >= S.fish.letterDay) rodLetter();
     floats = floats.filter(f => t - f.t0 < 700);
     updateHens(dt, t); updatePet(dt, t);
     impacts = impacts.filter(f => t - f.t0 < 400);
     hover = null;
-    if (free && mouse) { const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, list); if (tg) { tg.ok = reachable(tg); hover = tg; } }
-    const hint = $('hint'), text = hover ? (hover.ok ? hover.label : `${hover.label.split(' — ')[0]} — chegue mais perto`) : '';
+    if (free && mouse && !fishing) { const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, list); if (tg) { tg.ok = tg.fish ? tg.fishOk : reachable(tg); hover = tg; } }
+    const hint = $('hint'), text = hover ? (hover.ok || hover.fish ? hover.label : `${hover.label.split(' — ')[0]} — chegue mais perto`) : '';
     if (hint.dataset.t !== text) { hint.dataset.t = text; hint.hidden = !text; hint.classList.toggle('far', !!(hover && !hover.ok)); hint.replaceChildren(el('b', '', COARSE ? 'TOQUE' : 'CLIQUE'), el('span', '', text)); }
     if (t - lastSave > 2500) { lastSave = t; S.pos.x = Math.round(P.x); S.pos.y = Math.round(P.y); S.pos.dir = P.dir; save(); }
   }
@@ -530,6 +543,7 @@
     const c = $('scene'); World.setView(c.width, c.height);
     const cam = World.camera(map, P.x, P.y), ctx = c.getContext('2d');
     const me = { look: S.look, x: P.x, y: P.y, dir: P.dir, moving: P.moving, tool: P.tool, hop: P.hop && t < P.hop ? -Math.abs(Math.sin((P.hop - t) / 80)) * 4 : 0 };
+    if (fishing) { me.fish = fishView(t); me.tool = null; me.moving = false; if (me.fish.hold) me.dir = 'down'; }
     const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
     const lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
     World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
@@ -569,6 +583,11 @@
     for (const a of list.slice().sort((p, q) => q.y - p.y)) {
       const r = [a.x - 10, a.y - 31, 20, 33];
       if (inRect(r, wx, wy)) return { label: 'Falar com ' + a.name, rect: r, reach: a.reach > 30 ? 30 : 16, act: () => talkTo(a.v) };
+    }
+    const held = equipped();
+    if (held && held.id === 'vara' && World.waterZone(map, wx, wy)) {
+      const c = fishCheck(wx, wy);
+      return { label: c.ok ? 'Pescar — segure e solte para lançar' : c.why.replace(/\.$/, ''), rect: [Math.round(wx) - 5, Math.round(wy) - 4, 10, 8], fish: true, fishOk: c.ok, check: c };
     }
     if (map.id === 'fora') {
       if (pet) { const r = [pet.x - 10, pet.y - 18, 20, 19]; if (inRect(r, wx, wy)) return { label: `Fazer carinho em ${S.pet.name}`, rect: r, act: petPet }; }
@@ -732,6 +751,13 @@
       if ((low === 'e' || k === ' ' || k === 'Enter') && onAdvance) { e.preventDefault(); onAdvance(); }
       return;
     }
+    // 3b) pescando: Espaço fisga e puxa, Esc recolhe; os demais atalhos ficam bloqueados
+    if (fishing) {
+      if (k === ' ') { if (fishing.phase !== 'show') { e.preventDefault(); if (!e.repeat) fishSpace(true); } return; }
+      if (k === 'Escape') { e.preventDefault(); if (!e.repeat) cancelFishing(); return; }
+      if (k === 'Tab' || /^Arrow/.test(k) || ['e', 'f', 'm', 'p', 'q'].includes(low)) e.preventDefault();
+      return;
+    }
     // 4) pausa
     if (paused) { if (!e.repeat && (k === 'Escape' || low === 'p')) { e.preventDefault(); setPause(false); } return; }
     const menuOpen = !$('modal').hidden;
@@ -752,8 +778,8 @@
     if (KEYMAP[k]) { keys[KEYMAP[k]] = true; return; }
     if (/^[0-9]$/.test(k) && !blocked()) { selectSlot(k === '0' ? 9 : +k - 1); return; }
   });
-  window.addEventListener('keyup', e => { if (KEYMAP[e.key]) keys[KEYMAP[e.key]] = false; });
-  window.addEventListener('blur', () => { Object.keys(keys).forEach(k => { keys[k] = false; }); });
+  window.addEventListener('keyup', e => { if (KEYMAP[e.key]) keys[KEYMAP[e.key]] = false; if (e.key === ' ' && fishing) fishSpace(false); });
+  window.addEventListener('blur', () => { Object.keys(keys).forEach(k => { keys[k] = false; }); fishRelease(true); });
   document.querySelectorAll('[data-dir]').forEach(b => {
     const set = v => e => { e.preventDefault(); keys[b.dataset.dir] = v; };
     b.addEventListener('pointerdown', set(true)); ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => b.addEventListener(n, set(false)));
@@ -774,9 +800,11 @@
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
     setMouse(e);
+    if (fishing) { fishTap(); return; }                                        // pescando: o clique fisga (o resto fica bloqueado)
     if (blocked() || P.work || performance.now() - menuClosedT < 200) return;   // menu/conversa aberta, golpe em andamento ou menu recém-fechado: o clique não conta
     const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, actors());
-    if (!tg) { const it = equipped(); if (it && it.id === 'espada') { faceTo(wx, wy); useTool('espada', 0); } return; }
+    if (tg && tg.fish) return startCharge(tg.check);
+    if (!tg) { const it = equipped(); if (it && it.id === 'espada') { faceTo(wx, wy); useTool('espada', 0); } else if (it && it.id === 'vara') tip('Com a vara na mão, segure o clique sobre a água, perto da margem, e solte para lançar.'); return; }
     if (!reachable(tg)) return tip(`Longe demais: chegue mais perto de ${tg.label.split(' — ')[0].replace(/ \(.*\)$/, '').replace(/^(Falar com|Entrar:) /, '').toLowerCase()}.`);
     const [cx, cy] = center(tg.near || tg.rect); faceTo(cx, cy);
     if (tg.act) tg.act();
@@ -789,9 +817,10 @@
   /* Orientação curta, sem repetir a mesma mensagem em sequência. */
   function tip(text) { const now = performance.now(); if (text === lastTip && now - lastTipT < 1200) return; lastTip = text; lastTipT = now; toast(text); }
   /* A barra de ferramentas mostra uma das 3 linhas da mochila (Tab troca a linha, mantendo a coluna). */
-  function selectSlot(i) { S.sel = S.row * HOTBAR + i; renderHotbar(); save(); }
+  function selectSlot(i) { if (fishing) return; S.sel = S.row * HOTBAR + i; renderHotbar(); save(); }
   /* Clique na barra: escolhe o item; se ele já está na mão e é comida, come. */
   function hotbarClick(i) {
+    if (fishing) return tip('Termine a pesca ou recolha a linha (Esc) antes de trocar de item.');
     const idx = S.row * HOTBAR + i, s2 = S.inv[idx];
     if (idx === S.sel && s2 && ITEMS[s2.id].food) return eat(idx);
     selectSlot(i);
@@ -811,6 +840,7 @@
     return true;
   }
   function cycleRow(d = 1) {
+    if (fishing) return;
     const col = S.sel % HOTBAR; S.row = (S.row + d + 3) % 3; S.sel = S.row * HOTBAR + col;
     renderHotbar(); save(); tip(`Barra de ferramentas: linha ${S.row + 1} de 3`);
   }
@@ -911,6 +941,325 @@
   }
   async function sayAll(who, lines) { for (const l of lines) await say(who, l); }
   function toast(text) { const t = el('div', 'toast', text); $('toasts').append(t); while ($('toasts').children.length > 4) $('toasts').firstChild.remove(); setTimeout(() => t.remove(), 2300); }
+
+
+  /* =====================================================
+     PESCA
+     Etapas: charge (segurando: barra de força) → cast (vara vai à frente, boia voa)
+     → wait (boia boiando; o relógio anda) → bite ("!": clique para fisgar) → hook
+     → game (minijogo; relógio parado) → catch (linha recolhe o peixe) → show (peixe
+     erguido: Guardar ou Soltar). Saídas: reel (recolhe a linha), flee (o peixe foge),
+     release (peixe solto). Nada disso é salvo: recarregar encerra a tentativa.
+     ===================================================== */
+  const FISH_PAUSE = ['hook', 'game', 'catch', 'show', 'release', 'flee'];
+  function fishPaused() { return !!fishing && FISH_PAUSE.includes(fishing.phase); }
+  const BAND = 34;                                   // altura da faixa verde (a trilha vai de 0 a 100)
+  const HAND = { down: [5, -11], up: [5, -13], left: [-5, -12], right: [5, -12] };
+  const POSE = {                                      // ponta da vara em relação à mão
+    right: { back: [-8, -15], fwd: [15, -5], hold: [13, -10], hook: [5, -17] },
+    down: { back: [-2, -19], fwd: [3, 12], hold: [4, 8], hook: [1, -17] },
+    up: { back: [3, 11], fwd: [2, -19], hold: [3, -16], hook: [2, -6] },
+  };
+  POSE.left = Object.fromEntries(Object.entries(POSE.right).map(([k, [x, y]]) => [k, [-x, y]]));
+  const clamp01 = k => Math.max(0, Math.min(1, k));
+  const lerp = (a, b, k) => a + (b - a) * clamp01(k);
+  const grip = d => [P.x + HAND[d][0], P.y + HAND[d][1]];
+  function rodTip(d, from, to, k) { const a = POSE[d][from], b = POSE[d][to], [gx, gy] = grip(d); return [gx + lerp(a[0], b[0], k), gy + lerp(a[1], b[1], k)]; }
+  const fishValue = (id, cm) => { const F = FISH[id]; return Math.round(F.value[0] + (F.value[1] - F.value[0]) * (cm - F.cm[0]) / (F.cm[1] - F.cm[0])); };
+  /* Dá para pescar mirando o ponto (wx, wy)? Perto da margem e sem parede no caminho. */
+  function fishCheck(wx, wy) {
+    const ox = P.x, oy = P.y - 4, dx = wx - ox, dy = wy - oy, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+    let first = -1, wall = -1;                          // a colisão é em blocos de 8 px: a margem logo antes da água não conta como parede
+    for (let d = 0; d <= L; d++) {
+      const x = ox + ux * d, y = oy + uy * d;
+      if (World.waterZone(map, x, y)) { first = d; break; }
+      if (d > 3 && wall < 0 && World.solidAt(map, x, y)) wall = d;
+    }
+    if (first < 0 || first > 24) return { ok: false, why: 'Chegue mais perto da margem para pescar.' };
+    if (wall >= 0 && first - wall > 9) return { ok: false, why: 'Tem algo no caminho entre você e a água.' };
+    return { ok: true, ux, uy, first, ox, oy };
+  }
+  function startCharge(c) {
+    if (!c.ok) return tip(c.why);
+    if (S.energy < CAST_ENERGY) return tip('Sem energia para lançar a linha. Coma algo ou durma para recuperar.');
+    faceTo(P.x + c.ux * 20, P.y - 8 + c.uy * 20);
+    fishing = { phase: 'charge', t: 0, dir: P.dir, c, charge: 0, rings: [] };
+    hover = null; $('hint').hidden = true; $('hint').dataset.t = '';
+    fishUI();
+  }
+  /* Soltou o botão: a força decide a distância, sempre dentro de água contínua. */
+  function castLine() {
+    const f = fishing, c = f.c, D = 12 + f.charge * 60;
+    let best = c.first;
+    for (let d = c.first; d <= Math.max(D, c.first + 4); d++) { if (!World.waterZone(map, c.ox + c.ux * d, c.oy + c.uy * d)) break; best = d; }
+    S.energy = Math.max(0, S.energy - CAST_ENERGY); renderHud(); save();
+    f.target = [c.ox + c.ux * best, c.oy + c.uy * best]; f.zone = World.waterZone(map, f.target[0], f.target[1]) || 'lago';
+    f.flight = 240 + best * 5; f.phase = 'cast'; f.t = 0; f.power = f.charge; f.charge = null;
+    fishUI();
+  }
+  function pickFish(zone) {
+    const opts = Object.keys(FISH).map(id => { const F = FISH[id]; return [id, (F.zones[zone] || 0) * (S.time >= F.peak[0] && S.time <= F.peak[1] ? 1 : F.off)]; }).filter(o => o[1] > 0);
+    let r = Math.random() * opts.reduce((a, o) => a + o[1], 0);
+    for (const [id, w] of opts) if ((r -= w) <= 0) return id;
+    return opts[0][0];
+  }
+  function updateFishing(dt, now) {
+    const f = fishing; f.t += dt;
+    switch (f.phase) {
+      case 'charge': { const k = (f.t % 1600) / 800; f.charge = k <= 1 ? k : 2 - k; break; }
+      case 'cast':
+        if (f.t >= 140 + f.flight) {
+          f.phase = 'wait'; f.t = 0; f.rings.push({ x: f.target[0], y: f.target[1], t0: now }); bang(f.target[0], f.target[1], 'water');
+          f.wait = 1800 + Math.random() * 4700; f.nibbles = [];
+          for (let i = 0, n = Math.floor(Math.random() * 3); i < n; i++) f.nibbles.push(600 + Math.random() * Math.max(0, f.wait - 1100));
+        }
+        break;
+      case 'wait':
+        if (f.t >= f.wait) { f.phase = 'bite'; f.t = 0; f.fishId = pickFish(f.zone); f.rings.push({ x: f.target[0], y: f.target[1], t0: now }); bang(f.target[0], f.target[1], 'water'); fishUI(); }
+        break;
+      case 'bite': if (f.t >= FISH[f.fishId].bite) { tip('A boia subiu de novo: o peixe soltou a isca. Tente outra vez.'); reelIn(); } break;
+      case 'hook': if (f.t >= 220) openMinigame(); break;
+      case 'game': stepMinigame(dt); break;
+      case 'catch': if (f.t >= 480) showCatch(); break;
+      case 'reel': if (f.t >= 420) endFishing(); break;
+      case 'flee': if (f.t >= 950) endFishing(); break;
+      case 'release': if (f.t >= 560 && !f.splashed) { f.splashed = true; f.rings.push({ x: f.target[0], y: f.target[1], t0: now }); bang(f.target[0], f.target[1], 'water'); } if (f.t >= 950) endFishing(); break;
+    }
+  }
+  /* O que o cenário desenha: mão, ponta da vara, boia, linha e avisos. */
+  function fishView(now) {
+    const f = fishing, d = f.dir, t = f.t, v = { grip: grip(d), tip: null, bob: null, bobMode: 'none', slack: 0, rings: f.rings, charge: null, alert: null, head: [P.x, P.y - 40], lean: 0 };
+    const tg = f.target;
+    switch (f.phase) {
+      case 'charge': v.tip = rodTip(d, 'hold', 'back', t / 150); v.charge = f.charge; v.lean = 1; break;
+      case 'cast': {
+        v.tip = rodTip(d, 'back', 'fwd', t / 140);
+        if (t > 110) {
+          const k = clamp01((t - 110) / (f.flight + 30)), from = f.from || (f.from = rodTip(d, 'back', 'fwd', 1)), h = 10 + Math.hypot(tg[0] - from[0], tg[1] - from[1]) * 0.3;
+          v.bob = [lerp(from[0], tg[0], k), lerp(from[1], tg[1], k) - Math.sin(k * Math.PI) * h]; v.bobMode = 'fly'; v.slack = 0.2;
+        }
+        break;
+      }
+      case 'wait': v.tip = rodTip(d, 'fwd', 'hold', t / 250); v.bob = tg; v.slack = 1; v.bobMode = (f.nibbles || []).some(n => t > n && t < n + 280) ? 'nibble' : 'float'; break;
+      case 'bite': v.tip = rodTip(d, 'hold', 'fwd', 0.25 + (Math.floor(now / 90) % 2) * 0.1); v.bob = tg; v.slack = 0.15; v.bobMode = 'sink'; v.alert = 1 - t / FISH[f.fishId].bite; break;
+      case 'hook': v.tip = rodTip(d, 'hold', 'hook', t / 150); v.bob = tg; v.bobMode = 'sink'; v.lean = 1; break;
+      case 'game': v.tip = rodTip(d, 'hook', 'hold', 0.15 + (Math.floor(now / 60) % 2) * 0.12); v.bob = tg; v.bobMode = 'sink'; v.lean = 1; break;
+      case 'catch': case 'reel': {
+        const dur = f.phase === 'catch' ? 480 : 420, k = clamp01(t / dur), from = f.reelFrom || tg || v.grip;
+        v.tip = rodTip(d, 'hook', 'hold', 0.3); v.bob = [lerp(from[0], v.tip[0], k), lerp(from[1], v.tip[1], k) - Math.sin(k * Math.PI) * 6]; v.bobMode = 'reel';
+        if (f.phase === 'catch') v.jump = { id: f.fishId, x: v.bob[0], y: v.bob[1] + 7, flip: d === 'left' };
+        break;
+      }
+      case 'flee': {
+        const k = clamp01(t / 700), sx = d === 'left' ? -1 : 1;
+        v.tip = rodTip(d, 'hook', 'hold', k); v.bob = tg; v.bobMode = 'float'; v.slack = 1;
+        if (k < 1) v.jump = { id: f.fishId, x: tg[0] + sx * k * 18, y: tg[1] - Math.sin(k * Math.PI) * 16, flip: sx < 0 };
+        break;
+      }
+      case 'show': v.hold = f.fishId; break;
+      case 'release': {
+        const k = clamp01(t / 560);
+        if (k < 1) v.jump = { id: f.fishId, x: lerp(P.x, tg[0], k), y: lerp(P.y - 38, tg[1], k) - Math.sin(k * Math.PI) * 18, flip: tg[0] < P.x };
+        break;
+      }
+    }
+    return v;
+  }
+  /* Clique/toque no cenário durante a pesca. */
+  function fishTap() {
+    if (!fishing) return;
+    if (fishing.phase === 'bite') hookFish();
+    else if (fishing.phase === 'wait') tip('Espere a boia afundar e aparecer o "!" para fisgar.');
+  }
+  function fishSpace(down) {
+    const f = fishing; if (!f) return;
+    if (f.phase === 'game') { if (down && !f.mg.started) return startMinigame(); f.mg.hold = !!down; return; }
+    if (down) fishTap();
+  }
+  /* Soltou o botão (ou o dedo) em qualquer lugar da tela. */
+  function fishRelease(lost) {
+    const f = fishing; if (!f) return;
+    if (f.phase === 'charge') { if (lost) endFishing(); else castLine(); }
+    if (f.mg) f.mg.hold = false;
+  }
+  window.addEventListener('pointerup', () => fishRelease(false));
+  window.addEventListener('pointercancel', () => fishRelease(true));
+  window.addEventListener('pointerdown', e => {
+    const f = fishing; if (!f || f.phase !== 'game' || !f.mg.started) return;
+    if (e.target.closest && e.target.closest('#fish-cancel, #fish-start')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    f.mg.hold = true;
+  });
+  function hookFish() { const f = fishing; f.phase = 'hook'; f.t = 0; fishUI(); }
+  function reelIn() { const f = fishing; const v = fishView(performance.now()); f.reelFrom = v.bob || f.target; f.phase = 'reel'; f.t = 0; fishUI(); }
+  /* Esc ou "Recolher linha": desiste. Durante a briga, o peixe foge. */
+  function cancelFishing() {
+    const f = fishing; if (!f) return;
+    if (f.phase === 'charge') return endFishing();
+    if (['cast', 'wait', 'bite'].includes(f.phase)) { if (f.phase === 'cast') f.target = fishView(performance.now()).bob || f.target; if (!f.target) return endFishing(); return reelIn(); }
+    if (f.phase === 'hook' || f.phase === 'game') return fishFled();
+    if (f.phase === 'show') tip('Escolha: guardar o peixe ou soltar na água.');
+  }
+  function endFishing() {
+    fishing = null;
+    $('fishgame').hidden = true; $('catch').hidden = true; $('fish-cancel').hidden = true;
+    if (S) { renderHotbar(); renderHud(); }
+  }
+  /* Botão de recolher (para toque) aparece enquanto dá para desistir. */
+  function fishUI() {
+    const f = fishing; $('fish-cancel').hidden = !f || !['cast', 'wait', 'bite', 'game'].includes(f.phase);
+  }
+  $('fish-cancel').onclick = () => cancelFishing();
+
+  /* ---------- minijogo: manter o peixe dentro da faixa verde ---------- */
+  function openMinigame() {
+    const f = fishing; f.phase = 'game'; f.t = 0;
+    f.mg = { band: 8, bv: 0, fish: 55, ft: 60, fv: 0, next: 500, prog: 0.35, hold: false, started: !!S.fish.tut, sway: 0, swayDir: 1 };
+    $('fishgame').hidden = false; $('fish-tut').hidden = !!S.fish.tut;
+    $('fish-title').textContent = 'Fisgou! Puxe o peixe';
+    if (!S.fish.tut) $('fish-start').focus();
+    fishUI(); drawMinigame();
+  }
+  function startMinigame() {
+    const f = fishing; if (!f || !f.mg || f.mg.started) return;
+    f.mg.started = true; f.mg.hold = false; S.fish.tut = true; save(); $('fish-tut').hidden = true;
+  }
+  $('fish-start').onclick = () => startMinigame();
+  function stepMinigame(dt) {
+    const f = fishing, m = f.mg, F = FISH[f.fishId], sec = dt / 1000;
+    if (m.started) {
+      m.bv = Math.max(-90, Math.min(90, m.bv + (m.hold ? 220 : -170) * sec)); m.band += m.bv * sec;
+      if (m.band < 0) { m.band = 0; m.bv = m.bv < -40 ? -m.bv * 0.3 : 0; }
+      if (m.band > 100 - BAND) { m.band = 100 - BAND; m.bv = Math.min(0, m.bv); }
+      m.next -= dt;                                   // o peixe nada acima da faixa parada: sem segurar, ele sempre foge
+      if (m.next <= 0) { m.ft = Math.max(38, Math.min(96, m.fish + (Math.random() * 2 - 1) * (22 + 64 * F.move))); m.next = F.hold[0] + Math.random() * (F.hold[1] - F.hold[0]); }
+      const kk = 1.5 + 4 * F.move; m.fv += ((m.ft - m.fish) * kk - m.fv * 1.6 * Math.sqrt(kk)) * sec; m.fish = Math.max(2, Math.min(98, m.fish + m.fv * sec));
+      m.sway += m.swayDir * sec * (8 + 10 * F.move); if (Math.abs(m.sway) > 6) { m.sway = Math.sign(m.sway) * 6; m.swayDir *= -1; }
+      const inside = m.fish >= m.band && m.fish <= m.band + BAND; m.inside = inside;
+      m.prog = Math.min(1, m.prog + (inside ? F.gain : -F.loss) * sec);
+      if (m.prog >= 1) return fishCaught();
+      if (m.prog <= 0) return fishFled();
+    }
+    drawMinigame();
+  }
+  function fishCaught() {
+    const f = fishing, F = FISH[f.fishId];
+    f.cm = Math.round(F.cm[0] + (F.cm[1] - F.cm[0]) * Math.pow(Math.random(), 1.6));
+    const rec = S.fish.dex[f.fishId];
+    f.isNew = !rec; f.isRecord = !!rec && f.cm > rec.max;
+    S.fish.dex[f.fishId] = { n: (rec ? rec.n : 0) + 1, max: Math.max(rec ? rec.max : 0, f.cm) };
+    S.fish.xp += F.xp; save();                         // espécie, recorde e experiência ficam salvos já na captura
+    f.phase = 'catch'; f.t = 0; f.reelFrom = f.target; $('fishgame').hidden = true; fishUI();
+  }
+  function fishFled() {
+    const f = fishing; f.phase = 'flee'; f.t = 0; $('fishgame').hidden = true; fishUI();
+    f.rings.push({ x: f.target[0], y: f.target[1], t0: performance.now() }); bang(f.target[0], f.target[1], 'water');
+    toast('O peixe escapou!');
+  }
+  function drawMinigame() {
+    const m = fishing.mg, cv = $('fish-canvas'), g = cv.getContext('2d'), W = cv.width, H = cv.height, now = performance.now();
+    const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+    const tx = 8, ty = 9, tw = 30, th = H - 18, bx = 45, bw = 8;
+    g.clearRect(0, 0, W, H);
+    // moldura: tábua escura com pedras de rio em volta
+    R(1, 1, W - 2, H - 2, '#2a1a14'); R(2, 2, W - 4, H - 4, '#5a4632'); R(3, 3, W - 6, 2, '#7a6248');
+    for (let y = 6; y < H - 4; y += 9) { const c = ['#8a8a98', '#a4a4b2', '#74747f'][(y / 9 | 0) % 3]; R(3, y, 4, 6, '#2a1a14'); R(3, y + 1, 3, 4, c); R(W - 7, y + 4, 4, 6, '#2a1a14'); R(W - 6, y + 5, 3, 4, c); }
+    // água: clara em cima, funda embaixo
+    R(tx - 1, ty - 1, tw + 2, th + 2, '#2a1a14');
+    for (let y = 0; y < th; y++) { const k = y / th; g.fillStyle = `rgb(${Math.round(80 - 54 * k)},${Math.round(196 - 120 * k)},${Math.round(214 - 92 * k)})`; g.fillRect(tx, ty + y, tw, 1); }
+    for (let i = 0; i < 6; i++) { const k = ((now / 2600) + i / 6) % 1; R(tx + 4 + (i * 9) % (tw - 8), ty + th - 4 - k * (th - 8), 2, 2, 'rgba(230,250,255,.55)'); }
+    for (let i = 0; i < 5; i++) { const x = tx + 2 + i * 6, h = 8 + (i * 5) % 9; R(x, ty + th - h, 1, h, '#2f7a36'); R(x + 1, ty + th - h + 3, 1, h - 3, '#58a838'); }
+    R(tx, ty + th - 2, tw, 2, '#a8783a');
+    // faixa verde (sobe segurando, desce soltando)
+    const by = ty + th - (m.band + BAND) / 100 * th, bh = BAND / 100 * th;
+    g.fillStyle = m.inside ? 'rgba(170,255,120,.62)' : 'rgba(150,230,110,.42)'; g.fillRect(tx, Math.round(by), tw, Math.round(bh));
+    R(tx, by, tw, 1, '#f4ffe0'); R(tx, by + bh - 1, tw, 1, '#f4ffe0'); R(tx, by, 2, bh, '#c8f8a0'); R(tx + tw - 2, by, 2, bh, '#c8f8a0');
+    R(tx - 2, by + bh / 2 - 2, 3, 4, '#3f9a52'); R(tx + tw - 1, by + bh / 2 - 2, 3, 4, '#3f9a52');
+    // peixe: sobe e desce pela trilha e nada de um lado para o outro
+    const fy = ty + th - m.fish / 100 * th, fx = tx + tw / 2 + m.sway;
+    g.save(); g.translate(Math.round(fx), Math.round(fy)); if (m.swayDir > 0) g.scale(-1, 1); g.drawImage(World.icon(fishing.fishId), -8, -8); g.restore();
+    // barra de progresso
+    R(bx - 1, ty - 1, bw + 2, th + 2, '#2a1a14'); R(bx, ty, bw, th, '#3a2a20');
+    const ph = Math.round(m.prog * th); R(bx, ty + th - ph, bw, ph, m.prog > 0.66 ? '#8fe88f' : m.prog > 0.33 ? '#ffd75e' : '#ff7b5a'); R(bx, ty + th - ph, 2, ph, 'rgba(255,255,255,.45)');
+    for (let i = 1; i < 4; i++) R(bx, ty + Math.round(th * i / 4), bw, 1, '#2a1a14');
+  }
+
+  /* ---------- resultado ---------- */
+  let discardSel = -1, discardArm = false;
+  function showCatch() {
+    const f = fishing; f.phase = 'show'; f.t = 0; P.dir = 'down'; discardSel = -1; discardArm = false; fishUI(); renderCatch(false);
+  }
+  function renderCatch(full) {
+    const f = fishing, it = ITEMS[f.fishId], box = $('catch'), val = fishValue(f.fishId, f.cm);
+    box.replaceChildren(); box.hidden = false;
+    const top = el('div', 'catch-top'), pic = el('canvas', 'pixel catch-pic'); pic.width = 16; pic.height = 16; pic.getContext('2d').drawImage(World.icon(f.fishId), 0, 0);
+    const txt = el('div', 'catch-txt');
+    txt.append(el('b', 'catch-name', it.name), el('span', 'catch-size', `${f.cm} cm · vale ${val} moedas`), el('span', 'dim', `+${FISH[f.fishId].xp} de experiência de pesca`));
+    const tags = el('div', 'catch-tags'); if (f.isNew) tags.append(el('span', 'tag new', 'Nova espécie!')); if (f.isRecord) tags.append(el('span', 'tag rec', 'Novo recorde!')); if (tags.childNodes.length) txt.append(tags);
+    top.append(pic, txt); box.append(top);
+    const freeSlot = S.inv.findIndex(x => !x);
+    const keep = btn('btn primary', 'Guardar', () => keepFish()); keep.id = 'catch-keep';
+    const rel = btn('btn', 'Soltar', () => releaseFish()); rel.id = 'catch-release';
+    if (full || freeSlot < 0) {
+      keep.disabled = freeSlot < 0;
+      box.append(el('p', 'catch-full', freeSlot < 0 ? 'Mochila cheia. Solte o peixe ou jogue fora algo da mochila para abrir espaço; o peixe espera aqui.' : 'Espaço livre! Agora dá para guardar o peixe.'));
+      const grid2 = el('div', 'slots catch-inv');
+      S.inv.forEach((s2, i) => {
+        const b = slotNode(s2, i === discardSel ? 'sel' : ''); b.dataset.i = i;
+        const locked = !s2 || ['tool', 'quest'].includes(ITEMS[s2.id].kind);
+        if (locked) b.classList.add('locked');
+        b.onclick = () => { if (locked) return tip(s2 ? 'Ferramentas e itens de missão não podem ser jogados fora.' : 'Este espaço já está vazio.'); discardSel = i; discardArm = false; renderCatch(true); };
+        grid2.append(b);
+      });
+      box.append(grid2);
+      if (discardSel >= 0 && S.inv[discardSel]) {
+        const s2 = S.inv[discardSel], name = `${ITEMS[s2.id].name}${s2.n > 1 ? ' × ' + s2.n : ''}${s2.cm ? ` (${s2.cm} cm)` : ''}`;
+        const dz = btn('btn danger', discardArm ? `Confirmar: jogar fora ${name}` : `Jogar fora ${name}`, () => {
+          if (!discardArm) { discardArm = true; return renderCatch(true); }
+          S.inv[discardSel] = null; discardSel = -1; discardArm = false; save(); renderHotbar(); toast(`Você jogou fora ${name}.`); renderCatch(true);
+        });
+        dz.id = 'catch-discard'; box.append(dz);
+      }
+    }
+    const row = el('div', 'catch-btns'); row.append(keep, rel); box.append(row);
+    if (!keep.disabled) keep.focus(); else rel.focus();
+  }
+  function keepFish() {
+    const f = fishing; if (!f || f.phase !== 'show') return;
+    const i = S.inv.findIndex(x => !x);
+    if (i < 0) return renderCatch(true);
+    S.inv[i] = { id: f.fishId, n: 1, cm: f.cm }; save();
+    floats.push({ icon: f.fishId, x: P.x, y: P.y, t0: performance.now() });
+    toast(`+1 ${ITEMS[f.fishId].name} (${f.cm} cm)`);
+    endFishing();
+  }
+  function releaseFish() {
+    const f = fishing; if (!f || f.phase !== 'show') return;
+    f.phase = 'release'; f.t = 0; $('catch').hidden = true; toast('Você devolveu o peixe à água.');
+  }
+
+  /* ---------- a vara chega pelo correio (uma vez) ---------- */
+  function rodLetter() {
+    S.fish.letter = true; if (!S.fish.rod) S.fish.pending = true; save();     // o presente fica guardado até caber na mochila
+    run(async () => {
+      await say('narr', map.id === 'casa' ? 'Alguém passou cedinho e deixou na porta uma carta e um embrulho comprido.' : 'Um menino da vila vem correndo com uma carta e um embrulho comprido: "É do Tomé!"');
+      await showLetter(false, ROD_LETTER);
+      await giveRod(true);
+    });
+  }
+  async function giveRod(inDialog) {
+    if (S.fish.rod) { S.fish.pending = false; return true; }
+    if (canAdd('vara')) {
+      addTo(S.inv, 'vara', 1); S.fish.rod = true; S.fish.pending = false; save(); renderHotbar();
+      toast('+1 Vara de pesca');
+      if (inDialog) await say('narr', 'Você ganhou a vara de pesca de Tomé. Escolha a vara na barra de itens e vá até a beira da água. A carta fica guardada no Diário.');
+      return true;
+    }
+    S.fish.pending = true; save();
+    if (inDialog) await say('narr', 'Sua mochila está cheia, então a vara fica guardada junto com a carta. Abra um espaço e pegue a vara no Diário, em "Cartas".');
+    else toast('Mochila cheia: abra um espaço para pegar a vara.');
+    return false;
+  }
 
   /* =====================================================
      MISSÕES
@@ -1364,7 +1713,7 @@
   }
   function slotNode(s, cls) {
     const b = el('button', 'slot ' + (cls || '')); b.type = 'button';
-    if (s) { b.append(cloneIcon(s.id)); b.title = ITEMS[s.id].name; b.setAttribute('aria-label', ITEMS[s.id].name); if (s.id === 'regador') b.append(el('i', '', `${S.can}`)); else if (s.n > 1) b.append(el('i', '', String(s.n))); }
+    if (s) { const nm = ITEMS[s.id].name + (s.cm ? ` (${s.cm} cm)` : ''); b.append(cloneIcon(s.id)); b.title = nm; b.setAttribute('aria-label', nm); if (s.id === 'regador') b.append(el('i', '', `${S.can}`)); else if (s.n > 1) b.append(el('i', '', String(s.n))); }
     return b;
   }
   function cloneIcon(id) { const c = el('canvas', 'pixel'); c.width = 16; c.height = 16; c.getContext('2d').drawImage(World.icon(id), 0, 0); return c; }
@@ -1387,7 +1736,7 @@
   const TAB_TITLE = { mochila: 'Inventário', amizades: 'Amizades', mapa: 'Mapa', diario: 'Diário', personagem: 'Personagem', config: 'Configurações', bau: 'Baú', roupa: 'Guarda-roupa e espelho', loja: 'Armazém', ajuste: 'Sua fazenda' };
   function openModal(t) { if (busy) return; $('modal').hidden = false; modalT = performance.now(); picked = null; renderTab(t); }
   /* Menu principal: só abre com o jogo livre (sem conversa, carta, resumo ou pausa). */
-  function openMenu(t = 'mochila') { if (screen !== 'game' || !S || busy || paused || !$('letter').hidden || !$('summary').hidden) return; openModal(t); }
+  function openMenu(t = 'mochila') { if (screen !== 'game' || !S || busy || paused || !$('letter').hidden || !$('summary').hidden) return; if (fishing) return tip('Termine a pesca ou recolha a linha (Esc) antes de abrir o menu.'); openModal(t); }
   /* Atalho de aba: abre nela; se já está nela, fecha; se está em outra, troca. */
   function toggleTab(t) {
     if ($('modal').hidden) return openMenu(t);
@@ -1426,6 +1775,10 @@
   /* Move a pilha inteira de um conjunto para o outro, empilhando; o que não couber fica onde estava. */
   function moveStack(from, i, to) {
     const s = from[i]; if (!s) return;
+    if (s.cm) {                                       // peixe: vai inteiro, com o tamanho, para um espaço vazio
+      const j = to.findIndex(x => !x); if (j < 0) return toast(to === S.inv ? 'Mochila cheia' : 'Baú cheio');
+      to[j] = s; from[i] = null; if (S.sel >= 0 && !S.inv[S.sel]) renderHotbar(); save(); return;
+    }
     const left = addTo(to, s.id, s.n);
     if (left === s.n) return toast(to === S.inv ? 'Mochila cheia' : 'Baú cheio');
     if (left) { s.n = left; toast('Só coube uma parte'); } else from[i] = null;
@@ -1442,7 +1795,7 @@
         const s2 = S.inv[i]; info.replaceChildren();
         if (!s2) { info.append(el('span', 'dim', picked !== null ? 'Clique num espaço para colocar o item ali.' : 'Clique num item para ver, mover ou usar na barra.')); return; }
         const it = ITEMS[s2.id];
-        info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}`), el('span', 'dim', it.desc + (it.food ? ` Comestível: +${it.food} de energia.` : '') + (it.sell ? ` Vende por ${it.sell} moedas.` : '')));
+        info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}${s2.cm ? ` · ${s2.cm} cm` : ''}`), el('span', 'dim', it.desc + (it.food ? ` Comestível: +${it.food} de energia.` : '') + (it.sell ? ` Vende por ${it.sell} moedas.` : '') + (s2.cm ? ` Tamanho: ${s2.cm} cm. Vende por ${fishValue(s2.id, s2.cm)} moedas no Armazém.` : '')));
         if (i === picked) {
           const use = btn('btn', i === S.sel ? 'Na mão ✔' : 'Usar na barra', () => { S.row = Math.floor(i / HOTBAR); S.sel = i; picked = null; save(); renderTab('mochila'); }); use.dataset.use = i; info.append(use);
           if (it.kind === 'hat') info.append(btn('btn', S.look.hat === it.hat ? 'Tirar o chapéu' : 'Usar o chapéu', () => { S.look.hat = S.look.hat === it.hat ? null : it.hat; save(); renderTab('mochila'); }));
@@ -1506,7 +1859,28 @@
       body.append(el('h3', '', 'Cartas'));
       const cl = el('ul', 'list letters'), li = el('li');
       li.append(el('span', 'mt', '✉ Carta do Vô ' + AVO), el('span', 'dim', 'Recebida antes de chegar a ' + VILA + '.'));
-      const lt = btn('btn', 'Ler a carta', () => showLetter(true)); lt.id = 'btn-letter'; li.append(lt); cl.append(li); body.append(cl);
+      const lt = btn('btn', 'Ler a carta', () => showLetter(true)); lt.id = 'btn-letter'; li.append(lt); cl.append(li);
+      if (S.fish.letter) {
+        const l2 = el('li'); l2.append(el('span', 'mt', '✉ Carta de Tomé'), el('span', 'dim', S.fish.pending ? 'Veio com uma vara de pesca, que está guardada esperando espaço na mochila.' : 'Veio com uma vara de pesca e explica como pescar.'));
+        const row = el('div', 'li-actions'), rd = btn('btn', 'Ler a carta', () => showLetter(true, ROD_LETTER)); rd.id = 'btn-letter-tome'; row.append(rd);
+        if (S.fish.pending) { const gr = btn('btn primary', 'Pegar a vara de pesca', async () => { if (!canAdd('vara')) return toast('Mochila cheia: abra um espaço primeiro.'); await giveRod(false); renderTab('diario'); }); gr.id = 'btn-get-rod'; row.append(gr); }
+        l2.append(row); cl.append(l2);
+      }
+      body.append(cl);
+      body.append(el('h3', '', 'Pescaria'));
+      const fl = el('ul', 'list fish-dex');
+      if (!S.fish.rod && !S.fish.pending) fl.append(el('li', 'dim', 'Você ainda não tem vara de pesca.'));
+      else {
+        fl.append(el('li', '', `Experiência de pesca: ${S.fish.xp}`));
+        Object.keys(FISH).forEach(id => {
+          const d = S.fish.dex[id], li2 = el('li', 'fish-entry' + (d ? '' : ' dim')); li2.dataset.fish = id;
+          const head = el('div', 'shop-item'); if (d) head.append(cloneIcon(id)); head.append(el('b', '', d ? ITEMS[id].name : '???'));
+          li2.append(head, el('span', '', d ? `Capturados: ${d.n} · maior: ${d.max} cm` : 'Ainda não pescado.'));
+          if (d) li2.append(el('span', 'dim', `${ITEMS[id].desc} Onde: ${Object.keys(FISH[id].zones).map(z => FISH_ZONE_NAME[z]).join(' e ')}.`));
+          fl.append(li2);
+        });
+      }
+      body.append(fl);
     },
     amizades(body) {
       body.append(el('p', 'dim', 'A primeira conversa do dia e os presentes aumentam a amizade (100 pontos por coração, até 5). Cada morador tem seus gostos.'));
@@ -1555,6 +1929,7 @@
       const hatItem = S.look.hat && Object.keys(ITEMS).find(k => ITEMS[k].hat === S.look.hat), acc = Sprites.ACCESSORIES.find(a => a.id === S.look.accessory), hand = equipped();
       const en = el('div', 'xp'), bar = el('div', 'bar' + (S.energy < 20 ? ' low' : '')), fill = el('i'); fill.style.width = S.energy + '%'; bar.append(fill); en.append(el('span', '', `⚡ Energia ${Math.round(S.energy)}/100`), bar);
       info.append(el('b', 'sheet-name', S.name), el('span', '', `${S.age} anos · ${S.farmName}, ${VILA}`), en,
+        el('span', '', `🎣 Pesca: ${S.fish.xp} de experiência · ${Object.keys(S.fish.dex).length} de ${Object.keys(FISH).length} espécies`),
         el('span', '', `Chapéu: ${hatItem ? ITEMS[hatItem].name : 'nenhum'}`), el('span', '', `Acessório: ${acc ? acc.name : 'nenhum'}`), el('span', '', `Na mão: ${hand ? ITEMS[hand.id].name : 'nada'}`),
         el('span', 'dim', 'Para trocar cabelo, roupas e acessório, use o guarda-roupa de casa.'));
       top.append(pv, info); body.append(top);
@@ -1563,7 +1938,9 @@
       body.append(el('h3', '', 'Controles'));
       const t = el('table', 'controls');
       [['Andar', 'Setas ou W A S D (celular: direcional)'], ['Interagir e usar ferramentas', 'Clique (ou toque) perto do alvo'], ['Escolher item da barra', '1 a 0, ou clique na barra'], ['Trocar a linha da barra', 'Tab'],
-        ['Menu (Inventário)', 'E ou Esc (de novo fecha)'], ['Diário', 'F'], ['Mapa', 'M'], ['Abrir porta à frente', 'Q'], ['Avançar conversa', 'E, Espaço, Enter ou clique'], ['Recusar em "Sim/Não"', 'E ou Esc'], ['Pausa', 'P ou o botão ⏸']]
+        ['Menu (Inventário)', 'E ou Esc (de novo fecha)'], ['Diário', 'F'], ['Mapa', 'M'], ['Abrir porta à frente', 'Q'], ['Avançar conversa', 'E, Espaço, Enter ou clique'], ['Recusar em "Sim/Não"', 'E ou Esc'], ['Pausa', 'P ou o botão ⏸'],
+        ['Pescar (vara na mão)', 'Segure o clique (ou o dedo) na água, perto da margem; solte para lançar'], ['Fisgar', 'Clique, toque ou Espaço quando a boia afundar e aparecer o "!"'],
+        ['Puxar o peixe', 'Segure clique, toque ou Espaço: a faixa sobe; solte: desce'], ['Recolher a linha', 'Esc ou o botão "Recolher linha"']]
         .forEach(([a, b2]) => { const tr = el('tr'); tr.append(el('td', '', a), el('td', '', b2)); t.append(tr); });
       body.append(t, el('h3', '', 'Tela'));
       body.append(btn('btn', document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia', () => { $('btn-full').click(); setTimeout(() => renderTab('config'), 300); }));
@@ -1636,7 +2013,19 @@
       }, 'ovo'));
       body.append(buy, el('h3', '', 'Vender'));
       const sell = el('ul', 'list sell'), ids = [...new Set(S.inv.filter(s => s && ITEMS[s.id].sell).map(s => s.id))];
-      if (!ids.length) sell.append(el('li', 'dim', 'Você não tem nada para vender agora. Colheitas, ovos, frutos e o que achar no bosque têm preço.'));
+      const fishIdx = S.inv.map((x, i) => (x && x.cm ? i : -1)).filter(i => i >= 0);
+      if (!ids.length && !fishIdx.length) sell.append(el('li', 'dim', 'Você não tem nada para vender agora. Colheitas, ovos, frutos, peixes e o que achar no bosque têm preço.'));
+      fishIdx.forEach(i => {
+        const f = S.inv[i], v = fishValue(f.id, f.cm), li = el('li', 'fish-row'), left = el('div', 'shop-item');
+        left.append(cloneIcon(f.id), el('span', '', `${ITEMS[f.id].name} · ${f.cm} cm — ${v} moedas`));
+        const b = btn('btn primary', 'Vender', () => { if (S.inv[i] !== f) return; S.inv[i] = null; S.coins += v; toast(`+${v} moedas`); save(); renderTab('loja'); }); b.dataset.fish = i;
+        li.append(left, b); sell.append(li);
+      });
+      if (fishIdx.length > 1) {
+        const tot = fishIdx.reduce((a, i) => a + fishValue(S.inv[i].id, S.inv[i].cm), 0), li = el('li', 'fish-row');
+        const b = btn('btn', `Vender todos os peixes (${tot} moedas)`, () => { let got = 0; fishIdx.forEach(i => { const f = S.inv[i]; if (f && f.cm) { got += fishValue(f.id, f.cm); S.inv[i] = null; } }); S.coins += got; toast(`+${got} moedas`); save(); renderTab('loja'); }); b.id = 'sell-all-fish';
+        li.append(b); sell.append(li);
+      }
       ids.forEach(id => sell.append(row(id, `${ITEMS[id].name} (você tem ${count(id)})`, ITEMS[id].sell, count(id), 'Vender', n => {
         n = Math.min(n, count(id)); if (!n) return;
         removeItem(id, n); S.coins += n * ITEMS[id].sell; toast(`+${n * ITEMS[id].sell} moedas`); save(); renderTab('loja');
@@ -1729,6 +2118,7 @@
     cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), openMap, fit, petEvent, cleanName, textWidth,
     villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
+    get fishing() { return fishing; }, fishCheck, fishValue, pickFish, openTab: t => openModal(t),
   };
 
   /* Modo de desenvolvimento (só com ?dev=1 na URL): avançar tempo e noites, e ver

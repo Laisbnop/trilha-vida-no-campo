@@ -15,6 +15,7 @@ const ITEMS = {
   picareta: { name: 'Picareta',  kind: 'tool', desc: 'Quebra pedras pequenas.' },
   foice:    { name: 'Foice',     kind: 'tool', desc: 'Corta o mato.' },
   espada:   { name: 'Espada simples', kind: 'tool', desc: 'Velha, mas firme. Treine no boneco da fazenda.' },
+  vara:     { name: 'Vara de pesca', kind: 'tool', desc: 'Presente de Tomé. Na beira da água, segure o clique (ou o dedo) sobre a água e solte para lançar.' },
 
   sem_rabanete: { name: 'Sementes de rabanete', kind: 'seed', crop: 'rabanete', price: 8,  desc: 'Cresce em 2 dias regados.' },
   sem_tomate:   { name: 'Sementes de tomate',   kind: 'seed', crop: 'tomate',   price: 15, desc: 'Cresce em 4 dias regados.' },
@@ -40,6 +41,9 @@ const ITEMS = {
   fruta_cristal:  { name: 'Fruta de cristal', sell: 130, food: 40, desc: 'Rara. Fria e translúcida, aparece só no inverno.' },
   cogumelo: { name: 'Cogumelo',        sell: 9, desc: 'Encontrado à sombra das árvores.' },
   flor:     { name: 'Flor-do-campo',   sell: 6, desc: 'Simples e bonita.' },
+
+  sardinha: { name: 'Sardinha', kind: 'fish', desc: 'Um peixe comum na vila. Aparece no rio e nos lagos em qualquer estação, mais de dia.' },
+  tucunare: { name: 'Tucunaré', kind: 'fish', desc: 'Peixe de lago, valente e bonito, com uma mancha escura perto do rabo. Briga mais que a sardinha.' },
 
   chapeu_palha:    { name: 'Chapéu de palha',    kind: 'hat', hat: 'palha',    price: 45, desc: 'Sombra para os dias de roça.' },
   boina:           { name: 'Boina',              kind: 'hat', hat: 'boina',    desc: 'Presente de Iara.' },
@@ -288,4 +292,27 @@ const RESIST = {
   trunk:  { name: 'Árvore', verb: 'Cortar',   tools: ['machado'],  hp: 5, energy: 2, drop: ['madeira', 3], fx: 'wood' },
   rock:   { name: 'Rocha',  verb: 'Quebrar',  tools: ['picareta'], hp: 5, energy: 2, drop: ['pedra', 2],   fx: 'stone' },
 };
-const TOOL_NAME = { machado: 'o machado', picareta: 'a picareta', foice: 'a foice', espada: 'a espada', enxada: 'a enxada', regador: 'o regador' };
+const TOOL_NAME = { vara: 'a vara de pesca', machado: 'o machado', picareta: 'a picareta', foice: 'a foice', espada: 'a espada', enxada: 'a enxada', regador: 'o regador' };
+
+/* Pesca. zones = chance relativa em cada tipo de água (lago: lago da fazenda e lagoa do bosque;
+   rio: rio do bosque e nascente da serra). peak = horário em que o peixe é mais comum
+   (fora dele a chance cai para off). cm = tamanho mínimo e máximo; value = venda do menor ao maior.
+   xp = experiência de pesca por captura. move/hold = agitação do peixe no minijogo (0 a 1);
+   gain/loss = progresso por segundo com o peixe dentro/fora da faixa; bite = janela da fisgada (ms). */
+const FISH = {
+  sardinha: { zones: { rio: 1, lago: 0.35 }, peak: [360, 1140], off: 0.35, cm: [5, 90], value: [30, 130], xp: 30, move: 0.3, hold: [800, 1800], gain: 0.3, loss: 0.15, bite: 1200 },
+  tucunare: { zones: { lago: 0.65 }, peak: [360, 1080], off: 0.3, cm: [20, 80], value: [60, 200], xp: 45, move: 0.6, hold: [450, 1200], gain: 0.25, loss: 0.2, bite: 1000 },
+};
+const FISH_ZONE_NAME = { lago: 'lago', rio: 'rio' };
+const CAST_ENERGY = 2;                    // energia por lançamento válido
+const ROD_LETTER = {
+  greet: 'Oi, {nome}.',
+  body: [
+    'É o Tomé, da cabana do bosque. Achei esta vara no meu canto e lembrei de você: foi a minha primeira. Está velha, mas a linha é nova e a boia é boa.',
+    'Dá para pescar no lago da sua fazenda, na lagoa do bosque e no rio que desce dela até o fim da mata. No rio é quase só sardinha. Nos lagos também aparece tucunaré, que briga mais.',
+    'Com a vara na mão, chegue na beira da água. Segure o clique (ou o dedo) sobre a água para pegar força e solte para lançar. Quanto mais força, mais longe a boia cai.',
+    'Quando a boia afundar e aparecer o "!", clique ou toque de novo, rápido. Aí o peixe briga: segure o clique, o dedo ou a barra de espaço para a faixa verde subir; solte para ela descer. Deixe o peixe dentro da faixa até a barra encher.',
+    'Esc (ou o botão "Recolher linha") desiste e recolhe a linha. Cada lançamento cansa um pouquinho. Peixe se vende no Armazém, e a Dona Celeste paga mais pelos grandes.',
+  ],
+  sign: 'Boa pescaria,\nTomé',
+};
