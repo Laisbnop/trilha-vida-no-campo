@@ -361,14 +361,14 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Morango e abóbora',
+  title: 'Criação de personagem',
   items: [
-    'Morango novo: sementes no Armazém por 150 moedas, na Primavera, no Outono e no Inverno. Pronto em 5 dias regados (5 estágios de 1 dia) e depois a cada 4; 1 morango por colheita, e o pé fica plantado.',
-    'Morango vende por 360 moedas e recupera 30 de energia ("Comer morango?").',
-    'Dona Celeste adora morangos: o presente vale 150 pontos de amizade, com resposta própria. Os outros moradores continuam com os gostos de sempre.',
-    'Abóbora: plantio só na Primavera e no Outono; pronta em 13 dias regados (5 estágios: 1, 2, 3, 4 e 3 dias) e depois a cada 6; 1 abóbora por colheita, e o pé fica. Sementes (25) e venda (75) com o mesmo preço.',
-    'Sem rega, a planta não cresce, inclusive entre colheitas. Planta madura espera você colher.',
-    'Quando a estação muda, pés de morango e de abóbora secam (os frutos que ficaram se perdem). Limpe com a foice. Plantar sem tempo para a primeira colheita pede confirmação; fora de estação, o plantio é bloqueado sem gastar nada.',
-    'Abóboras de jogos salvos: as maduras continuam maduras; as que estavam crescendo mantêm os dias já regados.',
+    'Masculino, Feminino e Não binário agora mudam a aparência na hora: cada escolha traz uma base visual (rosto e silhueta) e um ponto de partida de cabelo e roupa. Tudo continua livre para qualquer gênero.',
+    'Masculino: ombros mais largos e maxilar quadrado. Feminino: cintura marcada, queixo mais fino, cílios e boca rosada. Não binário: a base neutra.',
+    'Voltar à etapa de gênero (ou clicar no mesmo gênero) não apaga a personalização; só escolher outro gênero aplica o novo ponto de partida, mantendo a pele.',
+    'A base aparece no mapa, andando, nas ferramentas, na pesca e na ficha do personagem. Personagens de jogos salvos continuam como eram.',
+    'Nova moldura de madeira, fundo bege, painéis cor de areia e destaques em âmbar em todas as etapas da criação; prévia com céu, cerca e grama, em escala inteira.',
+    'Cabelos com texturas próprias (liso, ondulado, cacheado e crespo) e mais volume nos cacheados e crespos; roupas com mangas, bolsos, babados, cinto e barras.',
+    'Armazém: a quantidade escolhida para vender ou comprar aparece em preto.',
   ],
 };

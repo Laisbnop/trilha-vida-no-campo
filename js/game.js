@@ -195,7 +195,10 @@
   const colorItems = list => list.map(c => ({ id: c, swatch: c }));
   /* Seções de aparência. look = objeto editado; change = redesenha. */
   const LOOK_SECTIONS = {
-    genero: (box, look, change) => optionGrid(box, Sprites.GENDERS.map(g => ({ id: g.id, label: g.name })), look.gender, id => { look.gender = id; change(); }),
+    /* gênero: pronomes + base visual. Escolher OUTRO gênero aplica o ponto de partida (mantém a
+       pele); repetir a mesma escolha não mexe em nada do que já foi personalizado. */
+    genero: (box, look, change) => optionGrid(box, Sprites.GENDERS.map(g => ({ id: g.id, label: g.name, canvas: Sprites.canvas(Object.assign(Sprites.genderPreset(g.id), { skin: look.skin, hat: null })) })), look.gender,
+      id => { if (id === look.gender) return; Object.assign(look, Sprites.genderPreset(id)); change(); }, 'genders'),
     pele: (box, look, change) => optionGrid(box, Sprites.SKINS.map(s => ({ id: s.id, label: s.name, swatch: s.c[0] })), look.skin, id => { look.skin = id; change(); }, 'sw'),
     cabelo: (box, look, change) => optionGrid(box, Sprites.HAIRS.map(h => ({ id: h.id, label: h.name, canvas: Sprites.canvas(Object.assign({}, look, { hair: h.id, hat: null })) })), look.hair, id => { look.hair = id; change(); }, 'many'),
     corCabelo: (box, look, change) => optionGrid(box, Sprites.HAIR_COLORS.map(h => ({ id: h.id, label: h.name, swatch: h.c[0] })), look.hairColor, id => { look.hairColor = id; change(); }, 'sw'),
@@ -210,7 +213,20 @@
     extras: (box, look, change) => { box.append(el('p', 'hint', 'Calçado')); LOOK_SECTIONS.calcado(box, look, change); box.append(el('p', 'hint', 'Acessório')); LOOK_SECTIONS.acessorio(box, look, change); },
   };
 
+  /* Moldura de madeira da criação (pixel art, 18x18 em 9 partes): borda escura, tábua com
+     veios, filete escuro, filete claro e pregos de latão nos cantos. Vira a borda da janela. */
+  (function woodFrame() {
+    const c = document.createElement('canvas'); c.width = 18; c.height = 18; const g = c.getContext('2d');
+    const R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+    R(0, 0, 18, 18, '#2a1608'); R(1, 1, 16, 16, '#8a5428'); R(1, 1, 16, 1, '#b8783c'); R(1, 1, 1, 16, '#a86a34');
+    R(1, 3, 16, 1, '#6a3c1a'); R(3, 1, 1, 16, '#6a3c1a');
+    [[7, 2], [10, 3], [13, 2], [2, 8], [3, 11], [2, 13], [8, 15], [12, 16], [15, 9], [16, 12]].forEach(([x, y]) => R(x, y, 1, 1, '#6a3c1a'));
+    R(4, 4, 10, 10, '#3a2010'); R(5, 5, 8, 8, '#fff0d0'); R(6, 6, 6, 6, '#f3e2bd');   // filete escuro, filete claro e o miolo liso (só ele se estica)
+    [[1, 1], [15, 1], [1, 15], [15, 15]].forEach(([x, y]) => { R(x, y, 2, 2, '#e8c060'); R(x + 1, y + 1, 1, 1, '#8a6a20'); R(x, y, 1, 1, '#fff2b0'); });
+    document.documentElement.style.setProperty('--wood-frame', `url(${c.toDataURL()})`);
+  })();
   const draft = {};
+  window.__creation = { get look() { return JSON.parse(JSON.stringify(draft.look || {})); } };   // para os testes
   let step = 0, previewTimer = 0, previewF = 0;
   const STEPS = [
     { title: 'Gênero', hint: 'Define como a vila se refere a você nas falas (ele, ela ou formas neutras). Todos os cabelos, roupas e acessórios servem para qualquer gênero.', key: 'genero' },
@@ -228,7 +244,8 @@
     optionGrid(box, Object.keys(PETS).map(k => ({ id: k, label: PETS[k].name, canvas: Object.assign(World.petCanvas(k), { className: 'pixel pet' }) })), cur, set, 'two');
   }
   function startCreation(pre) {
-    draft.look = Object.assign({}, DEFAULT_LOOK, pre ? pre.look : null); draft.name = pre ? pre.name : ''; draft.farm = ''; draft.pet = 'gato';
+    draft.look = Object.assign({}, DEFAULT_LOOK, Sprites.genderPreset(DEFAULT_LOOK.gender || 'f'), pre ? pre.look : null); draft.name = pre ? pre.name : ''; draft.farm = ''; draft.pet = 'gato';
+    if (pre && !draft.look.body) draft.look.body = draft.look.gender;      // personagem de versão antiga, recriado agora: base do gênero dele
     step = 0;
     const steps = $('steps'); steps.replaceChildren(); STEPS.forEach(() => steps.append(el('span')));
     show('create');
@@ -237,9 +254,25 @@
     renderStep();
   }
   /* Prévia ampliada: frente, esquerda, costas e direita, andando. */
+  /* Cenário pequeno da prévia (36x44): céu, morros, cerca e grama com tufos e flores. */
+  let previewBg = null;
+  function previewScene() {
+    if (previewBg) return previewBg;
+    const c = document.createElement('canvas'); c.width = 36; c.height = 44; const g = c.getContext('2d');
+    const R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+    [['#cfeaf2', 0, 6], ['#bfe2ef', 6, 6], ['#acd8e8', 12, 6], ['#9fd0e2', 18, 4]].forEach(([col, y, h]) => R(0, y, 36, h, col));
+    R(4, 5, 7, 2, '#f8fcfc'); R(6, 4, 4, 1, '#f8fcfc'); R(24, 9, 6, 2, '#f0f8fa'); R(25, 8, 3, 1, '#f0f8fa');
+    for (let x = 0; x < 36; x++) { const h = Math.round(3 + Math.sin(x * 0.28) * 2 + Math.sin(x * 0.11 + 1) * 1.5); R(x, 22 - h, 1, h, '#8ab878'); }
+    R(0, 22, 36, 22, '#78b04c');
+    for (let x = 0; x < 36; x += 6) { R(x + 1, 18, 1, 6, '#a8784a'); R(x + 1, 18, 1, 1, '#c8986a'); } R(0, 19, 36, 1, '#c8986a'); R(0, 22, 36, 1, '#a8784a');
+    R(0, 23, 36, 1, '#5e9a3a'); R(0, 36, 36, 8, '#6aa444');
+    [[3, 30], [9, 40], [15, 27], [27, 33], [32, 41], [21, 42], [6, 25], [30, 26]].forEach(([x, y], i) => { R(x, y, 1, 2, '#4e8a30'); R(x + 1, y - 1, 1, 3, '#5e9a3a'); if (i % 3 === 0) { R(x + 2, y - 1, 2, 2, i % 2 ? '#f8e070' : '#f8f8f8'); } });
+    R(8, 39, 20, 2, 'rgba(40,60,20,.22)');                                   // sombra sob os pés
+    return (previewBg = c);
+  }
   function updatePreview() {
     const dirs = ['down', 'left', 'up', 'right'], frame = [0, 1, 0, 2][previewF];
-    [...$('preview-views').querySelectorAll('canvas')].forEach((c, i) => { const g = c.getContext('2d'); g.clearRect(0, 0, Sprites.W, Sprites.H); Sprites.draw(g, draft.look, 0, 0, frame, dirs[i]); });
+    [...$('preview-views').querySelectorAll('canvas')].forEach((c, i) => { const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(previewScene(), 0, 0); Sprites.draw(g, draft.look, 6, 9, frame, dirs[i]); });
     $('preview-name').textContent = draft.name.trim() || '—';
     $('preview-farm').textContent = draft.farm.trim() ? draft.farm.trim() : '';
     $('preview-pet').replaceChildren(World.petCanvas(draft.pet));
