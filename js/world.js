@@ -998,12 +998,22 @@ const World = (() => {
     azevinho() { box(1, 6, 6, 6, '#1f6a34'); box(9, 6, 6, 6, '#2a7e40'); R(2, 7, 2, 1, '#4fa060'); blob(8, 5, 3, OUT); blob(7, 5, 2, '#e03a3a'); R(6, 4, 1, 1, '#ff8a7a'); blob(10, 4, 2, '#c02a2a'); },
     fruta_cristal() { blob(8, 9, 6, OUT); blob(8, 9, 5, '#a8e0f4'); blob(6, 7, 2, '#e8fbff'); R(10, 11, 2, 2, '#6ab4d8'); R(8, 1, 1, 3, '#5a8a5a'); R(9, 2, 2, 1, '#6aa86a'); },
     chapeu_tome() { box(4, 5, 8, 5, '#7a6a4a'); box(2, 10, 12, 2, '#5a4a32'); R(5, 7, 2, 1, '#3a2a1a'); },
-    vara() {                                        // cabo de madeira em diagonal, molinete e linha
-      for (let i = 0; i < 12; i++) { R(2 + i, 13 - i, 2, 1, OUT); R(2 + i, 14 - i, 1, 1, OUT); }
-      for (let i = 0; i < 11; i++) R(3 + i, 13 - i, 1, 1, i < 4 ? '#5a3a1e' : '#c8904a');
-      for (let i = 4; i < 11; i++) R(4 + i, 13 - i, 1, 1, '#8a5a2a');
-      box(4, 9, 3, 3, '#9a9aa8'); R(5, 10, 1, 1, '#e0e0ec');
-      R(14, 2, 1, 9, '#e8e8f0'); R(13, 11, 3, 2, OUT); R(14, 11, 1, 1, '#e04a3a'); R(14, 12, 1, 1, '#ffffff');
+    vara() {                                        // vara de bambu: gomos dourados com nós escuros, cabo amarrado com cordão
+      for (let i = 0; i < 13; i++) { R(1 + i, 14 - i, 2, 2, OUT); }
+      for (let i = 0; i < 12; i++) { R(2 + i, 14 - i, 1, 1, i % 4 === 3 ? '#8a5a1e' : '#e8c060'); R(2 + i, 15 - i, 1, 1, i % 4 === 3 ? '#6a4012' : '#b88a30'); }
+      R(2, 13, 2, 2, '#c8402a'); R(3, 12, 1, 1, '#e86a4a');
+      R(14, 1, 1, 1, '#f4e8a0'); for (let y = 2; y < 11; y++) R(15, y, 1, 1, 'rgba(240,240,250,.85)'); R(14, 11, 3, 3, OUT); R(15, 12, 1, 1, '#ffffff');
+    },
+    vara_fibra() {                                  // fibra de vidro: haste fina vinho e cinza, molinete prateado, cabo de cortiça
+      for (let i = 0; i < 13; i++) R(1 + i, 14 - i, 2, 2, OUT);
+      for (let i = 0; i < 12; i++) { R(2 + i, 14 - i, 1, 1, i < 4 ? '#c89a62' : i < 8 ? '#8a2a3a' : '#b8b8c8'); R(2 + i, 15 - i, 1, 1, i < 4 ? '#8a6038' : i < 8 ? '#5a1a26' : '#7a7a8a'); }
+      box(5, 9, 3, 3, '#c8c8d8'); R(6, 10, 1, 1, '#ffffff'); R(4, 12, 1, 1, '#e0e0ec');
+      for (let y = 2; y < 11; y++) R(15, y, 1, 1, 'rgba(240,240,250,.85)'); R(14, 11, 3, 3, OUT); R(15, 12, 1, 1, '#e04a3a');
+    },
+    minhoca() {                                     // minhoca rosada em curva
+      [[3, 11], [4, 10], [5, 9], [6, 9], [7, 10], [8, 11], [9, 11], [10, 10], [11, 9], [12, 8], [12, 7]].forEach(([x, y]) => { R(x - 1, y - 1, 3, 3, OUT); });
+      [[3, 11], [4, 10], [5, 9], [6, 9], [7, 10], [8, 11], [9, 11], [10, 10], [11, 9], [12, 8], [12, 7]].forEach(([x, y], i) => { R(x, y, 1, 1, i % 3 === 0 ? '#c85a72' : '#f08aa0'); });
+      R(12, 6, 1, 1, '#f8b0c0'); R(4, 13, 8, 1, '#7a5230');
     },
     sardinha() {                                    // corpo prateado e fino, dorso azul
       R(2, 6, 11, 5, OUT); R(1, 7, 1, 3, OUT); R(13, 7, 2, 3, OUT); R(14, 5, 2, 2, OUT); R(14, 10, 2, 2, OUT);
@@ -1220,16 +1230,19 @@ const World = (() => {
      rings = respingos [{ x, y, t0 }]; charge = força (0..1) ou null; alert = fisgada (0..1 do tempo que resta);
      hold = peixe erguido; jump = peixe pulando { x, y, id }. */
   const skinOf = look => { const s = Sprites.SKINS.find(k => k.id === look.skin) || Sprites.SKINS[0]; return s.c; };
-  function fishRod(ctx, a) {
+  const ROD_COL = { vara: ['#5a3a1e', '#c8902a', '#e8c060', '#8a5a1e'], vara_fibra: ['#c89a62', '#8a2a3a', '#b8b8c8', '#5a1a26'] };
+  function fishRod(ctx, a) {                        // a vara verga (curva) conforme a força na linha
     const f = a.fish; if (!f.tip || f.hold) return;
-    const [gx, gy] = f.grip, [tx, ty] = f.tip, n = Math.max(1, Math.ceil(Math.hypot(tx - gx, ty - gy)));
-    for (let i = 0; i <= n; i++) {                  // cabo grosso perto da mão, ponta fina
-      const k = i / n, x = Math.round(gx + (tx - gx) * k), y = Math.round(gy + (ty - gy) * k);
-      ctx.fillStyle = OUT; ctx.fillRect(x - 1, y - 1, k < 0.45 ? 3 : 2, k < 0.45 ? 3 : 2);
-    }
-    for (let i = 0; i <= n; i++) { const k = i / n, x = Math.round(gx + (tx - gx) * k), y = Math.round(gy + (ty - gy) * k); ctx.fillStyle = k < 0.3 ? '#5a3a1e' : k < 0.55 ? '#a86e34' : '#d8a060'; ctx.fillRect(x, y, k < 0.45 ? 2 : 1, 1); }
-    const rx = Math.round(gx + (tx - gx) * 0.18), ry = Math.round(gy + (ty - gy) * 0.18);   // molinete
-    ctx.fillStyle = OUT; ctx.fillRect(rx - 2, ry, 4, 4); ctx.fillStyle = '#9a9aa8'; ctx.fillRect(rx - 1, ry + 1, 2, 2);
+    const [gx, gy] = f.grip, [tx, ty] = f.tip, len = Math.hypot(tx - gx, ty - gy) || 1, n = Math.max(2, Math.ceil(len * 1.2));
+    let px = -(ty - gy) / len, py = (tx - gx) / len; if (py < 0) { px = -px; py = -py; }          // vergar para baixo
+    const b = (f.bend || 0) * len * 0.35, cx = (gx + tx) / 2 + px * b, cy = (gy + ty) / 2 + py * b;
+    const at = k => [(1 - k) * (1 - k) * gx + 2 * (1 - k) * k * cx + k * k * tx, (1 - k) * (1 - k) * gy + 2 * (1 - k) * k * cy + k * k * ty];
+    const C = ROD_COL[f.rod] || ROD_COL.vara;
+    for (let i = 0; i <= n; i++) { const k = i / n, [x, y] = at(k); ctx.fillStyle = OUT; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, k < 0.45 ? 3 : 2, k < 0.45 ? 3 : 2); }
+    for (let i = 0; i <= n; i++) { const k = i / n, [x, y] = at(k); ctx.fillStyle = k < 0.25 ? C[0] : f.rod === 'vara' && i % 5 === 4 ? C[3] : k < 0.65 ? C[1] : C[2]; ctx.fillRect(Math.round(x), Math.round(y), k < 0.45 ? 2 : 1, 1); }
+    const [rx, ry] = at(0.18);                       // molinete
+    ctx.fillStyle = OUT; ctx.fillRect(Math.round(rx) - 2, Math.round(ry), 4, 4); ctx.fillStyle = f.rod === 'vara_fibra' ? '#d8d8e8' : '#9a9aa8'; ctx.fillRect(Math.round(rx) - 1, Math.round(ry) + 1, 2, 2);
+    f.tipBent = at(1);
     if (a.dir === 'up') return;                     // de costas, a mão fica escondida pelo corpo
     const [sk, sd] = skinOf(a.look); ctx.fillStyle = OUT; ctx.fillRect(Math.round(gx) - 2, Math.round(gy) - 1, 4, 4); ctx.fillStyle = sk; ctx.fillRect(Math.round(gx) - 1, Math.round(gy), 2, 2); ctx.fillStyle = sd; ctx.fillRect(Math.round(gx) - 1, Math.round(gy) + 1, 2, 1);
   }

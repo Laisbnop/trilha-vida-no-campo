@@ -450,16 +450,23 @@ table.controls td:first-child { color: #7a3a14; }
 @media (max-width: 760px) { #modal .menu-wrap { width: calc(100vw - 12px); height: calc(100vh - 12px); } }
 
 /* ---------- pesca ---------- */
-.fish-panel { position: absolute; top: 50%; right: max(16px, 12%); transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 6px;
-  background: rgba(10, 16, 64, .82); border: 3px solid #fff; border-radius: 8px; box-shadow: 0 0 0 3px #1a1a3a; padding: 10px 12px; touch-action: none; user-select: none; -webkit-user-select: none; }
-.fish-title { font-family: var(--px); font-size: 11px; color: var(--gold); text-shadow: 2px 2px 0 #000; }
-#fish-canvas { width: 180px; height: 450px; max-height: calc(100vh - 170px); aspect-ratio: 60 / 150; image-rendering: pixelated; }
-.fish-help { margin: 0; text-align: center; font-size: 18px; line-height: 1.1; color: var(--muted); }
-.fish-tut { position: absolute; inset: 6px; background: rgba(10, 16, 64, .95); border: 2px solid var(--gold); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px; justify-content: center; text-align: center; }
-.fish-tut b { font-family: var(--px); font-size: 10px; line-height: 1.5; color: var(--gold); }
-.fish-tut p { margin: 0; font-size: 19px; line-height: 1.1; }
+.fishbar { position: fixed; z-index: 4; image-rendering: pixelated; pointer-events: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); }
+.fishtip { position: fixed; z-index: 4; transform: translateX(-50%); pointer-events: none; font-size: 19px; line-height: 1; padding: 2px 8px; color: #fff;
+  background: rgba(20, 14, 10, .78); border: 2px solid #c8904a; border-radius: 4px; white-space: nowrap; }
+.fish-pop { position: fixed; z-index: 6; transform: translate(-50%, -100%); pointer-events: none; font-family: var(--px); font-size: 14px; color: #ffd75e;
+  text-shadow: 2px 2px 0 #5a2a10, -1px -1px 0 #5a2a10, 1px -1px 0 #5a2a10, -1px 1px 0 #5a2a10; animation: fishpop 1.25s ease-out forwards; white-space: nowrap; }
+.fish-pop.perfect { color: #fff6a0; } .fish-pop.lvl { color: #a8f0ff; text-shadow: 2px 2px 0 #10306a, -1px -1px 0 #10306a; }
+@keyframes fishpop { 0% { opacity: 0; transform: translate(-50%, -60%) scale(.7); } 15% { opacity: 1; transform: translate(-50%, -100%) scale(1.15); } 30% { transform: translate(-50%, -100%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -170%); } }
+.tag.perfect { background: #c89a20; color: #fff; } .tag.lvl { background: #2a5aa8; }
+.catch-keys { font-size: 17px; color: var(--muted); text-align: center; }
+.slot i.bait { background: #c8506a; }
+.bait-info { color: #ffd0d8; }
+.fiber-row { flex-direction: row !important; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fiber-row.locked { opacity: .75; }
+.fish-skill .bar i { background: #6ac8f0; }
 .fish-cancel { position: absolute; left: 50%; bottom: 128px; transform: translateX(-50%); z-index: 4; font-size: 19px; }
 .catch { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 5; width: min(440px, calc(100% - 24px)); max-height: calc(100% - 150px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.catch.at-top { bottom: auto; top: 96px; }
 .catch-top { display: flex; gap: 12px; align-items: center; }
 .catch-pic { width: 64px; height: 64px; flex: none; background: var(--deep); border: 2px solid #fff; border-radius: 6px; image-rendering: pixelated; }
 .catch-txt { display: flex; flex-direction: column; gap: 2px; }
@@ -477,8 +484,7 @@ table.controls td:first-child { color: #7a3a14; }
 .stamp.stamp-green { background: #3f8a4a; outline-color: #3f8a4a; }
 .fish-row { flex-direction: row !important; align-items: center; justify-content: space-between; gap: 8px; }
 @media (max-width: 640px), (max-height: 560px) {
-  .fish-panel { right: 50%; transform: translate(50%, -55%); padding: 8px; }
-  #fish-canvas { width: 120px; height: 300px; }
   .catch { bottom: 150px; }
   .fish-cancel { top: 118px; bottom: auto; }
 }
+
