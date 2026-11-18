@@ -15,7 +15,9 @@ const ITEMS = {
   picareta: { name: 'Picareta',  kind: 'tool', desc: 'Quebra pedras pequenas.' },
   foice:    { name: 'Foice',     kind: 'tool', desc: 'Corta o mato.' },
   espada:   { name: 'Espada simples', kind: 'tool', desc: 'Velha, mas firme. Treine no boneco da fazenda.' },
-  vara:     { name: 'Vara de pesca', kind: 'tool', desc: 'Presente de Tomé. Na beira da água, segure o clique (ou o dedo) sobre a água e solte para lançar.' },
+  vara:     { name: 'Vara de bambu', kind: 'tool', rod: true, desc: 'A primeira vara de Tomé. Na beira da água, segure o clique sobre a água (ou Espaço, virado para ela) e solte para lançar.' },
+  vara_fibra: { name: 'Vara de fibra de vidro', kind: 'tool', rod: true, bait: true, desc: 'Leve e firme. Aceita isca de minhoca, que faz o peixe morder mais rápido.' },
+  minhoca:  { name: 'Minhoca (isca)', kind: 'bait', price: 5, desc: 'Isca simples. Carregue na vara de fibra de vidro pelo inventário: cada lançamento usa uma.' },
 
   sem_rabanete: { name: 'Sementes de rabanete', kind: 'seed', crop: 'rabanete', price: 8,  desc: 'Cresce em 2 dias regados.' },
   sem_tomate:   { name: 'Sementes de tomate',   kind: 'seed', crop: 'tomate',   price: 15, desc: 'Cresce em 4 dias regados.' },
@@ -65,7 +67,7 @@ const TREES = {
   goiaba:  { name: 'Goiabeira',  grow: 6, every: 3, n: 2, fruit: 'goiaba' },
 };
 
-const SHOP = ['sem_rabanete', 'sem_tomate', 'sem_abobora', 'muda_laranja', 'muda_goiaba', 'racao', 'chapeu_palha'];
+const SHOP = ['sem_rabanete', 'sem_tomate', 'sem_abobora', 'muda_laranja', 'muda_goiaba', 'racao', 'chapeu_palha', 'minhoca'];
 const HEN_PRICE = 80, MAX_HENS = 4;
 
 /* Aparência. Todas as opções valem para qualquer gênero. */
@@ -292,27 +294,44 @@ const RESIST = {
   trunk:  { name: 'Árvore', verb: 'Cortar',   tools: ['machado'],  hp: 5, energy: 2, drop: ['madeira', 3], fx: 'wood' },
   rock:   { name: 'Rocha',  verb: 'Quebrar',  tools: ['picareta'], hp: 5, energy: 2, drop: ['pedra', 2],   fx: 'stone' },
 };
-const TOOL_NAME = { vara: 'a vara de pesca', machado: 'o machado', picareta: 'a picareta', foice: 'a foice', espada: 'a espada', enxada: 'a enxada', regador: 'o regador' };
+const TOOL_NAME = { vara: 'a vara de bambu', vara_fibra: 'a vara de fibra de vidro', machado: 'o machado', picareta: 'a picareta', foice: 'a foice', espada: 'a espada', enxada: 'a enxada', regador: 'o regador' };
 
 /* Pesca. zones = chance relativa em cada tipo de água (lago: lago da fazenda e lagoa do bosque;
    rio: rio do bosque e nascente da serra). peak = horário em que o peixe é mais comum
    (fora dele a chance cai para off). cm = tamanho mínimo e máximo; value = venda do menor ao maior.
-   xp = experiência de pesca por captura. move/hold = agitação do peixe no minijogo (0 a 1);
-   gain/loss = progresso por segundo com o peixe dentro/fora da faixa; bite = janela da fisgada (ms). */
+   behavior = jeito de nadar no minijogo (FISHING.behaviors); a experiência vem do comportamento. */
 const FISH = {
-  sardinha: { zones: { rio: 1, lago: 0.35 }, peak: [360, 1140], off: 0.35, cm: [5, 90], value: [30, 130], xp: 30, move: 0.3, hold: [800, 1800], gain: 0.3, loss: 0.15, bite: 1200 },
-  tucunare: { zones: { lago: 0.65 }, peak: [360, 1080], off: 0.3, cm: [20, 80], value: [60, 200], xp: 45, move: 0.6, hold: [450, 1200], gain: 0.25, loss: 0.2, bite: 1000 },
+  sardinha: { zones: { rio: 1, lago: 0.6 }, peak: [360, 1140], off: 0.35, cm: [5, 90], value: [30, 130], behavior: 'tranquilo' },
+  tucunare: { zones: { lago: 0.4 }, peak: [360, 1080], off: 0.3, cm: [20, 80], value: [60, 200], behavior: 'ativo' },
+};
+/* Configuração central da pesca: mude aqui para equilibrar. Posições do minijogo são
+   proporções da pista (0 = esquerda, 1 = direita); velocidades em pistas por segundo. */
+const FISHING = {
+  progress: { start: 30, gain: 10, loss: 8, grace: 750 },          // 0 a 100; pontos por segundo; tolerância inicial (ms)
+  zone: { base: 0.22, perLevel: 0.01 },                               // largura da zona verde: 22% no nível 0, +1 ponto por nível
+  track: { fishMin: 0.36, fishMax: 0.97 },                           // o peixe nada à direita da zona parada: sem segurar, nunca se pesca
+  control: { accel: 4.5, back: 3.6, reverse: 2, maxSpeed: 0.45, settle: 450 },   // segurar acelera para a direita; soltar volta; settle = zona parada no começo (ms)
+  behaviors: {                                                        // como cada tipo de peixe nada
+    tranquilo: { xp: 20, speed: [0.12, 0.2], dist: [0.08, 0.26], accel: 0.6, pause: [0.5, 1.4], pauseChance: 0.55, turn: 0, dash: 0 },
+    ativo: { xp: 30, speed: [0.24, 0.33], dist: [0.12, 0.40], accel: 1.2, pause: [0.2, 0.6], pauseChance: 0.3, turn: 0.3, dash: 0.2 },
+    agil: { xp: 40, speed: [0.48, 0.64], dist: [0.10, 0.24], accel: 3, pause: [0.4, 1.0], pauseChance: 0.7, turn: 0, dash: 1 },
+  },
+  perfectBonus: 0.5,                                                  // +50% de experiência na captura perfeita
+  maxLevel: 10, nextLevel: lvl => 100 + 25 * lvl,                     // experiência para passar do nível lvl ao seguinte
+  bite: { window: 1200, waitMin: 3000, waitMax: 10000, maxCutPerLevel: 200, baitFactor: 0.5 },   // tempos reais (ms)
+  cast: { min: 12, max: 72, step: 16, stepLevels: [1, 4, 8], shore: 24, energy: 2 },             // distâncias em pixels do mapa (16 = um quadrado)
+  fiber: { price: 1500, level: 4 }, baitPrice: 5,
 };
 const FISH_ZONE_NAME = { lago: 'lago', rio: 'rio' };
-const CAST_ENERGY = 2;                    // energia por lançamento válido
+const CAST_ENERGY = FISHING.cast.energy;  // energia por lançamento válido
 const ROD_LETTER = {
   greet: 'Oi, {nome}.',
   body: [
     'É o Tomé, da cabana do bosque. Achei esta vara no meu canto e lembrei de você: foi a minha primeira. Está velha, mas a linha é nova e a boia é boa.',
     'Dá para pescar no lago da sua fazenda, na lagoa do bosque e no rio que desce dela até o fim da mata. No rio é quase só sardinha. Nos lagos também aparece tucunaré, que briga mais.',
-    'Com a vara na mão, chegue na beira da água. Segure o clique (ou o dedo) sobre a água para pegar força e solte para lançar. Quanto mais força, mais longe a boia cai.',
-    'Quando a boia afundar e aparecer o "!", clique ou toque de novo, rápido. Aí o peixe briga: segure o clique, o dedo ou a barra de espaço para a faixa verde subir; solte para ela descer. Deixe o peixe dentro da faixa até a barra encher.',
-    'Esc (ou o botão "Recolher linha") desiste e recolhe a linha. Cada lançamento cansa um pouquinho. Peixe se vende no Armazém, e a Dona Celeste paga mais pelos grandes.',
+    'Com a vara na mão, chegue na beira da água. Segure o clique sobre a água, ou a barra de espaço com você virado para ela, para pegar força; solte para lançar. Quanto mais força, mais longe a boia cai.',
+    'Quando a boia afundar e aparecer o "!", clique ou aperte Espaço de novo, rápido. Aí o peixe briga numa barrinha: segure o clique ou o Espaço para a faixa verde ir para a direita; solte para ela voltar. Deixe o peixe dentro da faixa até a barra de baixo encher.',
+    'Esc recolhe a linha. Cada lançamento cansa um pouquinho. Peixe se vende no Armazém, e a Dona Celeste paga mais pelos grandes. Com prática, você pesca melhor.',
   ],
   sign: 'Boa pescaria,\nTomé',
 };

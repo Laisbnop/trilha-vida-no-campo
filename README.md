@@ -31,9 +31,10 @@ pelo GitHub Pages. Não precisa instalar nada.
 | Recusar numa pergunta "Sim/Não" | E ou Esc | Botão "Não" |
 | Pausar | P (ou o botão ⏸) | Botão ⏸ |
 | Fechar painel, carta ou menu | Esc (ou E) | Botão ✕ |
-| Pescar (vara na mão) | Segure o clique na água, perto da margem, e solte | Segure o dedo na água e solte |
-| Fisgar | Clique ou Espaço quando a boia afundar e aparecer o "!" | Toque na tela |
-| Puxar o peixe | Segure clique ou Espaço: a faixa sobe; solte: desce | Segure o dedo; solte |
+| Pescar (vara na mão) | Segure o botão esquerdo sobre a água, ou Espaço virado para ela; solte para lançar | Segure o dedo na água e solte |
+| Fisgar | Botão esquerdo ou Espaço quando a boia afundar e aparecer o "!" | Toque na tela |
+| Puxar o peixe | Segure botão esquerdo ou Espaço: a faixa vai para a direita; solte: ela volta | Segure o dedo; solte |
+| Guardar ou soltar o peixe | Clique na opção, ou setas e Espaço | Toque na opção |
 | Recolher a linha | Esc | Botão "Recolher linha" |
 
 Os atalhos ignoram a repetição de tecla segurada, não funcionam enquanto você
@@ -269,11 +270,12 @@ mostram a fala e o rosto de quem pergunta. Narração aparece sem nome nem retra
 
 ## Pesca
 
-**A vara.** Tomé manda pelo correio a vara de pesca dele, com uma carta que
-explica os controles: no dia 2 de um jogo novo ou, em jogos salvos antes, na
-manhã seguinte à atualização. A vara chega uma única vez. Se a mochila estiver
-cheia, ela fica guardada com a carta e é resgatada no Diário ("Cartas" → "Pegar a
-vara de pesca"). Escolha a vara na barra de ferramentas.
+**A vara.** Tomé manda pelo correio a vara dele, a **Vara de bambu**, com uma carta
+que explica os controles: no dia 2 de um jogo novo ou, em jogos salvos antes, na
+manhã seguinte à atualização. Ela chega uma única vez; com a mochila cheia, fica
+guardada com a carta e é resgatada no Diário ("Cartas" → "Pegar a vara de bambu").
+Quem já tinha a vara de pesca continua com ela, no mesmo lugar, agora chamada de
+Vara de bambu.
 
 **Onde pescar.** Na beira da água, sem parede ou casa no caminho:
 
@@ -281,37 +283,81 @@ vara de pesca"). Escolha a vara na barra de ferramentas.
 - **rio:** o rio do bosque, que sai da lagoa e desce até o fim da mata (com uma
   ponte de tábuas), e a nascente da serra.
 
-| Peixe | Onde | Quando é mais comum | Tamanho | Venda | Experiência |
-| --- | --- | --- | --- | --- | --- |
-| Sardinha | rio e lago, todas as estações | 6h–19h | 5 a 90 cm | 30 a 130 moedas | 30 |
-| Tucunaré | só no lago, todas as estações | 6h–18h | 20 a 80 cm | 60 a 200 moedas | 45 |
+| Peixe | Onde | Mais comum | Tamanho | Venda | Jeito de nadar | XP |
+| --- | --- | --- | --- | --- | --- | --- |
+| Sardinha | rio e lago (a mais comum no lago da fazenda) | 6h–19h | 5 a 90 cm | 30 a 130 moedas | tranquilo | 20 |
+| Tucunaré | só no lago | 6h–18h | 20 a 80 cm | 60 a 200 moedas | ativo | 30 |
 
-O preço cresce com o tamanho. A sardinha é fácil; o tucunaré briga mais.
+O preço cresce com o tamanho. Há três jeitos de nadar: **tranquilo** (devagar,
+com pausas e curvas suaves), **ativo** (mais rápido, muda de direção com mais
+frequência e dá pequenas arrancadas) e **ágil** (arrancadas curtas alternadas com
+pausas; 40 XP). O ágil já está pronto para a próxima espécie que entrar no jogo.
+
+**Comando único.** A pesca inteira funciona com o **botão esquerdo do mouse** ou
+com a **barra de espaço**, e os dois contam como o mesmo botão: ele está
+pressionado enquanto pelo menos um dos dois estiver segurado. Usar os dois juntos
+não duplica lançamento, fisgada nem escolha. Com Espaço, o lançamento vai para
+onde o personagem está virado, sem precisar do cursor; durante a briga, o botão
+esquerdo vale em qualquer lugar da tela. Ao perder o foco da janela, teclas e
+mouse são soltos.
 
 **Etapas.**
-1. Segure o clique sobre a água: o personagem prepara a vara e uma barra de
-   força sobe e desce acima da cabeça.
-2. Solte para lançar: a vara vai à frente e a boia voa até a água, com
-   respingo. A força decide a distância, sempre dentro da água.
-3. Espere: a boia balança, às vezes dá umas beliscadas. O relógio continua andando.
-4. A boia afunda e aparece um "!" com o tempo que resta. Clique para fisgar.
-   Perdeu a hora? A linha volta e é só tentar de novo.
-5. O minijogo abre (relógio parado): segure para a faixa verde subir e solte
-   para ela descer. Com o peixe dentro da faixa, a barra da direita enche; fora,
-   esvazia. Cheia: o peixe é seu. Vazia: ele foge. Sem segurar nada, o peixe
-   sempre escapa. Na primeira vez aparecem instruções curtas.
-6. O personagem ergue o peixe e aparecem nome, tamanho e valor: **Guardar** ou
-   **Soltar**. Com a mochila cheia, o peixe espera enquanto você solta o peixe ou
-   joga fora algum item (ferramentas e itens de missão não podem ser jogados fora).
+1. Segure sobre a água (ou Espaço virado para ela): o personagem puxa a vara para
+   trás e uma barra de força sobe e desce acima da cabeça.
+2. Solte para lançar: a vara verga, vai à frente e a boia voa até a água, com
+   respingo. A força decide a distância, sempre dentro da água. O alcance máximo
+   cresce um quadrado nos níveis de pesca 1, 4 e 8.
+3. Espere: a boia balança, às vezes belisca. O relógio continua. A mordida vem
+   entre 3 e 10 segundos de jogo ativo (o máximo cai 0,2 s por nível).
+4. A boia afunda, treme e aparece um "!" com o tempo que resta (cerca de 1,2 s).
+   Aperte para fisgar: "Fisgou!" aparece na água.
+5. A barra horizontal aparece perto da pesca, sem cobrir o personagem nem a boia
+   (relógio parado). Segure para a zona verde acelerar para a direita; solte para
+   ela voltar para a esquerda. Com o centro do peixe dentro da zona, a barrinha
+   de baixo enche; fora, esvazia. Cheia: o peixe é seu. Vazia: ele foge. A zona
+   espera um instante antes de responder, para o aperto que fisgou não dar um
+   tranco. Na primeira vez aparece uma dica curta, que some sozinha.
+6. O peixe salta até as mãos, o personagem o ergue e aparecem nome, tamanho e
+   valor: **Guardar** ou **Soltar** (clique, ou setas e Espaço). É preciso um aperto
+   novo: o mesmo que pegou o peixe não escolhe nada. Com a mochila cheia, o peixe
+   espera enquanto você solta o peixe ou joga algo fora (ferramentas e itens de
+   missão não podem ser jogados fora).
 
-A animação acompanha a direção do personagem e usa a aparência escolhida. Durante
-a pesca não dá para andar nem abrir menus; Esc (ou "Recolher linha") desiste. Cada
-lançamento válido gasta 2 de energia; clicar fora da água ou longe da margem não
-gasta nada. Se der 2h com a linha na água, ela é recolhida antes de o dia acabar.
+Durante a pesca não dá para andar nem abrir menus; Esc (ou "Recolher linha")
+desiste e recolhe a linha. Cada lançamento válido gasta 2 de energia; lançamentos
+inválidos (longe da margem, sem água ou com parede no caminho) não gastam energia
+nem isca. Se der 2h com a linha na água, ela é recolhida antes de o dia acabar.
 
-Peixes são vendidos no Armazém, um a um ou todos de uma vez. O Diário mostra a
-experiência de pesca, as espécies descobertas e o maior tamanho de cada uma.
-Iscas, melhorias da vara e baús de tesouro ficam para uma próxima versão.
+**Captura perfeita.** Se o centro do peixe não sair da zona verde depois da
+tolerância inicial, a captura é perfeita: "Perfeito!" aparece e a experiência
+ganha 50% a mais.
+
+**Nível de pesca (0 a 10).** Cada captura dá a experiência do jeito de nadar
+(guardando ou soltando o peixe, uma vez só). Passar do nível N ao seguinte pede
+100 + 25 × N de experiência, e o que sobra continua contando. O nível aumenta a
+zona verde (22% da barra no nível 0, +1 ponto por nível, 32% no 10), o alcance do
+lançamento e encurta a espera; os peixes não ficam mais difíceis para compensar.
+Nível, progresso e zona aparecem na aba Personagem; subir de nível mostra um aviso.
+
+**Vara de fibra de vidro.** À venda no Armazém a partir do nível 4 de pesca, por
+1.500 moedas. A compra pede confirmação, confere tudo antes de cobrar e não deixa
+comprar duas. A vara nova toma o lugar da de bambu na barra; a de bambu continua
+na mochila (ou vai para o baú, se a mochila estiver cheia). Ela não aumenta a zona
+verde: aceita **isca de minhoca** (5 moedas no Armazém). Escolha a vara no
+Inventário e use "Carregar minhocas"; a quantidade aparece no ícone da barra. Cada
+lançamento válido gasta uma, e a espera pela mordida cai pela metade. Sem isca, a
+vara funciona normalmente.
+
+**Configuração central.** Os números da pesca ficam juntos em `FISHING`, no
+`js/data.js`: progresso (início 30, +10/s dentro, −8/s fora, 0,75 s de tolerância),
+zona verde por nível, controle da zona, jeitos de nadar, espera, alcance, preços e
+experiência. A física do minijogo fica em `js/fishcore.js` e é calculada pelo
+tempo decorrido, em passos fixos de 10 ms: a mesma em qualquer taxa de quadros.
+
+Peixes são vendidos no Armazém, um a um ou todos de uma vez. O Diário mostra o
+nível, as espécies descobertas, o maior tamanho de cada uma e as capturas perfeitas.
+Zonas de qualidade, lixo, tesouros, outras iscas, anzóis e encantamentos ficam
+para uma próxima versão.
 
 ## Missões
 
@@ -421,9 +467,11 @@ página não reinicia limites nem repete eventos. Use o mesmo navegador e
 aparelho para continuar. Jogos salvos antes de Lúcio ganham esses campos
 zerados, sem perder nada.
 
-Da pesca: vara recebida (ou guardada esperando espaço), carta de Tomé lida,
-instruções do minijogo vistas, peixes guardados com o tamanho de cada um, espécies
-descobertas com o maior tamanho e a experiência de pesca. A tentativa em andamento
+Da pesca: vara recebida (ou guardada esperando espaço), carta de Tomé lida, dica
+do minijogo vista, nível e experiência, vara usada por último, compra da vara de
+fibra, minhocas carregadas, peixes guardados com o tamanho de cada um, espécies
+descobertas com o maior tamanho e as capturas perfeitas. A experiência acumulada
+nas versões anteriores vira nível na primeira vez que o jogo é aberto. A tentativa em andamento
 não é salva: recarregar no meio dela só recolhe a linha, sem peixe de graça e sem
 devolver a energia do lançamento. Espécie, recorde e experiência são gravados no
 momento da captura; o peixe entra na mochila ao escolher "Guardar".
@@ -448,8 +496,10 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | --- | --- |
 | `index.html` | Página de entrada |
 | `css/style.css` | Visual da interface |
-| `js/data.js` | Itens, cultivos, árvores, moradores, missões e loja |
+| `js/data.js` | Itens, cultivos, árvores, moradores, missões, loja e configuração da pesca |
 | `js/sprites.js` | Personagens em pixel art (cabelos, roupas, chapéus, 4 direções) |
+| `js/portraits.js` | Retratos 64×64 dos moradores |
+| `js/fishcore.js` | Física do minijogo de pesca (peixe, zona verde e progresso) |
 | `js/world.js` | Mapa, interiores, colisão, câmera, ícones e desenho do mundo |
 | `js/game.js` | Salvamento, criação, ferramentas, fazenda, moradores, missões e painéis |
 
