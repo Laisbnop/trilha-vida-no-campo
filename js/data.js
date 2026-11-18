@@ -7,7 +7,7 @@ const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem 
 const MS_PER_GAME_MIN = 900;       // 54 s reais por hora de jogo (9 s a cada 10 min) → 20 horas em 18 minutos ativos
 /* Comestíveis do jogo (regra do vale): só os itens desta lista podem ser comidos, cada um
    com o valor "food" (energia recuperada) definido no item. Outras flores e plantas não. */
-const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare'];
+const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango'];
 const MAX_ENERGY = 100;
 const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
@@ -25,10 +25,12 @@ const ITEMS = {
 
   sem_rabanete: { name: 'Sementes de rabanete', kind: 'seed', crop: 'rabanete', price: 8,  desc: 'Cresce em 2 dias regados.' },
   sem_tomate:   { name: 'Sementes de tomate',   kind: 'seed', crop: 'tomate',   price: 15, desc: 'Cresce em 4 dias regados.' },
-  sem_abobora:  { name: 'Sementes de abóbora',  kind: 'seed', crop: 'abobora',  price: 25, desc: 'Cresce em 6 dias regados.' },
+  sem_abobora:  { name: 'Sementes de abóbora',  kind: 'seed', crop: 'abobora',  price: 25, seasons: [0, 2], desc: 'Plante na Primavera ou no Outono. Precisa de rega: 13 dias regados até a primeira abóbora e depois 6 para cada nova (1 por colheita); o pé continua no lugar. O pé seca no fim da estação.' },
+  sem_morango:  { name: 'Sementes de morango',  kind: 'seed', crop: 'morango',  price: 150, seasons: [0, 2, 3], desc: 'Plante na Primavera, no Outono ou no Inverno. Precisa de rega: 5 dias regados até o primeiro morango e depois 4 para cada novo (1 por colheita); o pé continua no lugar. O pé seca no fim da estação.' },
   rabanete: { name: 'Rabanete', sell: 18, desc: 'Crocante e ardidinho.' },
   tomate:   { name: 'Tomate',   sell: 40, desc: 'Vermelho e suculento.' },
   abobora:  { name: 'Abóbora',  sell: 75, desc: 'Pesada e doce.' },
+  morango:  { name: 'Morango',  cat: 'fruta', sell: 360, food: 30, desc: 'Fruta vermelha, perfumada e rara por aqui. Comestível: recupera 30 de energia. Dona Celeste adora.' },
 
   muda_laranja: { name: 'Muda de laranjeira', kind: 'sapling', tree: 'laranja', price: 60, desc: 'Vira árvore em 5 dias. Dá frutos a cada 3.' },
   muda_goiaba:  { name: 'Muda de goiabeira',  kind: 'sapling', tree: 'goiaba',  price: 70, desc: 'Vira árvore em 6 dias. Dá frutos a cada 3.' },
@@ -59,19 +61,34 @@ const ITEMS = {
   apito: { name: 'Apito de madeira', kind: 'quest', desc: 'Pequeno, gasto de tanto uso, com um entalhe de passarinho. É de Lúcio.' },
 };
 
-/* days = dias regados até a colheita. */
+/* Cultivos. days = noites regadas até a primeira colheita. Os de rebrota têm também:
+   stages = noites regadas em cada um dos 5 estágios (somam days); regrow = noites regadas
+   entre uma colheita e a próxima (o pé fica); yield = itens por colheita; seasons = estações
+   de plantio (0 Primavera, 1 Verão, 2 Outono, 3 Inverno); seasonal = o pé seca quando a
+   estação muda. Sem rega, a noite não conta. */
 const CROPS = {
   rabanete: { name: 'Rabanete', days: 2, seed: 'sem_rabanete' },
   tomate:   { name: 'Tomate',   days: 4, seed: 'sem_tomate' },
-  abobora:  { name: 'Abóbora',  days: 6, seed: 'sem_abobora' },
+  abobora:  { name: 'Abóbora',  days: 13, seed: 'sem_abobora', stages: [1, 2, 3, 4, 3], regrow: 6, yield: 1, seasons: [0, 2], seasonal: true },
+  morango:  { name: 'Morango',  days: 5, seed: 'sem_morango', stages: [1, 1, 1, 1, 1], regrow: 4, yield: 1, seasons: [0, 2, 3], seasonal: true },
 };
+/* Estado de uma plantação { crop, g, w, cyc, dead }: g = noites regadas no ciclo atual;
+   cyc = colheitas já feitas (0 = primeira produção); dead = pé seco.
+   Devolve { need, ripe, left, stage (1–5 na primeira produção), regrow, frac }. */
+function cropState(o) {
+  const C = CROPS[o.crop], regrow = !!(C.regrow && o.cyc > 0), need = regrow ? C.regrow : C.days;
+  const g = Math.min(o.g || 0, need), ripe = !o.dead && g >= need;
+  let stage = 1;
+  if (C.stages && !regrow) { let acc = 0; for (let i = 0; i < C.stages.length - 1; i++) { acc += C.stages[i]; if (g >= acc) stage = i + 2; } }
+  return { need, ripe, left: Math.max(0, need - g), stage, regrow, frac: need ? g / need : 1 };
+}
 /* grow = dias até ficar adulta; every = intervalo entre colheitas; n = frutos por colheita. */
 const TREES = {
   laranja: { name: 'Laranjeira', grow: 5, every: 3, n: 2, fruit: 'laranja' },
   goiaba:  { name: 'Goiabeira',  grow: 6, every: 3, n: 2, fruit: 'goiaba' },
 };
 
-const SHOP = ['sem_rabanete', 'sem_tomate', 'sem_abobora', 'muda_laranja', 'muda_goiaba', 'racao', 'chapeu_palha', 'minhoca'];
+const SHOP = ['sem_rabanete', 'sem_tomate', 'sem_abobora', 'sem_morango', 'muda_laranja', 'muda_goiaba', 'racao', 'chapeu_palha', 'minhoca'];
 const HEN_PRICE = 80, MAX_HENS = 4;
 
 /* Aparência. Todas as opções valem para qualquer gênero. */
@@ -119,7 +136,9 @@ const VILLAGERS = [
   { id: 'celeste', portrait: 'celeste', name: 'Dona Celeste', place: 'no Armazém, na vila',
     bio: 'Dona do Armazém. Prática, acolhedora e sabe de tudo o que se planta na região.',
     look: mkLook('s4', 'coque', 'grisalho', 'blusa', '#c8683a', 'saia', '#5a4a6a'),
-    love: ['laranja', 'flor'], like: ['tomate', 'ovo', 'goiaba', 'narciso'], dislike: ['pedra', 'madeira'],
+    love: ['laranja', 'flor', 'morango'], like: ['tomate', 'ovo', 'goiaba', 'narciso'], dislike: ['pedra', 'madeira'],
+    giftPts: { morango: 150 },                                  // valor base próprio (substitui o de "adora")
+    giftLine: { morango: 'Morango! Você acertou em cheio. Vou separar alguns para uma receita especial. Muito obrigada!' },
     sched: [[360, 'loja'], [1080, [[510, 160], [590, 186]]]],
     talk: [['Precisando de semente, é só falar. Rabanete é o mais rápido para começar.', 'O lago da sua fazenda serve para encher o regador. Planta sem água não cresce.', '{fazenda} ficou parado tanto tempo... É bom ver fumaça naquela chaminé de novo.'],
       ['Guardei umas mudas boas para você. Árvore dá trabalho no começo e alegria por anos.', 'Sabe que a vila anda mais animada desde que você chegou?', 'Meu marido plantou a laranjeira da praça. Toda florada eu lembro dele.'],
@@ -338,4 +357,18 @@ const ROD_LETTER = {
     'Esc recolhe a linha. Cada lançamento cansa um pouquinho. Peixe se vende no Armazém, e a Dona Celeste paga mais pelos grandes. Com prática, você pesca melhor.',
   ],
   sign: 'Boa pescaria,\nTomé',
+};
+
+/* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
+const UPDATE_NOTES = {
+  title: 'Morango e abóbora',
+  items: [
+    'Morango novo: sementes no Armazém por 150 moedas, na Primavera, no Outono e no Inverno. Pronto em 5 dias regados (5 estágios de 1 dia) e depois a cada 4; 1 morango por colheita, e o pé fica plantado.',
+    'Morango vende por 360 moedas e recupera 30 de energia ("Comer morango?").',
+    'Dona Celeste adora morangos: o presente vale 150 pontos de amizade, com resposta própria. Os outros moradores continuam com os gostos de sempre.',
+    'Abóbora: plantio só na Primavera e no Outono; pronta em 13 dias regados (5 estágios: 1, 2, 3, 4 e 3 dias) e depois a cada 6; 1 abóbora por colheita, e o pé fica. Sementes (25) e venda (75) com o mesmo preço.',
+    'Sem rega, a planta não cresce, inclusive entre colheitas. Planta madura espera você colher.',
+    'Quando a estação muda, pés de morango e de abóbora secam (os frutos que ficaram se perdem). Limpe com a foice. Plantar sem tempo para a primeira colheita pede confirmação; fora de estação, o plantio é bloqueado sem gastar nada.',
+    'Abóboras de jogos salvos: as maduras continuam maduras; as que estavam crescendo mantêm os dias já regados.',
+  ],
 };

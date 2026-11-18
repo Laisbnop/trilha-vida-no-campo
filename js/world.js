@@ -997,6 +997,11 @@ const World = (() => {
     acafrao() { R(7, 9, 2, 6, '#3a7a3a'); box(4, 2, 8, 8, '#8a5ad9'); R(5, 2, 6, 2, '#b48af0'); R(7, 4, 2, 4, '#f0a020'); R(4, 9, 8, 1, '#6a3ab8'); },
     azevinho() { box(1, 6, 6, 6, '#1f6a34'); box(9, 6, 6, 6, '#2a7e40'); R(2, 7, 2, 1, '#4fa060'); blob(8, 5, 3, OUT); blob(7, 5, 2, '#e03a3a'); R(6, 4, 1, 1, '#ff8a7a'); blob(10, 4, 2, '#c02a2a'); },
     fruta_cristal() { blob(8, 9, 6, OUT); blob(8, 9, 5, '#a8e0f4'); blob(6, 7, 2, '#e8fbff'); R(10, 11, 2, 2, '#6ab4d8'); R(8, 1, 1, 3, '#5a8a5a'); R(9, 2, 2, 1, '#6aa86a'); },
+    morango() {                                     // morango: vermelho com sementinhas e coroa verde
+      blob(8, 10, 6, OUT, 1.1); blob(8, 10, 5, '#e0283a', 1.1); R(4, 6, 8, 2, '#e0283a'); R(5, 14, 6, 1, OUT); R(6, 15, 4, 1, OUT);
+      R(5, 8, 2, 2, '#ff7a7a'); [[6, 11], [9, 9], [10, 12], [8, 13], [5, 10], [11, 7]].forEach(([x, y]) => R(x, y, 1, 1, '#ffe080'));
+      R(5, 3, 6, 2, OUT); R(5, 4, 2, 2, '#3f9648'); R(9, 4, 2, 2, '#3f9648'); R(7, 2, 2, 3, '#58b858'); R(7, 1, 1, 2, '#2f7028');
+    },
     chapeu_tome() { box(4, 5, 8, 5, '#7a6a4a'); box(2, 10, 12, 2, '#5a4a32'); R(5, 7, 2, 1, '#3a2a1a'); },
     vara() {                                        // vara de bambu: gomos dourados com nós escuros, cabo amarrado com cordão
       for (let i = 0; i < 13; i++) { R(1 + i, 14 - i, 2, 2, OUT); }
@@ -1034,7 +1039,7 @@ const World = (() => {
     const c = document.createElement('canvas'); c.width = 16; c.height = 16; c.className = 'pixel';
     const prev = g; g = c.getContext('2d');
     const it = ITEMS[id];
-    if (it && it.kind === 'seed') ICON.seed({ rabanete: '#e0507a', tomate: '#e04a3a', abobora: '#e88a20' }[it.crop]);
+    if (it && it.kind === 'seed') ICON.seed({ rabanete: '#e0507a', tomate: '#e04a3a', abobora: '#e88a20', morango: '#e0283a' }[it.crop]);
     else if (it && it.kind === 'sapling') ICON.muda(FRUIT[it.tree][1]);
     else if (ICON[id]) ICON[id]();
     g = prev;
@@ -1055,6 +1060,42 @@ const World = (() => {
       if (stage === 1) { P(6, 8, 4, 2, '#58b858'); P(4, 7, 2, 2, '#3f9648'); P(10, 9, 2, 2, '#3f9648'); }
       else { P(1, 9, 14, 2, '#3f9648'); P(2, 6, 4, 4, '#2f8a40'); P(10, 10, 4, 4, '#2f8a40'); P(12, 5, 3, 3, '#58b858'); if (stage === 3) { P(4, 4, 9, 8, OUT); P(5, 5, 7, 6, '#e88a20'); P(7, 5, 1, 6, '#c06a10'); P(10, 5, 1, 6, '#c06a10'); P(6, 6, 1, 2, '#ffc070'); P(8, 3, 2, 2, '#3f9648'); } else { P(6, 7, 4, 4, '#9ac850'); } }
     }
+  }
+  /* Morango e abóbora: 5 estágios na primeira produção, o pé adulto na rebrota (flor →
+     fruto em formação → maduro) e o pé seco no fim da estação. */
+  function staged(ctx, x, y, o) {
+    const P = (a, b, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + a, y + b, w, h); }, st = cropState(o);
+    const s = o.dead ? 0 : st.ripe ? 6 : st.regrow ? (st.frac < 0.5 ? 4 : 5) : st.stage;
+    if (o.crop === 'morango') strawberryPlant(P, s); else pumpkinPlant(P, s);
+  }
+  function strawberryPlant(P, s) {
+    const D = '#2a6a2a', M = '#4fa848', L = '#8ad060';
+    if (s === 0) { P(4, 10, 8, 3, '#5a3a1a'); P(3, 9, 3, 2, '#8a6a3a'); P(10, 9, 3, 2, '#8a6a3a'); P(6, 7, 1, 3, '#7a5a2a'); P(9, 7, 1, 3, '#7a5a2a'); P(7, 11, 3, 1, '#a8884a'); P(5, 8, 1, 1, '#a8884a'); return; }
+    if (s === 1) { P(7, 10, 2, 3, M); P(6, 9, 1, 1, L); P(9, 9, 1, 1, L); P(7, 12, 2, 1, D); return; }
+    if (s === 2) { P(7, 9, 1, 4, D); P(5, 8, 2, 2, M); P(9, 8, 2, 2, M); P(7, 6, 2, 2, M); P(5, 8, 1, 1, L); P(7, 6, 1, 1, L); return; }
+    const leaf = (a, b) => { P(a, b, 3, 3, D); P(a, b, 2, 2, M); P(a, b, 1, 1, L); };
+    if (s === 3) { leaf(4, 8); leaf(9, 8); leaf(6, 5); leaf(7, 10); return; }
+    leaf(2, 8); leaf(11, 8); leaf(5, 5); leaf(9, 5); leaf(7, 9); leaf(4, 11); leaf(10, 11);
+    if (s === 4) [[3, 6], [12, 6], [7, 3]].forEach(([a, b]) => { P(a - 1, b, 3, 1, '#f8f8f0'); P(a, b - 1, 1, 3, '#f8f8f0'); P(a, b, 1, 1, '#f0c040'); });
+    if (s === 5) [[3, 6], [12, 7], [7, 13]].forEach(([a, b]) => { P(a - 1, b - 1, 3, 4, '#2a4a1a'); P(a, b, 1, 2, '#b8e080'); });
+    if (s === 6) [[2, 6], [12, 6], [7, 12]].forEach(([a, b]) => {        // maduro: morangos vermelhos bem à vista
+      P(a - 1, b - 1, 5, 6, '#2a1a14'); P(a, b, 3, 4, '#e0283a'); P(a, b, 1, 1, '#ff8a8a'); P(a + 1, b + 2, 1, 1, '#ffe080'); P(a + 2, b + 1, 1, 1, '#ffe080');
+      P(a, b - 1, 3, 1, '#3f9648'); P(a + 1, b + 4, 1, 1, '#a81a2a');
+    });
+  }
+  function pumpkinPlant(P, s) {
+    const D = '#2a6422', M = '#3f9648', L = '#6ab84a', V = '#4a8a30';
+    const bigLeaf = (a, b) => { P(a, b, 4, 3, D); P(a, b, 3, 2, M); P(a + 1, b, 1, 1, L); };
+    if (s === 0) { P(1, 11, 14, 1, '#7a5a2a'); P(2, 9, 3, 2, '#8a6a3a'); P(10, 9, 4, 2, '#8a6a3a'); P(6, 8, 3, 3, '#6a4a22'); P(7, 7, 1, 1, '#a8884a'); P(12, 12, 2, 1, '#5a3a1a'); return; }
+    if (s === 1) { P(7, 10, 1, 3, M); P(5, 9, 2, 2, L); P(8, 9, 2, 2, L); return; }
+    if (s === 2) { P(7, 8, 1, 5, D); bigLeaf(3, 8); bigLeaf(8, 7); bigLeaf(5, 5); return; }
+    P(1, 11, 14, 1, V); P(3, 10, 1, 1, V); P(12, 12, 1, 1, V);                 // rama espalhada
+    bigLeaf(1, 7); bigLeaf(5, 5); bigLeaf(10, 6); bigLeaf(12, 9); bigLeaf(3, 12);
+    if (s === 3) return;
+    if (s === 4) { P(7, 9, 3, 3, '#ffd040'); P(8, 10, 1, 1, '#e09020'); P(6, 10, 1, 1, '#ffe880'); return; }
+    if (s === 5) { P(5, 8, 6, 5, '#2a1a14'); P(6, 9, 4, 3, '#8ac850'); P(7, 9, 1, 3, '#6aa838'); P(8, 7, 1, 2, '#5a3a1e'); return; }   // abóbora em formação: pequena e verde
+    P(3, 5, 10, 9, '#2a1a14'); P(4, 6, 8, 7, '#e88a20'); P(6, 6, 1, 7, '#c06a10'); P(9, 6, 1, 7, '#c06a10');   // madura: grande e laranja
+    P(4, 7, 1, 3, '#ffc070'); P(5, 6, 1, 1, '#ffc070'); P(7, 3, 2, 3, '#2a1a14'); P(7, 4, 1, 2, '#6a8a2a'); P(4, 12, 8, 1, '#a85a10');
   }
   function debris(ctx, x, y, k) {
     const P = (a, b, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + a, y + b, w, h); };
@@ -1099,7 +1140,7 @@ const World = (() => {
         if (o.k === 'soil') {
           R(q.x, q.y, 16, 16, o.w ? '#4a3018' : '#8a6238'); for (let r = 3; r < 16; r += 5) R(q.x + 1, q.y + r, 14, 1, o.w ? '#38220e' : '#6e4c28');
           if (o.w) { R(q.x + 3, q.y + 6, 2, 1, '#6a8ab8'); R(q.x + 11, q.y + 12, 2, 1, '#6a8ab8'); }
-          if (o.crop) crop(ctx, q.x, q.y, o.crop, o.g >= CROPS[o.crop].days ? 3 : o.g === 0 ? 0 : o.g * 2 > CROPS[o.crop].days ? 2 : 1);
+          if (o.crop) { if (CROPS[o.crop].stages) staged(ctx, q.x, q.y, o); else { const st = cropState(o); crop(ctx, q.x, q.y, o.crop, st.ripe ? 3 : !o.g ? 0 : o.g * 2 > CROPS[o.crop].days ? 2 : 1); } }
         } else if (o.k === 'tree') put(fruitTree(o.sp, o.age >= TREES[o.sp].grow ? 2 : o.age * 2 >= TREES[o.sp].grow ? 1 : 0, o.fruit), q.x + 8, q.y + 13);
         else debris(ctx, q.x + shk('f' + key), q.y, o.k);
       }

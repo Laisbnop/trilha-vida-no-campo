@@ -33,7 +33,7 @@
       farm: { tiles: {} }, coop: { feed: 0, eggs: 0, hens: [] },
       nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
       friends: {}, daily: { talk: {}, gift: {} }, known: {}, scenes: {},
-      quests: {}, world: { banco: false }, dummy: 0, intro: false, seed,
+      quests: {}, world: { banco: false }, dummy: 0, intro: false, seed, cropV: 2,
       fish: newFishState(2),
     };
     ['enxada', 'regador', 'machado', 'picareta', 'foice', 'espada'].forEach((id, i) => { s.inv[i] = { id, n: 1 }; });
@@ -390,6 +390,9 @@
     if (s.inv.some(x => x && x.id === 'vara_fibra') || s.chest.some(x => x && x.id === 'vara_fibra')) s.fish.fiber = true;
     if (!s.fish.dex || typeof s.fish.dex !== 'object') s.fish.dex = {};
     if (s.inv.some(x => x && x.id === 'vara') || s.chest.some(x => x && x.id === 'vara')) { s.fish.rod = true; s.fish.pending = false; }
+    /* plantações (versão dos cultivos com rebrota): abóboras antigas maduras continuam maduras;
+       as que cresciam mantêm as noites já regadas (agora precisam de 13) */
+    if (!s.cropV) { for (const key in s.farm.tiles) { const o = s.farm.tiles[key]; if (o.k === 'soil' && o.crop === 'abobora' && (o.g || 0) >= 6) o.g = CROPS.abobora.days; } s.cropV = 2; }
     if (!s.nature.mforage) refreshMountain(s);
     s.nature.cleared = s.nature.cleared || {};
     if (!s.stumps) {                                    // alguns tocos em grama livre, longe da casa
@@ -687,14 +690,39 @@
     save();
   }
 
+  const SEASON_IN = ['na Primavera', 'no Verão', 'no Outono', 'no Inverno'];
+  const seasonList = l => { const n = l.map(i => SEASON_IN[i]); return n.length > 1 ? n.slice(0, -1).join(', ') + ' e ' + n[n.length - 1] : n[0]; };
+  /* Texto de uma plantação: estágio, noites regadas, rebrota e rega. */
+  function cropText(o) {
+    const C = CROPS[o.crop], st = cropState(o);
+    if (st.ripe) return `${C.name}: pronto para colher`;
+    const fase = st.regrow ? `nova colheita em ${st.left} dia(s) regado(s)` : C.stages ? `estágio ${st.stage} de 5 · ${st.left} dia(s) regado(s) para colher` : `${Math.min(o.g || 0, C.days)} de ${C.days} dias`;
+    return `${C.name}: ${fase}${o.w ? ', regado' : ', precisa de água'}`;
+  }
+  /* Planta a semente escolhida no canteiro (gasta 1 semente; sem energia). */
+  function plantSeed(i, id) {
+    const o = S.farm.tiles[i], it = S.inv[S.sel];
+    if (!o || o.k !== 'soil' || o.crop || !it || it.id !== id) return;
+    useTool(id, 0); removeItem(id); o.crop = ITEMS[id].crop; o.g = 0; o.cyc = 0;
+    const q = World.tilePos(i); bang(q.x + 8, q.y + 8, 'soil'); qEvent('plant'); save();
+  }
   /* O que um clique faz em um quadrado da fazenda, conforme o item selecionado. */
   function tileTarget(i) {
     const o = S.farm.tiles[i], q = World.tilePos(i), rect = [q.x, q.y, 16, 16], cx = q.x + 8, cy = q.y + 8;
     const it = equipped(), id = it && it.id, kind = id && ITEMS[id].kind;
     const T = (label, act) => ({ label, act, rect, tile: true });
     if (o && RESIST[o.k]) return hitTarget('f' + i, o.k, rect, rect, [cx, cy], () => { delete S.farm.tiles[i]; }, true);
-    if (o && o.k === 'soil' && o.crop && o.g >= CROPS[o.crop].days) return T('Colher ' + CROPS[o.crop].name.toLowerCase(), () => {
-      if (!gain(o.crop)) return; S.farm.tiles[i] = { k: 'soil' }; P.hop = performance.now() + 300; bang(cx, cy, 'leaf'); qEvent('harvest'); save();
+    if (o && o.k === 'soil' && o.crop && o.dead) {                     // pé seco (fim da estação): só a foice limpa
+      const nm = CROPS[o.crop].name.toLowerCase();
+      if (id === 'foice') return T(`Remover pé seco de ${nm}`, () => { if (!useTool('foice', 1)) return; S.farm.tiles[i] = { k: 'soil' }; bang(cx, cy, 'leaf'); toast('Pé seco removido'); save(); });
+      return T(`Pé seco de ${nm} — use a foice`, () => tip(`Pé seco de ${nm}: a estação acabou. Use a foice para limpar o canteiro.`));
+    }
+    if (o && o.k === 'soil' && o.crop && cropState(o).ripe) return T('Colher ' + CROPS[o.crop].name.toLowerCase(), () => {
+      const C = CROPS[o.crop];
+      if (!gain(o.crop, C.yield || 1)) return;                         // mochila cheia: o fruto continua na planta
+      if (C.regrow) { o.cyc = (o.cyc || 0) + 1; o.g = 0; }             // o pé fica e começa a próxima produção
+      else S.farm.tiles[i] = { k: 'soil' };
+      P.hop = performance.now() + 300; bang(cx, cy, 'leaf'); qEvent('harvest'); save();
     });
     if (o && o.k === 'tree') {
       const TR = TREES[o.sp];
@@ -709,13 +737,24 @@
     }
     if (id === 'enxada') return o ? T('Terra já preparada', () => tip('Esta terra já está preparada.'))
       : T('Arar a terra', () => { if (!useTool(id, 2)) return; S.farm.tiles[i] = { k: 'soil' }; bang(cx, cy, 'soil'); qEvent('till'); save(); });
-    if (id === 'regador' && o && o.k === 'soil') return o.w ? T(o.crop ? `${CROPS[o.crop].name}: ${o.g} de ${CROPS[o.crop].days} dias, regado` : 'Já regado', () => tip('Esta terra já está regada hoje.'))
+    if (id === 'regador' && o && o.k === 'soil') return o.w ? T(o.crop ? cropText(o) : 'Já regado', () => tip('Esta terra já está regada hoje.'))
       : T(`Regar (água: ${S.can}/10)`, () => { if (!S.can) return tip('Regador vazio: encha no lago.'); if (!useTool(id, 1)) return; S.can--; o.w = 1; bang(cx, cy, 'water'); if (o.crop) qEvent('water'); renderHotbar(); save(); });
     if (kind === 'seed') {
-      if (o && o.k === 'soil' && !o.crop) return T('Plantar ' + CROPS[ITEMS[id].crop].name.toLowerCase(), () => { useTool(id, 0); removeItem(id); o.crop = ITEMS[id].crop; o.g = 0; bang(cx, cy, 'soil'); qEvent('plant'); save(); });
+      if (o && o.k === 'soil' && !o.crop) {
+        const C = CROPS[ITEMS[id].crop], si = calendar().si;
+        if (C.seasons && !C.seasons.includes(si)) return T(`${C.name}: fora de estação`, () => tip(`${C.name} só pode ser plantado ${seasonList(C.seasons)}. Nada foi gasto.`));
+        return T('Plantar ' + C.name.toLowerCase(), () => {
+          const daysLeft = SEASON_DAYS - calendar().day;                 // manhãs que ainda restam nesta estação
+          if (C.seasonal && C.days > daysLeft) {
+            run(async () => { if (await ask(`Não dá tempo: ${C.name.toLowerCase()} precisa de ${C.days} dias regados e a estação acaba em ${daysLeft + 1} dia(s). O pé seca na troca de estação. Plantar mesmo assim?`, ['Sim, plantar', 'Não']) === 0) plantSeed(i, id); });
+            return;
+          }
+          plantSeed(i, id);
+        });
+      }
       if (!o) return T('Are a terra antes de plantar', () => tip('Prepare a terra com a enxada antes de plantar.'));
     }
-    if (o && o.k === 'soil' && o.crop) { const info = `${CROPS[o.crop].name}: ${o.g} de ${CROPS[o.crop].days} dias${o.w ? ', regado' : ', precisa de água'}`; return T(info, () => tip(info)); }
+    if (o && o.k === 'soil' && o.crop) { const info = cropText(o); return T(info, () => tip(info)); }
     if (o && o.k === 'soil') return T('Terra preparada', () => tip('Terra pronta: escolha uma semente na barra e clique para plantar.'));
     return null;                                              // grama comum sem ferramenta útil: nada a fazer
   }
@@ -1696,8 +1735,9 @@
   async function give(v, who, id) {
     const kind = v.love.includes(id) ? 'love' : v.like.includes(id) ? 'like' : v.dislike.includes(id) ? 'dislike' : 'neutral';
     removeItem(id, 1); S.daily.gift[v.id] = true; S.known[v.id][id] = kind;
-    addFriend(v.id, FRIEND[kind]);
-    await say(who, (kind === 'love' || kind === 'like' ? '[contente]' : '') + v.gift[kind]);
+    const own = v.giftPts && v.giftPts[id] != null;                     // presente com valor próprio (ex.: morango para Dona Celeste): substitui o valor de "adora"
+    addFriend(v.id, own ? v.giftPts[id] : FRIEND[kind]);
+    await say(who, (kind === 'love' || kind === 'like' ? '[contente]' : '') + ((v.giftLine && v.giftLine[id]) || v.gift[kind]));
     if (kind === 'love') toast(`${v.name} adorou!`);
   }
 
@@ -1843,7 +1883,7 @@
     let grew = 0, ripe = 0, fruits = 0, eggs = 0, hungry = 0;
     for (const key in S.farm.tiles) {
       const o = S.farm.tiles[key];
-      if (o.k === 'soil') { if (o.crop && o.w && o.g < CROPS[o.crop].days) { o.g++; grew++; if (o.g >= CROPS[o.crop].days) ripe++; } o.w = 0; }
+      if (o.k === 'soil') { if (o.crop && !o.dead && o.w && !cropState(o).ripe) { o.g = (o.g || 0) + 1; grew++; if (cropState(o).ripe) ripe++; } o.w = 0; }   // sem rega, não cresce; maduro espera a colheita
       if (o.k === 'tree') { const T = TREES[o.sp]; o.age++; if (o.age >= T.grow && !o.fruit) { o.cool = (o.cool || 0) + 1; if (o.cool >= T.every) { o.fruit = true; o.cool = 0; fruits++; } } }
     }
     S.coop.hens.forEach(h => { if (S.coop.feed > 0) { S.coop.feed--; h.well = Math.min(100, h.well + 6); if (S.coop.eggs < S.coop.hens.length * 3) { S.coop.eggs++; eggs++; } } else { h.well = Math.max(0, h.well - 12); hungry++; } });
@@ -1853,12 +1893,15 @@
     Object.keys(S.nature.rocks).forEach(k => { if (S.day >= S.nature.rocks[k]) delete S.nature.rocks[k]; });
     refreshForage(S);
     const newSeason = calendar().si !== calendar(finished).si;
+    let dried = 0;                                                       // troca de estação: morango e abóbora secam (frutos não colhidos se perdem)
+    if (newSeason) for (const key in S.farm.tiles) { const o = S.farm.tiles[key]; if (o.k === 'soil' && o.crop && !o.dead && CROPS[o.crop].seasonal) { o.dead = true; o.w = 0; dried++; } }
     const spawned = spawnSeasonal();
     World.setSeason(calendar().si);
     const b = World.get('casa').objs.find(o => o.kind === 'bed');
     enterMap('casa', b.x + 20, b.y + 10, 'down');
     save();
 
+    if (dried) notes.push(`${dried} pé(s) de morango ou abóbora secaram com a troca de estação. Use a foice para limpar e plante de novo se a estação permitir.`);
     if (grew) notes.push(`${grew} planta(s) regada(s) cresceram${ripe ? `, e ${ripe} está(ão) pronta(s) para colher` : ''}.`);
     if (fruits) notes.push(`${fruits} árvore(s) amanheceram com frutos.`);
     if (eggs) notes.push(`As galinhas botaram ${eggs} ovo(s). Estão no ninho.`);
@@ -2139,6 +2182,9 @@
       top.append(pv, info); body.append(top);
     },
     config(body) {
+      const up = el('div', 'update-notes'); up.id = 'update-notes';
+      const ul = el('ul', 'list'); UPDATE_NOTES.items.forEach(t => ul.append(el('li', '', t)));
+      up.append(el('h3', '', 'Última atualização'), el('b', '', UPDATE_NOTES.title), ul); body.append(up);
       body.append(el('h3', '', 'Controles'));
       const t = el('table', 'controls');
       [['Andar', 'Setas ou W A S D (celular: direcional)'], ['Interagir e usar ferramentas', 'Clique (ou toque) perto do alvo'], ['Escolher item da barra', '1 a 0, ou clique na barra'], ['Mostrar outra linha da mochila na barra', 'Clique em 1, 2 ou 3 ao lado da barra'], ['Comer (alimento na mão)', 'Clique numa área livre do cenário e confirme "Sim"'],
@@ -2206,7 +2252,7 @@
       };
       body.append(el('h3', '', 'Comprar'));
       const buy = el('ul', 'list buy');
-      SHOP.forEach(id => buy.append(row(id, ITEMS[id].name, ITEMS[id].price, 20, 'Comprar', n => {
+      SHOP.filter(id => !ITEMS[id].seasons || ITEMS[id].seasons.includes(calendar().si)).forEach(id => buy.append(row(id, ITEMS[id].name, ITEMS[id].price, 20, 'Comprar', n => {
         if (S.coins < n * ITEMS[id].price) return toast('Moedas insuficientes');
         if (!canAdd(id, n)) return toast('Mochila cheia');
         S.coins -= n * ITEMS[id].price; addTo(S.inv, id, n); toast(`+${n} ${ITEMS[id].name}`); save(); renderTab('loja');
