@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=dia18">
+  <link rel="stylesheet" href="css/style.css?v=pesca1">
 </head>
 <body>
 
@@ -71,6 +71,21 @@
         <button class="btn" type="button" id="btn-pause" title="Pausa (tecla P)" aria-label="Pausa">⏸</button>
       </nav>
       <div class="toasts" id="toasts" aria-live="polite"></div>
+      <!-- pesca: minijogo, resultado e botão de recolher (para toque) -->
+      <div class="fish-panel" id="fishgame" hidden>
+        <div class="fish-title" id="fish-title">Fisgou!</div>
+        <canvas id="fish-canvas" class="pixel" width="60" height="150"></canvas>
+        <p class="fish-help">Segure clique, toque ou Espaço: a faixa sobe<br>Solte: a faixa desce</p>
+        <div class="fish-tut" id="fish-tut" hidden>
+          <b>Como puxar o peixe</b>
+          <p>Deixe o peixe dentro da faixa verde até a barra da direita encher.</p>
+          <p>Segure o clique, o dedo ou Espaço para a faixa subir; solte para ela descer.</p>
+          <p>Fora da faixa, a barra esvazia. Vazia, o peixe foge.</p>
+          <button type="button" class="btn primary" id="fish-start">Começar ▶</button>
+        </div>
+      </div>
+      <div class="win catch" id="catch" hidden aria-live="polite"></div>
+      <button type="button" class="btn fish-cancel" id="fish-cancel" hidden>✕ Recolher linha (Esc)</button>
       <div class="hint-bar" id="hint" hidden></div>
 
       <div class="bottom">
@@ -149,10 +164,10 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=dia18"></script>
-  <script src="js/sprites.js?v=dia18"></script>
-  <script src="js/portraits.js?v=dia18"></script>
-  <script src="js/world.js?v=dia18"></script>
-  <script src="js/game.js?v=dia18"></script>
+  <script src="js/data.js?v=pesca1"></script>
+  <script src="js/sprites.js?v=pesca1"></script>
+  <script src="js/portraits.js?v=pesca1"></script>
+  <script src="js/world.js?v=pesca1"></script>
+  <script src="js/game.js?v=pesca1"></script>
 </body>
 </html>

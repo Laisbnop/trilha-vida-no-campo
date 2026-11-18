@@ -512,7 +512,7 @@ const World = (() => {
     else obj({ id: 'house:' + id, kind: 'text', x: d.x, y: d.y - 3, r: 13, hit, label, text: 'A porta está fechada. Bater sem ser chamado não é costume por aqui.' });
     return d;
   }
-  function water(cx, cy, rx, ry) {
+  function water(cx, cy, rx, ry, zone = 'lago') {
     for (let y = -ry - 3; y <= ry + 3; y++) {
       const k = Math.sqrt(Math.max(0, 1 - (y * y) / ((ry + 3) * (ry + 3)))), hw = Math.round((rx + 3) * k);
       R(cx - hw, cy + y, hw * 2, 1, '#86764c');
@@ -526,7 +526,32 @@ const World = (() => {
       R(lx - 3, ly - 2, 6, 4, '#2c6a22'); R(lx - 2, ly - 2, 4, 3, '#58a838'); R(lx, ly - 2, 1, 2, '#2c6a22'); if (paintSeason === 0 && i % 2 === 0) { R(lx + 2, ly - 3, 2, 2, '#ffb8d0'); R(lx + 2, ly - 3, 1, 1, '#ffffff'); }
     }
     solid(cx - rx + 2, cy - ry + 4, rx * 2 - 4, ry * 2 - 6); keep(cx - rx - 8, cy - ry - 8, rx * 2 + 16, ry * 2 + 16);
-    cur.waters.push({ cx, cy, rx, ry });
+    cur.waters.push({ cx, cy, rx, ry, zone });
+  }
+  /* Rio: água corrente ao longo de uma linha (pontos [x, y]), com margem de terra.
+     A margem não é pintada por cima de um lago em que o rio desemboca. hw = meia largura da água. */
+  function stream(pts, hw, bridge) {
+    const L = [], inLake = (x, y) => cur.waters.some(w => ((x - w.cx) / (w.rx - 1)) ** 2 + ((y - w.cy) / (w.ry - 1)) ** 2 < 1);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
+      for (let k = 0; k < n; k++) L.push([x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n]);
+    }
+    const disc = (x, y, r, c) => { for (let dy = -r; dy <= r; dy++) { const w = Math.round(Math.sqrt(r * r - dy * dy)); R(x - w, y + dy, w * 2 + 1, 1, c); } };
+    L.forEach(([x, y]) => { if (!inLake(x, y)) disc(Math.round(x), Math.round(y), hw + 3, '#86764c'); });
+    L.forEach(([x, y]) => disc(Math.round(x), Math.round(y), hw, '#bfe4ff'));
+    L.forEach(([x, y]) => disc(Math.round(x), Math.round(y), hw - 1, '#3f86d8'));
+    L.forEach(([x, y]) => disc(Math.round(x), Math.round(y), hw - 4, '#3478cc'));
+    L.forEach(([x, y], i) => { if (i % 3 === 0) { solid(x - hw + 3, y - 2, hw * 2 - 6, 4); keep(x - hw - 8, y - hw - 8, hw * 2 + 16, hw * 2 + 16); } });
+    if (bridge) {                                   // ponte de tábuas: dá para atravessar a pé
+      const [bx, by, bw, bh] = bridge;
+      R(bx - 1, by - 1, bw + 2, bh + 3, OUT); R(bx, by, bw, bh, '#a8743e');
+      for (let x = bx + 3; x < bx + bw; x += 4) R(x, by, 1, bh, '#7a5028');
+      R(bx, by, bw, 1, '#d8a868'); R(bx, by + bh - 1, bw, 2, '#5a3a1e');
+      [[bx + 1, by - 3], [bx + bw - 3, by - 3], [bx + 1, by + bh - 1], [bx + bw - 3, by + bh - 1]].forEach(([x, y]) => { R(x - 1, y - 1, 4, 5, OUT); R(x, y, 2, 3, '#6a4426'); });
+      open(bx, by, bw, bh); keep(bx - 10, by - 10, bw + 20, bh + 20);
+    }
+    cur.streams = cur.streams || [];
+    cur.streams.push({ pts: L, hw, zone: 'rio', bridge: bridge || null });
   }
 
   function buildFora() {
@@ -587,6 +612,8 @@ const World = (() => {
     // ---------- bosque ----------
     building('tome', 'Cabana de Tomé', { x: 980, y: 66, w: 60, h: 76, roof: '#5a7a5a', wall: '#b89868', brick: true, windows: [[6, 8, 9, 8]], chimney: 40, door: '#5a3a22', doorX: 30 }, false);
     water(1104, 258, 62, 36);
+    // rio do bosque: sai da lagoa e desce até o fim da mata, com uma ponte de tábuas
+    stream([[1110, 280], [1126, 330], [1129, 365], [1114, 392], [1106, 418], [1092, 445], [1086, 475], [1084, 520]], 6, [1106, 371, 36, 12]);
     NTREES.forEach(([x, y]) => keep(x - 16, y - 34, 32, 44)); NROCKS.forEach(([x, y]) => keep(x - 12, y - 14, 24, 22)); FORAGE.forEach(([x, y]) => keep(x - 12, y - 14, 24, 24));
     keep(SPOT.hat[0] - 12, SPOT.hat[1] - 14, 24, 24);
     R(846, 150, 14, 10, OUT); R(847, 151, 12, 8, '#f0e6cc'); R(852, 160, 2, 8, '#6a4426'); solid(848, 162, 10, 5);
@@ -649,6 +676,7 @@ const World = (() => {
     { id: 'tome', label: 'Tomé', x: 1010, y: 106, icon: 'morador' },
     { id: 'bosque', label: 'Bosque', x: 950, y: 330, icon: 'bosque' },
     { id: 'rio', label: 'Lagoa do bosque', x: 1104, y: 258, icon: 'agua' },
+    { id: 'riacho', label: 'Rio do bosque', x: 1100, y: 440, icon: 'agua' },
     { id: 'trilha', label: 'Trilha da serra', x: 821, y: 70, icon: 'trilha' },
   ];
 
@@ -786,7 +814,7 @@ const World = (() => {
     road('terra', 472, 252, 124, 14); road('terra', 580, 140, 16, 126);   // trilha do rochedo
     road('terra', 168, 182, 160, 30);                 // terreiro da tenda
     // nascente
-    water(500, 300, 44, 22);
+    water(500, 300, 44, 22, 'rio');
     obj({ id: 'water', kind: 'water', x: 500, y: 276, r: 22, hit: [458, 280, 86, 40], label: 'Nascente' });
     // fogueira com troncos para sentar
     const [fx, fy] = SERRA.fire;
@@ -890,6 +918,17 @@ const World = (() => {
     for (let cy = Math.floor(y0 / CELL); cy <= Math.floor((y - 1) / CELL); cy++) for (let cx = Math.floor(x0 / CELL); cx <= Math.floor((x0 + 9) / CELL); cx++) if (map.solid[cy * map.cols + cx]) return false;
     return true;
   }
+  /* Água de pesca no ponto: devolve 'lago', 'rio' ou null. A ponte não conta como água. */
+  function waterZone(map, x, y) {
+    for (const w of map.waters || []) if (((x - w.cx) / (w.rx - 2)) ** 2 + ((y - w.cy) / (w.ry - 2)) ** 2 <= 1) return w.zone || 'lago';
+    for (const st of map.streams || []) {
+      if (st.bridge) { const [bx, by, bw, bh] = st.bridge; if (x >= bx - 1 && x <= bx + bw && y >= by - 3 && y <= by + bh + 1) continue; }
+      for (let i = 0; i < st.pts.length; i += 2) { const [px, py] = st.pts[i]; if ((x - px) ** 2 + (y - py) ** 2 <= (st.hw - 1) ** 2) return st.zone; }
+    }
+    return null;
+  }
+  /* Ponto dentro de um obstáculo fixo (parede, casa, tronco, água)? */
+  const solidAt = (map, x, y) => { const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL); return cx < 0 || cy < 0 || cx >= map.cols || cy >= map.rows || !!map.solid[cy * map.cols + cx]; };
   /* Câmera: segue o personagem; se o mapa for menor que a tela, fica centralizado. */
   const axis = (size, view, p) => size <= view ? Math.round((size - view) / 2) : Math.round(Math.max(0, Math.min(size - view, p - view / 2)));
   const camera = (map, px, py) => ({ x: axis(map.w, VW, px), y: axis(map.h, VH, py - 14) });
@@ -959,6 +998,24 @@ const World = (() => {
     azevinho() { box(1, 6, 6, 6, '#1f6a34'); box(9, 6, 6, 6, '#2a7e40'); R(2, 7, 2, 1, '#4fa060'); blob(8, 5, 3, OUT); blob(7, 5, 2, '#e03a3a'); R(6, 4, 1, 1, '#ff8a7a'); blob(10, 4, 2, '#c02a2a'); },
     fruta_cristal() { blob(8, 9, 6, OUT); blob(8, 9, 5, '#a8e0f4'); blob(6, 7, 2, '#e8fbff'); R(10, 11, 2, 2, '#6ab4d8'); R(8, 1, 1, 3, '#5a8a5a'); R(9, 2, 2, 1, '#6aa86a'); },
     chapeu_tome() { box(4, 5, 8, 5, '#7a6a4a'); box(2, 10, 12, 2, '#5a4a32'); R(5, 7, 2, 1, '#3a2a1a'); },
+    vara() {                                        // cabo de madeira em diagonal, molinete e linha
+      for (let i = 0; i < 12; i++) { R(2 + i, 13 - i, 2, 1, OUT); R(2 + i, 14 - i, 1, 1, OUT); }
+      for (let i = 0; i < 11; i++) R(3 + i, 13 - i, 1, 1, i < 4 ? '#5a3a1e' : '#c8904a');
+      for (let i = 4; i < 11; i++) R(4 + i, 13 - i, 1, 1, '#8a5a2a');
+      box(4, 9, 3, 3, '#9a9aa8'); R(5, 10, 1, 1, '#e0e0ec');
+      R(14, 2, 1, 9, '#e8e8f0'); R(13, 11, 3, 2, OUT); R(14, 11, 1, 1, '#e04a3a'); R(14, 12, 1, 1, '#ffffff');
+    },
+    sardinha() {                                    // corpo prateado e fino, dorso azul
+      R(2, 6, 11, 5, OUT); R(1, 7, 1, 3, OUT); R(13, 7, 2, 3, OUT); R(14, 5, 2, 2, OUT); R(14, 10, 2, 2, OUT);
+      R(3, 7, 10, 3, '#c8d4e0'); R(3, 7, 10, 1, '#4a78a8'); R(4, 9, 8, 1, '#f0f4f8'); R(13, 8, 1, 1, '#9aa8b8'); R(15, 6, 1, 1, '#4a78a8'); R(15, 10, 1, 1, '#4a78a8');
+      R(4, 8, 1, 1, OUT); R(6, 8, 1, 1, '#8aa0b8'); R(8, 6, 3, 1, '#4a78a8');
+    },
+    tucunare() {                                    // corpo dourado-esverdeado, faixas escuras e o "olho" no rabo
+      R(2, 5, 11, 8, OUT); R(1, 7, 1, 4, OUT); R(13, 7, 1, 4, OUT); R(14, 5, 2, 8, OUT); R(6, 3, 5, 2, OUT);
+      R(3, 6, 10, 6, '#c8b03a'); R(3, 6, 10, 2, '#6a8a3a'); R(3, 10, 10, 2, '#e8d070'); R(7, 4, 3, 1, '#6a8a3a');
+      R(6, 6, 1, 5, '#3a4a22'); R(9, 6, 1, 5, '#3a4a22'); R(14, 6, 1, 6, '#e07a2a'); R(12, 7, 2, 2, '#2a2a1a'); R(12, 7, 1, 1, '#ffb84a');
+      R(4, 8, 1, 1, OUT); R(3, 10, 2, 1, '#e8603a');
+    },
   };
   const iconCache = {};
   /* Canvas 16x16 com o ícone do item. */
@@ -1023,6 +1080,7 @@ const World = (() => {
     if (map.id === 'fora') {
       const ph = Math.floor(t / 280);
       map.waters.forEach((w, k) => { for (let i = 0; i < 9; i++) { const y = w.cy - w.ry + 4 + (i * 7 + ph + k * 3) % (w.ry * 2 - 8), hw = w.rx * Math.sqrt(1 - ((y - w.cy) ** 2) / (w.ry * w.ry)) - 8; if (hw > 4) R(w.cx - hw + (i * 13 + ph * 2) % (hw * 2), y, 3 + i % 2, 1, i % 2 ? '#e4fbf6' : '#9fe0e4'); } });
+      (map.streams || []).forEach(st => { const n = st.pts.length; for (let i = 0; i < n; i += 23) { const j = Math.floor(i + t / 70) % n, [x, y] = st.pts[j]; R(x - 2 + (i % 3) - 1, y - 1 + (i % 2) * 2, 3, 1, i % 2 ? '#e4fbf6' : '#9fe0e4'); } });
       for (let i = 0; i < 4; i++) { const k = ((t / 900) + i / 4) % 1; ctx.fillStyle = `rgba(255,255,255,${0.8 * (1 - k)})`; ctx.fillRect(Math.round(628 + Math.sin(k * 5 + i) * 5), Math.round(126 - k * 8), 2, 2); }
       // terra, plantas e entulho da fazenda
       const tiles = S.farm.tiles;
@@ -1083,9 +1141,12 @@ const World = (() => {
       ctx.fillStyle = 'rgba(20,30,20,.28)'; ctx.fillRect(ax - 6, ay - 2, 12, 3);
       const tk = a.tool ? Math.min(1, (t - a.tool.t0) / 280) : -1, using = tk >= 0 && tk < 1;
       if (using && a.dir === 'up') toolSwing(ctx, a, ax, ay, tk);
-      Sprites.drawAt(ctx, a.look, ax, ay + (a.hop || 0) + (using && tk > 0.4 ? 1 : 0), a.moving ? Sprites.walk(t) : (using ? 1 : 0), a.dir || 'down');
+      Sprites.drawAt(ctx, a.look, ax, ay + (a.hop || 0) + (using && tk > 0.4 ? 1 : 0) + (a.fish ? a.fish.lean || 0 : 0), a.moving ? Sprites.walk(t) : (using ? 1 : 0), a.dir || 'down');
       if (using && a.dir !== 'up') toolSwing(ctx, a, ax, ay, tk);
+      if (a.fish) fishRod(ctx, a);
+      if (a.fish && a.fish.hold) liftFish(ctx, a, t);
     });
+    v.actors.forEach(a => { if (a.fish) fishLine(ctx, a.fish, t); });
     v.actors.forEach(a => { if (a.bubble) bubble(Math.round(a.x) - 7, Math.round(a.y) - 46, a.bubble === '...' ? '' : '!', t); if (a.heart) heart(ctx, Math.round(a.x) - 3, Math.round(a.y) - 42 - Math.floor(t / 300) % 2); });
     if (v.cursor) { const c = v.cursor, b = Math.floor(t / 350) % 2; ctx.fillStyle = c.far ? 'rgba(255,255,255,.45)' : b ? '#ffffff' : '#ffd75e'; [[0, 0, 5, 1], [0, 0, 1, 5], [c.w - 5, 0, 5, 1], [c.w - 1, 0, 1, 5], [0, c.h - 1, 5, 1], [0, c.h - 5, 1, 5], [c.w - 5, c.h - 1, 5, 1], [c.w - 1, c.h - 5, 1, 5]].forEach(([a, e, w, h]) => ctx.fillRect(c.x + a, c.y + e, w, h)); }
     (v.bars || []).forEach(b => { const x = Math.round(b.x) - 8, y = Math.round(b.y); ctx.fillStyle = OUT; ctx.fillRect(x - 1, y - 1, 18, 4); ctx.fillStyle = '#5a1a1a'; ctx.fillRect(x, y, 16, 2); ctx.fillStyle = b.frac > 0.5 ? '#8fe88f' : b.frac > 0.25 ? '#ffd75e' : '#ff7b5a'; ctx.fillRect(x, y, Math.max(1, Math.round(16 * b.frac)), 2); });
@@ -1153,6 +1214,71 @@ const World = (() => {
     if (a.tool.id === 'regador' && k > 0.3) { ctx.fillStyle = '#8fd0f0'; for (let i = 0; i < 4; i++) ctx.fillRect(Math.round(x + d[0] * 14 - 4 + i * 3), Math.round(y - 8 + d[1] * 10 + ((k * 20 + i * 5) % 8)), 1, 2); }
     if (a.tool.id === 'espada' && k > 0.2 && k < 0.8) { ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(Math.round(x + d[0] * 14 - 6), Math.round(y - 12 + d[1] * 12), 12, 1); ctx.fillRect(Math.round(x + d[0] * 16 - 3), Math.round(y - 15 + d[1] * 12), 6, 1); }
   }
+  /* ---------- pesca ----------
+     f (montado pelo jogo): grip/tip = mão e ponta da vara; bob = boia [x, y] ou null;
+     bobMode: 'fly' | 'float' | 'nibble' | 'sink' | 'reel'; slack (0..1) = quanto a linha cai;
+     rings = respingos [{ x, y, t0 }]; charge = força (0..1) ou null; alert = fisgada (0..1 do tempo que resta);
+     hold = peixe erguido; jump = peixe pulando { x, y, id }. */
+  const skinOf = look => { const s = Sprites.SKINS.find(k => k.id === look.skin) || Sprites.SKINS[0]; return s.c; };
+  function fishRod(ctx, a) {
+    const f = a.fish; if (!f.tip || f.hold) return;
+    const [gx, gy] = f.grip, [tx, ty] = f.tip, n = Math.max(1, Math.ceil(Math.hypot(tx - gx, ty - gy)));
+    for (let i = 0; i <= n; i++) {                  // cabo grosso perto da mão, ponta fina
+      const k = i / n, x = Math.round(gx + (tx - gx) * k), y = Math.round(gy + (ty - gy) * k);
+      ctx.fillStyle = OUT; ctx.fillRect(x - 1, y - 1, k < 0.45 ? 3 : 2, k < 0.45 ? 3 : 2);
+    }
+    for (let i = 0; i <= n; i++) { const k = i / n, x = Math.round(gx + (tx - gx) * k), y = Math.round(gy + (ty - gy) * k); ctx.fillStyle = k < 0.3 ? '#5a3a1e' : k < 0.55 ? '#a86e34' : '#d8a060'; ctx.fillRect(x, y, k < 0.45 ? 2 : 1, 1); }
+    const rx = Math.round(gx + (tx - gx) * 0.18), ry = Math.round(gy + (ty - gy) * 0.18);   // molinete
+    ctx.fillStyle = OUT; ctx.fillRect(rx - 2, ry, 4, 4); ctx.fillStyle = '#9a9aa8'; ctx.fillRect(rx - 1, ry + 1, 2, 2);
+    if (a.dir === 'up') return;                     // de costas, a mão fica escondida pelo corpo
+    const [sk, sd] = skinOf(a.look); ctx.fillStyle = OUT; ctx.fillRect(Math.round(gx) - 2, Math.round(gy) - 1, 4, 4); ctx.fillStyle = sk; ctx.fillRect(Math.round(gx) - 1, Math.round(gy), 2, 2); ctx.fillStyle = sd; ctx.fillRect(Math.round(gx) - 1, Math.round(gy) + 1, 2, 1);
+  }
+  function liftFish(ctx, a, t) {                   // personagem de frente, com o peixe erguido acima da cabeça
+    const x = Math.round(a.x), y = Math.round(a.y), [sk, sd] = skinOf(a.look), bob = Math.floor(t / 300) % 2;
+    [[-9, -27], [8, -27]].forEach(([dx, dy]) => { ctx.fillStyle = OUT; ctx.fillRect(x + dx - 1, y + dy - 8, 4, 10); ctx.fillStyle = sk; ctx.fillRect(x + dx, y + dy - 7, 2, 8); ctx.fillStyle = sd; ctx.fillRect(x + dx + 1, y + dy - 7, 1, 8); });
+    ctx.drawImage(icon(a.fish.hold), x - 8, y - 46 - bob);
+    if (Math.floor(t / 180) % 3 === 0) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 9, y - 46, 1, 3); ctx.fillRect(x + 8, y - 45, 3, 1); ctx.fillRect(x - 11, y - 38, 1, 1); }
+  }
+  function fishLine(ctx, f, t) {
+    (f.rings || []).forEach(r => {                  // respingo: anéis que se abrem na água
+      const k = (t - r.t0) / 650; if (k < 0 || k > 1) return;
+      const rx = 2 + k * 9, ry = 1 + k * 4; ctx.fillStyle = `rgba(232,251,255,${0.9 * (1 - k)})`;
+      for (let i = 0; i < 20; i++) { const an = (i / 20) * Math.PI * 2; ctx.fillRect(Math.round(r.x + Math.cos(an) * rx), Math.round(r.y + Math.sin(an) * ry), 1, 1); }
+      if (k < 0.35) { ctx.fillStyle = '#e8fbff'; ctx.fillRect(Math.round(r.x) - 1, Math.round(r.y - 3 - k * 10), 2, 2); ctx.fillRect(Math.round(r.x) + 3, Math.round(r.y - 2 - k * 6), 1, 1); ctx.fillRect(Math.round(r.x) - 4, Math.round(r.y - 2 - k * 7), 1, 1); }
+    });
+    if (f.tip && f.bob && !f.hold) {               // linha: da ponta da vara até a boia, caindo um pouco no meio
+      const [ax, ay] = f.tip, [bx, by] = f.bob, d = Math.hypot(bx - ax, by - ay), sag = (f.slack || 0) * Math.min(14, d * 0.3);
+      const cx = (ax + bx) / 2, cy = (ay + by) / 2 + sag, n = Math.max(2, Math.ceil(d * 1.3));
+      ctx.fillStyle = 'rgba(250,250,240,.9)';
+      for (let i = 0; i <= n; i++) { const k = i / n, x = (1 - k) * (1 - k) * ax + 2 * (1 - k) * k * cx + k * k * bx, y = (1 - k) * (1 - k) * ay + 2 * (1 - k) * k * cy + k * k * by; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); }
+    }
+    if (f.bob && f.bobMode !== 'none') {           // boia vermelha e branca
+      const [x0, y0] = f.bob, x = Math.round(x0), m = f.bobMode;
+      const y = Math.round(y0 + (m === 'float' ? (Math.floor(t / 420) % 2) : m === 'nibble' ? 1 + (Math.floor(t / 70) % 2) : 0));
+      if (m === 'sink') { ctx.fillStyle = OUT; ctx.fillRect(x - 2, y, 4, 2); ctx.fillStyle = '#e04a3a'; ctx.fillRect(x - 1, y, 2, 1); ctx.fillStyle = 'rgba(232,251,255,.9)'; ctx.fillRect(x - 4, y + 2, 8, 1); }
+      else {
+        ctx.fillStyle = OUT; ctx.fillRect(x - 2, y - 4, 5, 6); ctx.fillRect(x, y - 6, 1, 2);
+        ctx.fillStyle = '#e04a3a'; ctx.fillRect(x - 1, y - 3, 3, 2); ctx.fillStyle = '#ff8a7a'; ctx.fillRect(x - 1, y - 3, 1, 1);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y - 1, 3, 2);
+        if (m !== 'fly' && m !== 'reel') { ctx.fillStyle = 'rgba(232,251,255,.7)'; ctx.fillRect(x - 3, y + 1, 7, 1); }
+      }
+    }
+    if (f.jump) { const j = f.jump; ctx.save(); ctx.translate(Math.round(j.x), Math.round(j.y)); if (j.flip) ctx.scale(-1, 1); ctx.drawImage(icon(j.id), -8, -8); ctx.restore(); }
+    if (f.charge != null && f.head) {              // barra de força acima da cabeça
+      const [hx, hy] = f.head, x = Math.round(hx) - 13, y = Math.round(hy), w = 26, k = f.charge;
+      ctx.fillStyle = OUT; ctx.fillRect(x - 1, y - 1, w + 2, 7); ctx.fillStyle = '#e8dcb8'; ctx.fillRect(x, y, w, 5); ctx.fillStyle = '#5a3a22'; ctx.fillRect(x + 1, y + 1, w - 2, 3);
+      const fw = Math.round((w - 2) * k); ctx.fillStyle = k < 0.4 ? '#8fe88f' : k < 0.8 ? '#ffd75e' : '#ff8a4a'; ctx.fillRect(x + 1, y + 1, fw, 3); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(x + 1, y + 1, fw, 1);
+      for (let i = 1; i < 4; i++) { ctx.fillStyle = '#e8dcb8'; ctx.fillRect(x + Math.round(w * i / 4), y + 4, 1, 2); }
+    }
+    if (f.alert != null && f.head) {               // fisgada: "!" grande piscando e o tempo que resta
+      const [hx, hy] = f.head, x = Math.round(hx), y = Math.round(hy) - 4, on = Math.floor(t / 110) % 2;
+      ctx.fillStyle = OUT; ctx.fillRect(x - 6, y - 14, 13, 14); ctx.fillRect(x - 1, y, 3, 3);
+      ctx.fillStyle = on ? '#ffd75e' : '#ffffff'; ctx.fillRect(x - 5, y - 13, 11, 12); ctx.fillRect(x, y, 1, 2);
+      ctx.fillStyle = '#c8302a'; ctx.fillRect(x - 1, y - 11, 3, 6); ctx.fillRect(x - 1, y - 4, 3, 2);
+      ctx.fillStyle = OUT; ctx.fillRect(x - 7, y + 4, 15, 3); ctx.fillStyle = '#ff6a4a'; ctx.fillRect(x - 6, y + 5, Math.max(1, Math.round(13 * f.alert)), 1);
+      if (f.bob) { const [bx, by] = f.bob, k = (t % 500) / 500; ctx.fillStyle = `rgba(255,215,94,${1 - k})`; for (let i = 0; i < 16; i++) { const an = i / 16 * Math.PI * 2; ctx.fillRect(Math.round(bx + Math.cos(an) * (4 + k * 6)), Math.round(by + 1 + Math.sin(an) * (2 + k * 3)), 1, 1); } }
+    }
+  }
   /* Efeito de impacto: lascas que voam e um brilho rápido no ponto do golpe. */
   const CHIP = { wood: ['#b88448', '#7a5230'], stone: ['#c0c0cc', '#8a8a98'], leaf: ['#58b858', '#2f8a40'], soil: ['#a07848', '#6e4c28'], water: ['#bfe4ff', '#6aacf0'], spark: ['#ffffff', '#ffd75e'] };
   function impact(ctx, f, t) {
@@ -1198,6 +1324,6 @@ const World = (() => {
 
   return {
     get VW() { return VW; }, get VH() { return VH; }, RW, RH, setView, setSeason, get SEASON() { return SEASON; }, SERRA, MPLACES,
-    get, free, camera, render, icon, tileAt, tilePos, petCanvas, GRID, YARD, SPOT, NTREES, NROCKS, FORAGE, PLACES, FORA,
+    get, free, camera, render, icon, tileAt, tilePos, petCanvas, waterZone, solidAt, GRID, YARD, SPOT, NTREES, NROCKS, FORAGE, PLACES, FORA,
   };
 })();

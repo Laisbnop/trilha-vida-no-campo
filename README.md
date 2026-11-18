@@ -31,6 +31,10 @@ pelo GitHub Pages. Não precisa instalar nada.
 | Recusar numa pergunta "Sim/Não" | E ou Esc | Botão "Não" |
 | Pausar | P (ou o botão ⏸) | Botão ⏸ |
 | Fechar painel, carta ou menu | Esc (ou E) | Botão ✕ |
+| Pescar (vara na mão) | Segure o clique na água, perto da margem, e solte | Segure o dedo na água e solte |
+| Fisgar | Clique ou Espaço quando a boia afundar e aparecer o "!" | Toque na tela |
+| Puxar o peixe | Segure clique ou Espaço: a faixa sobe; solte: desce | Segure o dedo; solte |
+| Recolher a linha | Esc | Botão "Recolher linha" |
 
 Os atalhos ignoram a repetição de tecla segurada, não funcionam enquanto você
 digita um nome e respeitam a ordem: carta aberta → conversa → menu. Numa carta, E
@@ -263,6 +267,52 @@ Cada conversa fixa o interlocutor ao começar e limpa nome, retrato, texto e
 opções ao abrir e ao fechar. Escolhas que abrem a conversa (loja, presente)
 mostram a fala e o rosto de quem pergunta. Narração aparece sem nome nem retrato.
 
+## Pesca
+
+**A vara.** Tomé manda pelo correio a vara de pesca dele, com uma carta que
+explica os controles: no dia 2 de um jogo novo ou, em jogos salvos antes, na
+manhã seguinte à atualização. A vara chega uma única vez. Se a mochila estiver
+cheia, ela fica guardada com a carta e é resgatada no Diário ("Cartas" → "Pegar a
+vara de pesca"). Escolha a vara na barra de ferramentas.
+
+**Onde pescar.** Na beira da água, sem parede ou casa no caminho:
+
+- **lago:** o lago da fazenda e a lagoa do bosque;
+- **rio:** o rio do bosque, que sai da lagoa e desce até o fim da mata (com uma
+  ponte de tábuas), e a nascente da serra.
+
+| Peixe | Onde | Quando é mais comum | Tamanho | Venda | Experiência |
+| --- | --- | --- | --- | --- | --- |
+| Sardinha | rio e lago, todas as estações | 6h–19h | 5 a 90 cm | 30 a 130 moedas | 30 |
+| Tucunaré | só no lago, todas as estações | 6h–18h | 20 a 80 cm | 60 a 200 moedas | 45 |
+
+O preço cresce com o tamanho. A sardinha é fácil; o tucunaré briga mais.
+
+**Etapas.**
+1. Segure o clique sobre a água: o personagem prepara a vara e uma barra de
+   força sobe e desce acima da cabeça.
+2. Solte para lançar: a vara vai à frente e a boia voa até a água, com
+   respingo. A força decide a distância, sempre dentro da água.
+3. Espere: a boia balança, às vezes dá umas beliscadas. O relógio continua andando.
+4. A boia afunda e aparece um "!" com o tempo que resta. Clique para fisgar.
+   Perdeu a hora? A linha volta e é só tentar de novo.
+5. O minijogo abre (relógio parado): segure para a faixa verde subir e solte
+   para ela descer. Com o peixe dentro da faixa, a barra da direita enche; fora,
+   esvazia. Cheia: o peixe é seu. Vazia: ele foge. Sem segurar nada, o peixe
+   sempre escapa. Na primeira vez aparecem instruções curtas.
+6. O personagem ergue o peixe e aparecem nome, tamanho e valor: **Guardar** ou
+   **Soltar**. Com a mochila cheia, o peixe espera enquanto você solta o peixe ou
+   joga fora algum item (ferramentas e itens de missão não podem ser jogados fora).
+
+A animação acompanha a direção do personagem e usa a aparência escolhida. Durante
+a pesca não dá para andar nem abrir menus; Esc (ou "Recolher linha") desiste. Cada
+lançamento válido gasta 2 de energia; clicar fora da água ou longe da margem não
+gasta nada. Se der 2h com a linha na água, ela é recolhida antes de o dia acabar.
+
+Peixes são vendidos no Armazém, um a um ou todos de uma vez. O Diário mostra a
+experiência de pesca, as espécies descobertas e o maior tamanho de cada uma.
+Iscas, melhorias da vara e baús de tesouro ficam para uma próxima versão.
+
 ## Missões
 
 As primeiras ensinam jogando: chegar à vila, a primeira plantação, a primeira
@@ -370,6 +420,13 @@ apito encontrado e entregue, cenas vistas e a conversa de Iara. Recarregar a
 página não reinicia limites nem repete eventos. Use o mesmo navegador e
 aparelho para continuar. Jogos salvos antes de Lúcio ganham esses campos
 zerados, sem perder nada.
+
+Da pesca: vara recebida (ou guardada esperando espaço), carta de Tomé lida,
+instruções do minijogo vistas, peixes guardados com o tamanho de cada um, espécies
+descobertas com o maior tamanho e a experiência de pesca. A tentativa em andamento
+não é salva: recarregar no meio dela só recolhe a linha, sem peixe de graça e sem
+devolver a energia do lançamento. Espécie, recorde e experiência são gravados no
+momento da captura; o peixe entra na mochila ao escolher "Guardar".
 
 Jogos salvos da versão anterior da fazenda continuam: o jogo pede só o nome da
 fazenda e o animal favorito, sem recomeçar nem mexer em mochila, plantações,
