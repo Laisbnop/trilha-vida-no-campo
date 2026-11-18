@@ -1155,6 +1155,7 @@ const World = (() => {
       if (using && a.dir !== 'up') toolSwing(ctx, a, ax, ay, tk);
       if (a.fish) fishRod(ctx, a);
       if (a.fish && a.fish.hold) liftFish(ctx, a, t);
+      if (a.eat) eating(ctx, a, t);
     });
     v.actors.forEach(a => { if (a.fish) fishLine(ctx, a.fish, t); });
     v.actors.forEach(a => { if (a.bubble) bubble(Math.round(a.x) - 7, Math.round(a.y) - 46, a.bubble === '...' ? '' : '!', t); if (a.heart) heart(ctx, Math.round(a.x) - 3, Math.round(a.y) - 42 - Math.floor(t / 300) % 2); });
@@ -1245,6 +1246,15 @@ const World = (() => {
     f.tipBent = at(1);
     if (a.dir === 'up') return;                     // de costas, a mão fica escondida pelo corpo
     const [sk, sd] = skinOf(a.look); ctx.fillStyle = OUT; ctx.fillRect(Math.round(gx) - 2, Math.round(gy) - 1, 4, 4); ctx.fillStyle = sk; ctx.fillRect(Math.round(gx) - 1, Math.round(gy), 2, 2); ctx.fillStyle = sd; ctx.fillRect(Math.round(gx) - 1, Math.round(gy) + 1, 2, 1);
+  }
+  /* Comendo: o alimento perto da boca, seguro com as duas mãos, encolhe a cada mordida; migalhas caem. */
+  function eating(ctx, a, t) {
+    const x = Math.round(a.x), y = Math.round(a.y), k = a.eat.k, bites = Math.min(3, Math.floor(k * 4)), [sk, sd] = skinOf(a.look);
+    const w = 8 - bites * 2, ix = x - 4, iy = y - 22 + (Math.floor(k * 8) % 2);
+    if (w > 0) { ctx.drawImage(icon(a.eat.id), 0, 0, w * 2, 16, ix, iy, w, 8); for (let i = 0; i < bites; i++) { ctx.fillStyle = OUT; ctx.fillRect(ix + w - 1, iy + 2 + i * 2, 1, 1); } }
+    [[-7, -19], [5, -19]].forEach(([dx, dy]) => { ctx.fillStyle = OUT; ctx.fillRect(x + dx - 1, y + dy - 1, 4, 4); ctx.fillStyle = sk; ctx.fillRect(x + dx, y + dy, 2, 2); ctx.fillStyle = sd; ctx.fillRect(x + dx, y + dy + 1, 2, 1); });
+    for (let i = 0; i < bites * 2; i++) { const s2 = (i * 37) % 7, fy = y - 14 + ((k * 900 + i * 53) % 12); ctx.fillStyle = i % 2 ? '#f4e8c8' : '#d8b878'; ctx.fillRect(x - 4 + s2 + (i % 3), Math.round(fy), 1, 1); }
+    if (k > 0.85) { ctx.fillStyle = '#8fe88f'; ctx.fillRect(x + 8, y - 34, 1, 3); ctx.fillRect(x + 7, y - 33, 3, 1); }
   }
   function liftFish(ctx, a, t) {                   // personagem de frente, com o peixe erguido acima da cabeça
     const x = Math.round(a.x), y = Math.round(a.y), [sk, sd] = skinOf(a.look), bob = Math.floor(t / 300) % 2;

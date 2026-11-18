@@ -22,8 +22,8 @@ pelo GitHub Pages. Não precisa instalar nada.
 | Abrir a porta à frente | Q (ou clique na porta) | Toque na porta |
 | Usar a ferramenta, semente ou muda | Clique na terra ou no objeto | Toque na terra ou no objeto |
 | Escolher o item da barra | Clique na barra ou teclas 1 a 9 e 0 | Toque na barra |
-| Comer (ovo, laranja, goiaba, amora, fruta de cristal, narciso) | Clique no item que já está na mão, na barra | Toque de novo no item da barra |
-| Trocar a linha da mochila usada na barra | Tab | Menu → Inventário → "Usar na barra" |
+| Comer (frutos, narciso, peixes, ovos) | Com o alimento na mão, clique numa área livre do cenário e confirme "Sim" | Toque numa área livre e confirme |
+| Mostrar outra linha da mochila na barra | Botões 1, 2 e 3 ao lado da barra (ou Menu → Inventário → "Usar na barra") | Os mesmos botões |
 | Menu principal (abre no Inventário) | E ou Esc (de novo fecha) | Botão ☰ Menu |
 | Diário | F | Botão Diário |
 | Mapa | M | Botão Mapa |
@@ -40,6 +40,9 @@ pelo GitHub Pages. Não precisa instalar nada.
 Os atalhos ignoram a repetição de tecla segurada, não funcionam enquanto você
 digita um nome e respeitam a ordem: carta aberta → conversa → menu. Numa carta, E
 ou Esc só fecham a carta; em escolhas obrigatórias de uma cena, nada é cancelado.
+
+Tab não tem função durante o jogo (não troca a linha da barra nem o item na mão);
+nos menus, continua navegando entre os controles.
 
 ### Menu principal
 
@@ -113,10 +116,15 @@ O gênero define os pronomes nas falas (masculino, feminino ou formas neutras).
 Não há casamento, gravidez nem filhos. O guarda-roupa de casa permite mudar
 cabelo, roupas, acessório e chapéu a qualquer momento. A idade é 22 anos.
 
-**Nomes:** aceitam letras com acento, números, espaços e pontuação comum
-(`. , ' ! ? & ( ) -`). Espaços nas pontas são retirados e nome só com espaços não
-vale. O limite é pela largura na tela (até 16 letras no nome e 20 na fazenda): ao
-chegar nele, o campo avisa. Os nomes aparecem como texto nas falas, na carta, no
+**Nomes:** o nome do personagem, o da fazenda e o das galinhas aceitam **somente
+letras de A a Z**, maiúsculas ou minúsculas: sem espaços, acentos, cedilha,
+números, pontuação, aspas, emojis ou outros símbolos. Vale para o que é digitado,
+colado ou arrastado: o campo retira o que não pode e explica "Use apenas letras de
+A a Z, maiúsculas ou minúsculas, sem espaços ou acentos." Nome vazio ou inválido
+não avança nem é salvo. O limite é pela largura na tela (até 16 letras no nome, 20
+na fazenda e 12 nas galinhas). Ao renomear uma galinha, deixar o campo vazio mantém
+o nome atual. Nomes de partidas antigas continuam como estavam até o jogador
+decidir editá-los. O nome do bicho de estimação segue a regra anterior. Os nomes aparecem como texto nas falas, na carta, no
 diário, no mapa e na placa da fazenda.
 
 ## Abertura e carta
@@ -435,10 +443,31 @@ noites e dias). Nada disso aparece na versão normal.
 ### Energia e comida
 
 Andar e conversar não gastam energia. Para recuperar no meio do dia, **coma**:
-escolha o item na barra de baixo e clique nele de novo. Ovo +20, goiaba +18,
-laranja +15, narciso +10, amora +8 e fruta de cristal +40 de energia (até o
-máximo de 100; com a energia cheia, nada é gasto). O Inventário mostra quanto
-cada comida recupera. Dormir recupera tudo e mostra um resumo da
+escolha o alimento na barra e clique numa **área livre** do cenário. Aparece a
+pergunta "Comer [item]?" com **Sim** e **Não**. "Sim" come exatamente uma unidade,
+com uma animação curta, e salva; "Não", E ou Esc deixam tudo como estava. Com a
+energia cheia, o jogo avisa e não pergunta nada.
+
+Comestíveis (regra do vale, cadastrada item a item em `EDIBLE`, no `js/data.js`):
+
+| Item | Energia |
+| --- | --- |
+| Fruta de cristal | +40 |
+| Tucunaré | +32 |
+| Sardinha | +22 |
+| Ovo | +20 |
+| Goiaba | +18 |
+| Laranja | +15 |
+| Narciso | +10 |
+| Amora silvestre | +8 |
+
+Outras flores, cogumelos e colheitas não são comestíveis. A energia nunca passa de 100; o valor de cada alimento
+está na descrição dele. Só escolher o alimento na barra não come nada: é preciso um
+clique novo no cenário. Se o clique cair num morador, porta, baú ou outro alvo
+próximo, vale essa interação. Dar o alimento de presente ou entregá-lo numa missão
+não conta como comer. Enquanto a pergunta está aberta, o relógio para, ferramentas
+e passos ficam bloqueados e não abre outra pergunta; cliques repetidos comem uma
+unidade só. Ao acabar a pilha, o espaço fica vazio. Dormir recupera tudo e mostra um resumo da
 noite.
 
 O Armazém (Dona Celeste atende das 6h às 18h) vende sementes, mudas, ração,
@@ -448,7 +477,7 @@ do bosque. Preço, quantidade e total aparecem antes de confirmar.
 ## Itens
 
 Mochila com 30 espaços em 3 linhas (a barra de acesso rápido mostra uma linha por
-vez; Tab troca) e baú com 20. Saves antigos de 20 espaços ganham as vagas novas
+vez; os botões 1, 2 e 3 ao lado dela trocam a linha mostrada) e baú com 20. Saves antigos de 20 espaços ganham as vagas novas
 vazias. Itens iguais empilham até 99. Se a mochila estiver cheia, o item fica onde
 está e o jogo avisa. Três chapéus equipáveis: de palha, boina e de pescador.
 

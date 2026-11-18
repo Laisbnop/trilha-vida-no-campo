@@ -427,7 +427,10 @@ table.controls td { border-bottom: 1px solid #d8b880; padding: 3px 6px; }
 table.controls td:first-child { color: #7a3a14; }
 .save-msg { min-height: 22px; margin: 6px 0; }
 .save-msg.ok { color: #2f7a2a; } .save-msg.bad { color: #b02a1a; }
-.hotrow { font-size: 15px; color: #e6ebff; text-shadow: 1px 1px 0 #000; }
+.hotrow { display: flex; gap: 4px; align-items: center; justify-content: center; font-size: 15px; color: #e6ebff; text-shadow: 1px 1px 0 #000; }
+.rowbtn { font-size: 15px; line-height: 1; min-width: 22px; padding: 1px 5px; background: var(--deep); border: 2px solid var(--line); border-radius: 4px; color: #e6ebff; }
+.rowbtn.on { border-color: var(--gold); color: var(--gold); }
+.rowbtn:hover { background: #2a3a8a; }
 #modal .map-frame { border-color: #5a2e14; }
 #modal .legend { color: #3a2410; }
 #modal .map-info { color: #7a5a3a; }

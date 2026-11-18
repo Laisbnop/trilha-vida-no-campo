@@ -89,10 +89,18 @@
   function show(name) { screen = name; ['title', 'create', 'game'].forEach(n => { $('screen-' + n).hidden = n !== name; }); document.body.classList.toggle('playing', name === 'game'); window.scrollTo(0, 0); }
 
   /* =====================================================
-     NOMES: validação comum (personagem, fazenda, galinhas e bicho)
+     NOMES
+     Personagem, fazenda e galinhas: só letras de A a Z (maiúsculas ou minúsculas), sem
+     espaços, acentos, números ou símbolos. Vale para o que é digitado, colado ou arrastado:
+     o campo é limpo a cada mudança e o nome é conferido de novo antes de salvar.
+     O nome do bicho de estimação segue a regra anterior. Nomes de partidas antigas
+     não são mudados; só novas entradas e edições seguem a regra.
      ===================================================== */
+  const STRICT_KINDS = ['name', 'farm', 'hen'];
+  const NAME_STRICT = /^[A-Za-z]$/, NAME_STRICT_ALL = /^[A-Za-z]+$/;
   const NAME_CHAR = /^[\p{L}\p{M}\p{N} .,'’!?&()-]$/u;
-  const NAME_MAX = { name: 160, farm: 200, pet: 120 };          // largura máxima, em pixels da fonte das placas (10px)
+  const NAME_RULE_MSG = 'Use apenas letras de A a Z, maiúsculas ou minúsculas, sem espaços ou acentos.';
+  const NAME_MAX = { name: 160, farm: 200, pet: 120, hen: 120 };          // largura máxima, em pixels da fonte das placas (10px)
   let measureCtx = null;
   /* Largura visual do texto na fonte das placas. A fonte é monoespaçada: no mínimo 10px por letra. */
   function textWidth(t) {
@@ -102,27 +110,38 @@
   }
   /* Limpa o que foi digitado: tira caracteres não aceitos e corta no limite de largura. Devolve { value, msg }. */
   function cleanName(raw, kind) {
-    let msg = '', v = [...String(raw).replace(/[\t\n\r]/g, ' ')].filter(ch => NAME_CHAR.test(ch)).join('');
-    if (v !== String(raw).replace(/[\t\n\r]/g, ' ')) msg = 'Use só letras (com ou sem acento), números, espaços e pontuação simples: . , \' ! ? & ( ) -';
-    v = v.replace(/ {2,}/g, ' ');
+    const strict = STRICT_KINDS.includes(kind), src = String(raw == null ? '' : raw);
+    let msg = '', v;
+    if (strict) { v = [...src].filter(ch => NAME_STRICT.test(ch)).join(''); if (v !== src) msg = NAME_RULE_MSG; }
+    else {
+      const base = src.replace(/[\t\n\r]/g, ' ');
+      v = [...base].filter(ch => NAME_CHAR.test(ch)).join('');
+      if (v !== base) msg = 'Use só letras (com ou sem acento), números, espaços e pontuação simples: . , \' ! ? & ( ) -';
+      v = v.replace(/ {2,}/g, ' ');
+    }
     if (textWidth(v.trim()) > NAME_MAX[kind]) {
       const chars = [...v]; while (chars.length && textWidth(chars.join('').trim()) > NAME_MAX[kind]) chars.pop();
       v = chars.join(''); msg = `Limite atingido: o nome pode ter até ${Math.floor(NAME_MAX[kind] / 10)} letras, para caber nas placas e nas falas.`;
     }
     return { value: v, msg };
   }
-  const nameOk = v => v.trim().length > 0;
+  /* Nome pronto para salvar: não vazio e, nos campos com a regra nova, só letras de A a Z. */
+  const nameOk = (v, kind = 'name') => { v = String(v == null ? '' : v); return STRICT_KINDS.includes(kind) ? NAME_STRICT_ALL.test(v) && textWidth(v) <= NAME_MAX[kind] : v.trim().length > 0; };
   /* Campo de nome com aviso. onChange recebe o texto já limpo. */
   function nameField(label, value, kind, placeholder, onChange, id) {
     const box = el('div', 'name-field'), lab = el('label', '', label), input = el('input'), msg = el('div', 'field-msg');
-    input.type = 'text'; input.value = value; input.placeholder = placeholder; input.autocomplete = 'off'; input.maxLength = 30; if (id) { input.id = id; lab.htmlFor = id; }
+    input.type = 'text'; input.value = value; input.placeholder = placeholder; input.autocomplete = 'off'; input.spellcheck = false; input.maxLength = 30; if (id) { input.id = id; lab.htmlFor = id; }
+    input.setAttribute('autocapitalize', 'off'); if (STRICT_KINDS.includes(kind)) { input.pattern = '[A-Za-z]+'; input.setAttribute('inputmode', 'text'); }
     const count = () => { const n = [...input.value.trim()].length, max = Math.floor(NAME_MAX[kind] / 10); return `${n}/${max} letras`; };
-    msg.textContent = count();
-    input.oninput = () => {
+    const show = (warn, text) => { msg.textContent = text; msg.classList.toggle('warn', warn); };
+    /* nome que já veio preenchido (de uma versão antiga) só é avisado, não alterado */
+    if (value && !nameOk(value, kind)) show(true, NAME_RULE_MSG); else show(false, count());
+    input.oninput = () => {                                   // digitado, colado, arrastado ou preenchido: tudo passa por aqui
       const r = cleanName(input.value, kind);
       if (r.value !== input.value) input.value = r.value;
-      msg.textContent = r.msg || (nameOk(input.value) || !input.value ? count() : 'O nome não pode ficar só com espaços.');
-      msg.classList.toggle('warn', !!r.msg || (!!input.value && !nameOk(input.value)));
+      if (r.msg) show(true, r.msg);
+      else if (input.value && !nameOk(input.value, kind)) show(true, STRICT_KINDS.includes(kind) ? NAME_RULE_MSG : 'O nome não pode ficar só com espaços.');
+      else show(false, count());
       onChange(input.value);
     };
     box.append(lab, input, msg);
@@ -203,7 +222,7 @@
     { title: 'Calçado e acessório', hint: 'O acessório aparece de todos os lados, até com chapéu.', key: 'extras', look: true },
     { title: 'Animal favorito', hint: 'Gato ou cachorro? Um dia, alguém da vila pode se lembrar disso.', key: 'pet' },
     { title: 'Nomes', hint: 'Como a vila vai te chamar e o nome da fazenda que você vai herdar. Depois, o guarda-roupa de casa permite mudar cabelo, roupas e acessório.', key: 'names',
-      valid: () => nameOk(draft.name) && nameOk(draft.farm) },
+      valid: () => nameOk(draft.name, 'name') && nameOk(draft.farm, 'farm') },
   ];
   function petOptions(box, cur, set) {
     optionGrid(box, Object.keys(PETS).map(k => ({ id: k, label: PETS[k].name, canvas: Object.assign(World.petCanvas(k), { className: 'pixel pet' }) })), cur, set, 'two');
@@ -242,7 +261,7 @@
     else if (st.key === 'pet') petOptions(box, draft.pet, id => { draft.pet = id; renderStep(); });
     else {
       const a = nameField('Seu nome', draft.name, 'name', 'Seu nome', v => { draft.name = v; updatePreview(); updateNav(); }, 'name-input');
-      const b = nameField('Nome da fazenda', draft.farm, 'farm', 'Ex.: Sítio Recanto', v => { draft.farm = v; updatePreview(); updateNav(); }, 'farm-input');
+      const b = nameField('Nome da fazenda', draft.farm, 'farm', 'Ex.: Recanto', v => { draft.farm = v; updatePreview(); updateNav(); }, 'farm-input');
       [a.input, b.input].forEach(i => { i.onkeydown = e => { if (e.key === 'Enter' && st.valid()) $('btn-next').click(); }; });
       box.append(a.box, b.box); setTimeout(() => (draft.name ? b.input : a.input).focus(), 0);
     }
@@ -255,7 +274,8 @@
     if (st.valid && !st.valid()) return;
     if (step < STEPS.length - 1) { step++; renderStep(); return; }
     clearInterval(previewTimer);
-    S = newState(Object.assign({}, draft.look), cleanName(draft.name, 'name').value.trim(), cleanName(draft.farm, 'farm').value.trim(), draft.pet);
+    if (!nameOk(draft.name, 'name') || !nameOk(draft.farm, 'farm')) return;                  // nada de nome vazio ou inválido
+    S = newState(Object.assign({}, draft.look), draft.name, draft.farm, draft.pet);
     save(); startGame();
   };
 
@@ -405,7 +425,7 @@
       }
       await say('narr', 'A carroça da manhã deixa você diante de uma casa de madeira com varanda, telhado gasto e mato por todo lado. Na placa nova do portão: {fazenda}. A ' + VILA + ' fica logo a leste.');
       await say('narr', `Você tem ${S.age} anos, a carta do seu avô no bolso e as ferramentas antigas dele na mochila. A carta fica guardada no Diário.`);
-      await say('narr', COARSE ? 'Ande com as setas da tela. Chegue perto e toque em pessoas, portas e objetos para interagir. Toque na barra para escolher o item; com uma ferramenta na mão, toque na terra ou no objeto ao seu lado. O botão Menu abre o inventário, as amizades, o mapa e o diário.' : 'Ande com as setas (ou W, A, S, D). Chegue perto e clique em pessoas, portas e objetos para interagir (Q abre a porta à frente). Clique na barra ou use as teclas 1 a 0 para escolher o item; Tab troca a linha da barra. E abre o menu, F o diário e M o mapa.');
+      await say('narr', COARSE ? 'Ande com as setas da tela. Chegue perto e toque em pessoas, portas e objetos para interagir. Toque na barra para escolher o item; com uma ferramenta na mão, toque na terra ou no objeto ao seu lado. O botão Menu abre o inventário, as amizades, o mapa e o diário.' : 'Ande com as setas (ou W, A, S, D). Chegue perto e clique em pessoas, portas e objetos para interagir (Q abre a porta à frente). Clique na barra ou use as teclas 1 a 0 para escolher o item; os botões 1, 2 e 3 ao lado da barra mostram as outras linhas da mochila. Com um alimento na mão, clique numa área livre para comer. E abre o menu, F o diário e M o mapa.');
       await say('narr', 'Não há pressa nem fim: os dias passam quando você dorme. Para começar, siga a estrada para o leste e apresente-se no Armazém.');
       S.intro = true;
     });
@@ -526,7 +546,9 @@
     impacts = impacts.filter(f => t - f.t0 < 400);
     hover = null;
     if (free && mouse && !fishing) { const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, list); if (tg) { tg.ok = tg.fish ? tg.fishOk : reachable(tg); hover = tg; } }
-    const hint = $('hint'), text = hover ? (hover.ok || hover.fish ? hover.label : `${hover.label.split(' — ')[0]} — chegue mais perto`) : '';
+    let text = hover ? (hover.ok || hover.fish ? hover.label : `${hover.label.split(' — ')[0]} — chegue mais perto`) : '';
+    if (!text && free && mouse && !fishing && !P.work) { const it = equipped(); if (it && isFood(it.id)) text = `Comer ${foodName(it).toLowerCase()} (+${ITEMS[it.id].food} de energia)`; }
+    const hint = $('hint');
     if (hint.dataset.t !== text) { hint.dataset.t = text; hint.hidden = !text; hint.classList.toggle('far', !!(hover && !hover.ok)); hint.replaceChildren(el('b', '', COARSE ? 'TOQUE' : 'CLIQUE'), el('span', '', text)); }
     if (t - lastSave > 2500) { lastSave = t; S.pos.x = Math.round(P.x); S.pos.y = Math.round(P.y); S.pos.dir = P.dir; save(); }
   }
@@ -550,6 +572,7 @@
     const c = $('scene'); World.setView(c.width, c.height);
     const cam = World.camera(map, P.x, P.y), ctx = c.getContext('2d');
     const me = { look: S.look, x: P.x, y: P.y, dir: P.dir, moving: P.moving, tool: P.tool, hop: P.hop && t < P.hop ? -Math.abs(Math.sin((P.hop - t) / 80)) * 4 : 0 };
+    if (P.eat && t < P.eat.t0 + EAT_MS) { me.eat = { id: P.eat.id, k: (t - P.eat.t0) / EAT_MS }; me.dir = 'down'; me.tool = null; me.hop = -(Math.floor((t - P.eat.t0) / 120) % 2); }
     if (fishing) { me.fish = fishView(t); me.tool = null; me.moving = false; if (me.fish.hold) me.dir = 'down'; if (fishing.phase === 'game') { drawBar(t); placeBar(t); } if (fishing.phase === 'show') $('catch').classList.toggle('at-top', screenOf(P.x, P.y)[1] > window.innerHeight * 0.52); }
     const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
     const lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
@@ -781,7 +804,7 @@
     // 5) dentro do menu, Tab e as demais teclas servem para navegar nos controles
     if (menuOpen) return;
     // 6) exploração
-    if (k === 'Tab') { e.preventDefault(); if (!e.repeat && !blocked()) cycleRow(e.shiftKey ? -1 : 1); return; }
+    if (k === 'Tab') { e.preventDefault(); return; }             // Tab não faz nada no jogo (nos menus continua navegando entre os controles)
     if (/^Arrow|^ $/.test(k)) e.preventDefault();               // as setas e o espaço não rolam a página
     if (k === ' ' && !e.repeat && isRod(equipped()) && !blocked() && !P.work) { keyCast(); return; }   // Espaço com a vara: lança para onde o personagem olha
     if (KEYMAP[k]) { keys[KEYMAP[k]] = true; return; }
@@ -813,7 +836,7 @@
     if (blocked() || P.work || performance.now() - menuClosedT < 200) return;   // menu/conversa aberta, golpe em andamento ou menu recém-fechado: o clique não conta
     const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, actors());
     if (tg && tg.fish) return startCharge(tg.check);
-    if (!tg) { const it = equipped(); if (it && it.id === 'espada') { faceTo(wx, wy); useTool('espada', 0); } else if (isRod(it)) tip('Com a vara na mão, segure o clique sobre a água, perto da margem (ou Espaço virado para ela), e solte para lançar.'); return; }
+    if (!tg) { const it = equipped(); if (it && it.id === 'espada') { faceTo(wx, wy); useTool('espada', 0); } else if (isRod(it)) tip('Com a vara na mão, segure o clique sobre a água, perto da margem (ou Espaço virado para ela), e solte para lançar.'); else if (it && isFood(it.id)) askEat(); return; }
     if (!reachable(tg)) return tip(`Longe demais: chegue mais perto de ${tg.label.split(' — ')[0].replace(/ \(.*\)$/, '').replace(/^(Falar com|Entrar:) /, '').toLowerCase()}.`);
     const [cx, cy] = center(tg.near || tg.rect); faceTo(cx, cy);
     if (tg.act) tg.act();
@@ -825,34 +848,44 @@
   let lastTip = '', lastTipT = 0;
   /* Orientação curta, sem repetir a mesma mensagem em sequência. */
   function tip(text) { const now = performance.now(); if (text === lastTip && now - lastTipT < 1200) return; lastTip = text; lastTipT = now; toast(text); }
-  /* A barra de ferramentas mostra uma das 3 linhas da mochila (Tab troca a linha, mantendo a coluna). */
+  /* A barra de ferramentas mostra uma das 3 linhas da mochila; os botões 1, 2 e 3 ao lado dela trocam a linha mostrada. */
   function selectSlot(i) { if (fishing) return; S.sel = S.row * HOTBAR + i; renderHotbar(); save(); }
-  /* Clique na barra: escolhe o item; se ele já está na mão e é comida, come. */
+  function showRow(r) { if (fishing || r === S.row) return; S.row = r; renderHotbar(); save(); }
+  /* Clique na barra: só escolhe o item (comer é com um clique novo numa área livre do cenário). */
   function hotbarClick(i) {
     if (fishing) return tip('Termine a pesca ou recolha a linha (Esc) antes de trocar de item.');
-    const idx = S.row * HOTBAR + i, s2 = S.inv[idx];
-    if (idx === S.sel && s2 && ITEMS[s2.id].food) return eat(idx);
+    if (busy) return;
+    const s2 = S.inv[S.row * HOTBAR + i];
     selectSlot(i);
-    if (s2 && ITEMS[s2.id].food) tip(`${ITEMS[s2.id].name} na mão. Clique de novo para comer (+${ITEMS[s2.id].food} de energia).`);
+    if (s2 && isFood(s2.id)) tip(`${ITEMS[s2.id].name} na mão. Clique numa área livre do cenário para comer (+${ITEMS[s2.id].food} de energia).`);
   }
-  /* Come uma unidade do item: recupera energia (até 100). Nada acontece com a energia cheia ou com o jogo ocupado. */
-  function eat(idx) {
-    const s2 = S.inv[idx]; if (!s2) return false;
-    const it = ITEMS[s2.id]; if (!it.food) return false;
-    if (blocked() || P.work) return false;
-    if (S.energy >= 100) { tip('Sua energia já está cheia.'); return false; }
-    const before = S.energy; S.energy = Math.min(100, S.energy + it.food);
-    s2.n--; if (!s2.n) S.inv[idx] = null;
-    P.hop = performance.now() + 300; floats.push({ icon: s2.id, x: P.x, y: P.y, t0: performance.now() });
+  /* Comer: só os itens da lista EDIBLE. Um clique numa área livre pergunta antes; "Sim" come
+     exatamente uma unidade. Com a pergunta aberta o jogo para (relógio, ferramentas, passos). */
+  const isFood = id => EDIBLE.includes(id) && !!ITEMS[id] && ITEMS[id].food > 0;
+  const foodName = s2 => ITEMS[s2.id].name + (s2.cm ? ` (${s2.cm} cm)` : '');
+  function askEat() {
+    const idx = S.sel, ref = S.inv[idx];
+    if (!ref || !isFood(ref.id) || busy || P.work || fishing) return;
+    if (S.energy >= MAX_ENERGY) return tip('Sua energia já está cheia. Guarde o alimento para depois.');
+    const it = ITEMS[ref.id];
+    run(async () => {
+      const c = await ask(`Comer ${foodName(ref)}? Recupera ${it.food} de energia.`, ['Sim', 'Não']);
+      if (c === 0) eatNow(idx, ref);
+    });
+  }
+  /* Come uma unidade da pilha confirmada (se ela ainda estiver lá). */
+  function eatNow(idx, ref) {
+    if (S.inv[idx] !== ref || !(ref.n > 0) || !isFood(ref.id)) return false;
+    if (S.energy >= MAX_ENERGY) { tip('Sua energia já está cheia.'); return false; }
+    const it = ITEMS[ref.id], before = S.energy;
+    S.energy = Math.min(MAX_ENERGY, S.energy + it.food);
+    ref.n--; if (ref.n <= 0) S.inv[idx] = null;
+    const now = performance.now(); P.eat = { id: ref.id, t0: now }; P.work = now + EAT_MS; P.tool = null;
     toast(`Você comeu ${it.name.toLowerCase()}: +${Math.round(S.energy - before)} de energia`);
     renderHotbar(); renderHud(); save();
     return true;
   }
-  function cycleRow(d = 1) {
-    if (fishing) return;
-    const col = S.sel % HOTBAR; S.row = (S.row + d + 3) % 3; S.sel = S.row * HOTBAR + col;
-    renderHotbar(); save(); tip(`Barra de ferramentas: linha ${S.row + 1} de 3`);
-  }
+  const EAT_MS = 700;
   /* Q: abre a porta (ou saída) logo à frente, se estiver ao alcance. */
   function useDoor() {
     const F = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[P.dir];
@@ -922,13 +955,26 @@
     });
   }
   /* Pede um nome curto (galinha, bicho). Valida como os outros nomes; vazio usa o padrão. */
-  function askText(who, text, fallback) {
+  /* Pergunta um nome na caixa de diálogo. kind = regra de nome ('hen' só letras de A a Z;
+     'pet' a regra anterior). suggest vem preenchido (Enter aceita); keep = nome atual,
+     mantido se o campo ficar vazio (renomear sem mudar). Nome vazio ou inválido não passa. */
+  function askText(who, text, suggest, kind = 'pet', keep = null) {
     return new Promise(resolve => {
       { const [expr, rest] = splitExpr(String(text)); setSpeaker(who, expr); clearInterval(typer); typer = 0; $('dlg-text').textContent = fmt(rest); shownRun = dlgRun; }
       onAdvance = null; $('dlg-more').hidden = true; $('dlg-choices').replaceChildren();
-      const form = $('dlg-form'), input = $('dlg-input'), msg = $('dlg-msg'); form.hidden = false; input.value = ''; input.placeholder = fallback; msg.textContent = ''; input.focus();
-      input.oninput = () => { const r = cleanName(input.value, 'pet'); if (r.value !== input.value) input.value = r.value; msg.textContent = r.msg; };
-      form.onsubmit = e => { e.preventDefault(); form.hidden = true; form.onsubmit = null; input.oninput = null; input.blur(); msg.textContent = ''; resolve(cleanName(input.value, 'pet').value.trim() || fallback); };
+      const form = $('dlg-form'), input = $('dlg-input'), msg = $('dlg-msg'); form.hidden = false;
+      const strict = STRICT_KINDS.includes(kind);
+      input.value = strict && keep === null && nameOk(suggest, kind) ? suggest : ''; input.placeholder = keep !== null ? keep : suggest; msg.textContent = ''; input.focus();
+      input.oninput = () => { const r = cleanName(input.value, kind); if (r.value !== input.value) input.value = r.value; msg.textContent = r.msg; };
+      form.onsubmit = e => {
+        e.preventDefault();
+        const v = cleanName(input.value, kind).value.trim();
+        if (!v && keep !== null) { done(keep); return; }
+        if (!v && !strict) { done(suggest); return; }          // bicho de estimação: vazio usa a sugestão, como antes
+        if (!nameOk(v, kind)) { msg.textContent = v || !STRICT_KINDS.includes(kind) ? (STRICT_KINDS.includes(kind) ? NAME_RULE_MSG : 'Digite um nome.') : 'Digite um nome. ' + NAME_RULE_MSG; input.focus(); return; }
+        done(v);
+      };
+      const done = v => { form.hidden = true; form.onsubmit = null; input.oninput = null; input.blur(); msg.textContent = ''; resolve(v); };
     });
   }
   $('dlg-form').addEventListener('submit', e => e.preventDefault());     // nunca recarrega a página, mesmo com Enter repetido
@@ -1676,7 +1722,7 @@
     });
   }
   async function newHen(who) {
-    const name = await askText(who || 'narr', 'Que nome você dá a ela?', ['Pipoca', 'Farofa', 'Canjica', 'Paçoca'][S.coop.hens.length % 4]);
+    const name = await askText(who || 'narr', 'Que nome você dá a ela? Só letras de A a Z.', ['Pipoca', 'Farofa', 'Canjica', 'Pamonha'][S.coop.hens.length % 4], 'hen');
     S.coop.hens.push({ name, well: 60, pet: 0, kind: S.coop.hens.length % 4 });
     spawnHens(); toast(`${name} chegou ao galinheiro`); save();
   }
@@ -1691,7 +1737,7 @@
         return say('narr', `Você faz carinho em ${h.name}. Ela fecha os olhos e cacareja baixinho.`);
       }
       if (c === 1) return say('narr', `${h.name} está ${wellText(h.well)}. ${S.coop.feed ? 'Há ração no comedouro para esta noite.' : 'O comedouro está vazio: sem ração, ela não bota e fica triste.'} Galinha alimentada bota um ovo, que aparece no ninho na manhã seguinte.`);
-      if (c === 2) { h.name = await askText('narr', 'Qual é o novo nome?', h.name); return say('narr', `Agora ela se chama ${h.name}.`); }
+      if (c === 2) { const nv = await askText('narr', 'Qual é o novo nome? Só letras de A a Z (deixe vazio para manter).', h.name, 'hen', h.name); if (nv === h.name) return say('narr', `Ela continua se chamando ${h.name}.`); h.name = nv; save(); return say('narr', `Agora ela se chama ${h.name}.`); }
     });
   }
   function feed() {
@@ -1871,8 +1917,12 @@
     const base = S.row * HOTBAR;
     for (let i = 0; i < HOTBAR; i++) { const b = slotNode(S.inv[base + i], base + i === S.sel ? 'sel' : ''); b.dataset.slot = i; b.append(el('u', '', String((i + 1) % 10))); b.onclick = () => hotbarClick(i); bar.append(b); }
     const it = equipped(); $('equipped').textContent = it ? ITEMS[it.id].name : 'Mãos livres';
-    let hr = $('hotrow'); if (!hr) { hr = el('span', 'hotrow'); hr.id = 'hotrow'; hr.title = 'Linha da mochila na barra (Tab troca)'; bar.parentNode.append(hr); }
-    hr.textContent = `Linha ${S.row + 1}/3 · Tab`;
+    let hr = $('hotrow'); if (!hr) { hr = el('div', 'hotrow'); hr.id = 'hotrow'; bar.parentNode.append(hr); }
+    hr.replaceChildren(el('span', '', 'Linha'));
+    for (let r = 0; r < 3; r++) {                      // as outras linhas da mochila ficam a um clique (sem atalho de teclado)
+      const b = btn('rowbtn' + (r === S.row ? ' on' : ''), String(r + 1), () => showRow(r)); b.dataset.row = r;
+      b.title = `Mostrar a linha ${r + 1} da mochila na barra`; b.setAttribute('aria-pressed', r === S.row); hr.append(b);
+    }
   }
 
   /* =====================================================
@@ -1943,7 +1993,7 @@
         const s2 = S.inv[i]; info.replaceChildren();
         if (!s2) { info.append(el('span', 'dim', picked !== null ? 'Clique num espaço para colocar o item ali.' : 'Clique num item para ver, mover ou usar na barra.')); return; }
         const it = ITEMS[s2.id];
-        info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}${s2.cm ? ` · ${s2.cm} cm` : ''}`), el('span', 'dim', it.desc + (it.food ? ` Comestível: +${it.food} de energia.` : '') + (it.sell ? ` Vende por ${it.sell} moedas.` : '') + (s2.cm ? ` Tamanho: ${s2.cm} cm. Vende por ${fishValue(s2.id, s2.cm)} moedas no Armazém.` : '')));
+        info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}${s2.cm ? ` · ${s2.cm} cm` : ''}`), el('span', 'dim', it.desc + (isFood(s2.id) ? ' Para comer: escolha na barra e clique numa área livre do cenário.' : '') + (it.sell ? ` Vende por ${it.sell} moedas.` : '') + (s2.cm ? ` Tamanho: ${s2.cm} cm. Vende por ${fishValue(s2.id, s2.cm)} moedas no Armazém.` : '')));
         if (i === picked) {
           const use = btn('btn', i === S.sel ? 'Na mão ✔' : 'Usar na barra', () => { S.row = Math.floor(i / HOTBAR); S.sel = i; picked = null; save(); renderTab('mochila'); }); use.dataset.use = i; info.append(use);
           if (s2.id === 'vara_fibra') {
@@ -2091,7 +2141,7 @@
     config(body) {
       body.append(el('h3', '', 'Controles'));
       const t = el('table', 'controls');
-      [['Andar', 'Setas ou W A S D (celular: direcional)'], ['Interagir e usar ferramentas', 'Clique (ou toque) perto do alvo'], ['Escolher item da barra', '1 a 0, ou clique na barra'], ['Trocar a linha da barra', 'Tab'],
+      [['Andar', 'Setas ou W A S D (celular: direcional)'], ['Interagir e usar ferramentas', 'Clique (ou toque) perto do alvo'], ['Escolher item da barra', '1 a 0, ou clique na barra'], ['Mostrar outra linha da mochila na barra', 'Clique em 1, 2 ou 3 ao lado da barra'], ['Comer (alimento na mão)', 'Clique numa área livre do cenário e confirme "Sim"'],
         ['Menu (Inventário)', 'E ou Esc (de novo fecha)'], ['Diário', 'F'], ['Mapa', 'M'], ['Abrir porta à frente', 'Q'], ['Avançar conversa', 'E, Espaço, Enter ou clique'], ['Recusar em "Sim/Não"', 'E ou Esc'], ['Pausa', 'P ou o botão ⏸'],
         ['Pescar (vara na mão)', 'Segure o botão esquerdo sobre a água, ou Espaço virado para ela; solte para lançar'], ['Fisgar', 'Botão esquerdo ou Espaço quando a boia afundar e aparecer o "!"'],
         ['Puxar o peixe', 'Segure botão esquerdo ou Espaço: a faixa vai para a direita; solte: volta'], ['Guardar ou soltar o peixe', 'Clique na opção, ou setas e Espaço'], ['Recolher a linha', 'Esc ou o botão "Recolher linha"']]
@@ -2130,7 +2180,7 @@
         el('p', '', 'Esta versão do jogo dá um nome à sua fazenda e pergunta qual é o seu animal favorito. Todo o resto continua como estava: mochila, plantações, galinhas, amizades e missões.'));
       const draftA = { farm: S.farmName, pet: S.pet.sp || 'gato' };
       const ok = btn('btn primary', 'Confirmar ▶', () => {
-        const v = cleanName(draftA.farm, 'farm').value.trim(); if (!nameOk(v)) return;
+        const v = draftA.farm; if (!nameOk(v, 'farm')) return;
         S.farmName = v; S.pet.sp = draftA.pet; save();
         $('modal').hidden = true; renderHud(); renderHotbar();
         toast(`Bem-vindo de volta a ${S.farmName}`);
@@ -2138,10 +2188,10 @@
         if (!S.intro) intro();
       });
       ok.id = 'setup-ok';
-      const f = nameField('Nome da fazenda', draftA.farm, 'farm', 'Ex.: Sítio Recanto', v => { draftA.farm = v; ok.disabled = !nameOk(v); }, 'setup-farm');
+      const f = nameField('Nome da fazenda', draftA.farm, 'farm', 'Ex.: Recanto', v => { draftA.farm = v; ok.disabled = !nameOk(v, 'farm'); }, 'setup-farm');
       body.append(f.box, el('p', 'hint', 'Animal favorito'));
       const petBox = el('div'); const drawPets = () => { petBox.replaceChildren(); petOptions(petBox, draftA.pet, id => { draftA.pet = id; drawPets(); }); }; drawPets();
-      ok.disabled = !nameOk(draftA.farm); ok.style.marginTop = '12px';
+      ok.disabled = !nameOk(draftA.farm, 'farm'); ok.style.marginTop = '12px';
       body.append(petBox, ok);
     },
     loja(body) {
@@ -2298,6 +2348,7 @@
     cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), openMap, fit, petEvent, cleanName, textWidth,
     villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
+    targetAt: (x, y) => targetAt(x, y, actors()), henMenu, newHen: () => { run(() => newHen('narr')); }, get Pobj() { return P; },
     get fishing() { return fishing; }, fishCheck, fishValue, pickFish, openTab: t => openModal(t), get fin() { return { ...FIN }; }, zoneWidth, castMax, biteWait, addFishXp,
   };
 
