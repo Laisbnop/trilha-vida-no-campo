@@ -66,7 +66,7 @@ o tempo para enquanto ela está aberta. Trocar de aba mantém a mesma janela.
   seção **Cartas**.
 - **Personagem:** aparência ampliada nas quatro direções, nome, fazenda,
   equipamentos e energia.
-- **Configurações:** lista de controles, tela cheia, salvar a partida (com aviso
+- **Configurações** (engrenagem): "Última atualização" com o que a versão trouxe, lista de controles, tela cheia, salvar a partida (com aviso
   de sucesso ou falha), voltar à tela inicial (salva antes) e apagar a fazenda.
 
 **Só funciona de perto.** O alvo precisa estar ao lado do personagem (na fazenda,
@@ -171,9 +171,38 @@ na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 - **Ferramentas** (gastam energia a cada uso ou golpe): enxada ara, regador rega
   (10 usos por carga), machado corta galhos, tocos e árvores comuns, picareta
   quebra pedras, foice corta o mato. A espada simples serve para treinar no boneco.
-- **Cultivos**: rabanete (2 dias, semente 8, vende 18), tomate (4 dias, 15 → 40)
-  e abóbora (6 dias, 25 → 75). Cada dia regado conta um dia de crescimento; sem
-  rega a planta pausa, mas não morre. O crescimento acontece só ao dormir.
+- **Cultivos**: escolha a semente na barra e clique na terra arada; regue com o
+  regador; colha clicando perto da planta pronta. Cada noite depois de um dia
+  regado conta um dia de crescimento; sem rega a planta pausa, mas não morre. O
+  crescimento acontece só uma vez por noite (dormir, desmaiar às 2h ou recarregar
+  não repete). Planta madura espera a colheita. Com a mochila cheia, o fruto fica
+  na planta.
+
+| Cultivo | Estações de plantio | Primeira colheita | Nova colheita | Semente | Venda |
+| --- | --- | --- | --- | --- | --- |
+| Rabanete | qualquer | 2 dias regados | — (a planta sai) | 8 | 18 |
+| Tomate | qualquer | 4 dias regados | — (a planta sai) | 15 | 40 |
+| Morango | Primavera, Outono e Inverno | 5 dias regados (5 estágios de 1 dia) | a cada 4 dias regados | 150 | 360 |
+| Abóbora | Primavera e Outono | 13 dias regados (estágios de 1, 2, 3, 4 e 3 dias) | a cada 6 dias regados | 25 | 75 |
+
+  **Morango e abóbora** dão 1 fruto por colheita e o pé continua plantado,
+  voltando ao estado sem frutos (sem precisar de semente nova). Os estágios
+  aparecem no canteiro: no morango, broto, folhas, flores, frutos verdes e frutos
+  vermelhos (prontos); na abóbora, broto, folhas, rama, flor, abóbora verde
+  pequena e abóbora laranja grande (pronta). Na rebrota, o pé adulto mostra a flor,
+  depois o fruto em formação e o fruto maduro. As sementes ficam à venda no
+  Armazém só nas estações de plantio; o Armazém compra os frutos em qualquer
+  estação. Fora da estação, o plantio é bloqueado sem gastar semente nem energia.
+  Se não houver tempo para a primeira colheita antes da troca de estação, o jogo
+  avisa e pergunta se quer plantar mesmo assim. **Na manhã da nova estação**, os
+  pés de morango e de abóbora secam (mesmo que a nova estação também permita o
+  plantio), e os frutos que ficaram se perdem; limpe o canteiro com a foice (1 de
+  energia) e plante de novo quando a estação permitir. O morango é comestível
+  (+30 de energia) e é o presente favorito da Dona Celeste: vale 150 pontos de
+  amizade, com resposta própria. Para os outros moradores, é um presente neutro.
+  O preço da semente de morango (150) foi escolhido para a economia do jogo: uma
+  colheita paga mais que duas sementes, e um pé plantado no começo da estação rende
+  até 6 colheitas.
 - **Árvores frutíferas**: laranjeira e goiabeira. A muda precisa de grama livre,
   sem outra árvore encostada. Ficam adultas em 5 ou 6 dias e dão 2 frutos a cada
   3 dias. Não precisam de rega.
@@ -495,6 +524,12 @@ apito encontrado e entregue, cenas vistas e a conversa de Iara. Recarregar a
 página não reinicia limites nem repete eventos. Use o mesmo navegador e
 aparelho para continuar. Jogos salvos antes de Lúcio ganham esses campos
 zerados, sem perder nada.
+
+Das plantações, por canteiro: tipo de cultivo, noites regadas no ciclo atual
+(o estágio sai delas), rega do dia, colheitas já feitas (primeira produção ou
+rebrota; os dias que faltam saem daí), e se o pé está seco. Abóboras de jogos
+salvos antes desta versão: as maduras continuam maduras e as que cresciam mantêm
+as noites já regadas (agora contam até 13).
 
 Da pesca: vara recebida (ou guardada esperando espaço), carta de Tomé lida, dica
 do minijogo vista, nível e experiência, vara usada por último, compra da vara de
