@@ -286,8 +286,8 @@ limite semanal de presentes, que vira **toda segunda-feira**.
 
 ### Duração do dia
 
-Das **6h às 2h da madrugada**: 20 horas de jogo em **26 minutos de tempo real
-ativo** (cada hora dura 78 segundos). O relógio interno é contínuo, e a luz muda
+Das **6h às 2h da madrugada**: 20 horas de jogo em **18 minutos de tempo real
+ativo** (cada hora dura 54 segundos; cada 10 minutos do relógio, 9 segundos). O relógio interno é contínuo, e a luz muda
 aos poucos. O tempo para em conversas, mochila, loja, baú e outros painéis, no
 mapa, nas cenas, na pausa (P) e com a aba do navegador em segundo plano. Fechar e
 voltar ao jogo não soma o tempo que passou fora. Dormir antes das 2h encerra o
