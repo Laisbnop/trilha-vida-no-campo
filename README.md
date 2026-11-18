@@ -108,11 +108,43 @@ cabelo, 6 modelos de roupa de cima (camiseta, regata, camisa, blusa, moletom e
 jardineira), 4 de baixo (calça, short, saia e saia longa), calçado, 4 acessórios
 (óculos, laço, bandana e cachecol) com cor, animal favorito (gato ou cachorro),
 nome do personagem e nome da fazenda. Tudo vale para qualquer gênero. O botão
-**Aparência aleatória** sorteia só o visual. A prévia mostra frente, costas e os
-dois lados, andando. O personagem tem 24×32 pixels e não perde cabelo nem
-acessório em nenhuma direção, andando, usando ferramentas ou de chapéu.
+**Aparência aleatória** sorteia só o visual. O personagem tem 24×32 pixels e não
+perde cabelo nem acessório em nenhuma direção, andando, usando ferramentas,
+pescando ou de chapéu.
 
-O gênero define os pronomes nas falas (masculino, feminino ou formas neutras).
+**Gênero e base visual.** O gênero define os pronomes nas falas e também a
+**base visual** do corpo, que aparece na prévia, no mapa, ao andar, nas
+ferramentas, na pesca e na ficha do personagem:
+
+| Escolha | Base | Ponto de partida |
+| --- | --- | --- |
+| Masculino | ombros e peito mais largos, maxilar quadrado com sombra, sobrancelhas mais marcadas, boca mais larga | cabelo curto liso, camisa verde e calça |
+| Feminino | ombros mais estreitos e cintura marcada, queixo mais fino, cílios, boca rosada e bochechas mais coradas | cabelo longo ondulado com laço, blusa rosa e saia |
+| Não binário | a base neutra (a mesma das versões anteriores) | chanel com franja, moletom verde e calça |
+
+O ponto de partida é aplicado só quando se escolhe **outro** gênero (o tom de pele
+fica). Voltar à etapa ou clicar de novo no mesmo gênero não apaga nada; depois,
+todos os cabelos, roupas e acessórios continuam livres. Os cartões de gênero, de
+cabelo, de roupa e de acessório mostram a prévia já com a base e o tom de pele
+escolhidos. Personagens de jogos salvos antes desta versão continuam exatamente
+como eram (base neutra) até o jogador mudar alguma coisa.
+
+**Visual da criação.** Moldura de madeira em pixel art com pregos de latão, fundo
+bege, painéis cor de areia, textos marrom-escuros e destaques em âmbar (também na
+seleção, no foco e ao passar o mouse). A prévia fica à esquerda: frente, esquerda,
+costas e direita, andando, sobre um pequeno cenário de céu, cerca e grama, em
+escala inteira (3×, sem suavizar). Os controles ficam à direita; nas grades
+grandes, só a lista rola e os botões Voltar, Aparência aleatória e Avançar ficam
+sempre à vista.
+
+**Cabelos e roupas.** Cada tipo de fio tem textura própria: liso com mechas retas
+e um arco de brilho, ondulado com faixas que serpenteiam, cacheado com espirais e
+crespo com textura miúda e fechada; cacheados e crespos têm contorno com volume.
+O curto liso tem franja varrida para um lado e o chanel é reto, com franja cheia e
+pontas para dentro. Nas roupas: bainha nas mangas curtas e costura lateral na
+camiseta, bolso na camisa, manga bufante e barra com babado na blusa, cinto com
+fivela, bolsos e vinco na calça e barra no short.
+
 Não há casamento, gravidez nem filhos. O guarda-roupa de casa permite mudar
 cabelo, roupas, acessório e chapéu a qualquer momento. A idade é 22 anos.
 
@@ -499,7 +531,7 @@ e passos ficam bloqueados e não abre outra pergunta; cliques repetidos comem um
 unidade só. Ao acabar a pilha, o espaço fica vazio. Dormir recupera tudo e mostra um resumo da
 noite.
 
-O Armazém (Dona Celeste atende das 6h às 18h) vende sementes, mudas, ração,
+O Armazém (Dona Celeste atende das 6h às 18h; a quantidade escolhida aparece em preto) vende sementes, mudas, ração,
 galinhas e um chapéu, e compra colheitas, ovos, frutos, madeira, pedra e itens
 do bosque. Preço, quantidade e total aparecem antes de confirmar.
 
