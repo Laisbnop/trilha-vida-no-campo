@@ -5,6 +5,10 @@ const START_COINS = 60;
 const DAY_START = 6 * 60;          // 06:00, em minutos
 const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem precisa descansar
 const MS_PER_GAME_MIN = 900;       // 54 s reais por hora de jogo (9 s a cada 10 min) → 20 horas em 18 minutos ativos
+/* Comestíveis do jogo (regra do vale): só os itens desta lista podem ser comidos, cada um
+   com o valor "food" (energia recuperada) definido no item. Outras flores e plantas não. */
+const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare'];
+const MAX_ENERGY = 100;
 const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
 /* kind: tool | seed | sapling | hat | quest | item.  sell = preço de venda.  food = energia que recupera ao comer. */
@@ -28,24 +32,24 @@ const ITEMS = {
 
   muda_laranja: { name: 'Muda de laranjeira', kind: 'sapling', tree: 'laranja', price: 60, desc: 'Vira árvore em 5 dias. Dá frutos a cada 3.' },
   muda_goiaba:  { name: 'Muda de goiabeira',  kind: 'sapling', tree: 'goiaba',  price: 70, desc: 'Vira árvore em 6 dias. Dá frutos a cada 3.' },
-  laranja: { name: 'Laranja', sell: 16, food: 15, desc: 'Colhida do pé.' },
-  goiaba:  { name: 'Goiaba',  sell: 20, food: 18, desc: 'Perfumada.' },
+  laranja: { name: 'Laranja', sell: 16, food: 15, desc: 'Colhida do pé. Comestível: recupera 15 de energia.' },
+  goiaba:  { name: 'Goiaba',  sell: 20, food: 18, desc: 'Perfumada. Comestível: recupera 18 de energia.' },
 
   madeira: { name: 'Madeira', sell: 3, desc: 'De galhos e árvores comuns.' },
   pedra:   { name: 'Pedra',   sell: 3, desc: 'De pedras quebradas.' },
   racao:   { name: 'Ração',   price: 5, desc: 'Coloque no comedouro do galinheiro.' },
-  ovo:     { name: 'Ovo',     sell: 14, food: 20, desc: 'Fresquinho.' },
-  amora:    { name: 'Amora silvestre', sell: 7, food: 8, desc: 'Colhida no bosque, na serra e, no outono, pela vila.' },
-  narciso:        { name: 'Narciso',          sell: 30, food: 10, desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila.' },
+  ovo:     { name: 'Ovo',     sell: 14, food: 20, desc: 'Fresquinho. Comestível: recupera 20 de energia.' },
+  amora:    { name: 'Amora silvestre', sell: 7, food: 8, desc: 'Colhida no bosque, na serra e, no outono, pela vila. Comestível: recupera 8 de energia.' },
+  narciso:        { name: 'Narciso',          sell: 30, food: 10, desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila. Comestível (só aqui no vale, não na vida real!): recupera 10 de energia.' },
   ervilha_cheiro: { name: 'Ervilha-de-cheiro', sell: 45, desc: 'Flor perfumada do verão, em tons de rosa e lilás.' },
   acafrao:        { name: 'Flor de açafrão',  sell: 55,  desc: 'Flor roxa que fura a neve no inverno.' },
   azevinho:       { name: 'Azevinho',         sell: 70,  desc: 'Ramo de folhas pontudas com bagas vermelhas. Enfeite de inverno.' },
-  fruta_cristal:  { name: 'Fruta de cristal', sell: 130, food: 40, desc: 'Rara. Fria e translúcida, aparece só no inverno.' },
+  fruta_cristal:  { name: 'Fruta de cristal', sell: 130, food: 40, desc: 'Rara. Fria e translúcida, aparece só no inverno. Comestível: recupera 40 de energia.' },
   cogumelo: { name: 'Cogumelo',        sell: 9, desc: 'Encontrado à sombra das árvores.' },
   flor:     { name: 'Flor-do-campo',   sell: 6, desc: 'Simples e bonita.' },
 
-  sardinha: { name: 'Sardinha', kind: 'fish', desc: 'Um peixe comum na vila. Aparece no rio e nos lagos em qualquer estação, mais de dia.' },
-  tucunare: { name: 'Tucunaré', kind: 'fish', desc: 'Peixe de lago, valente e bonito, com uma mancha escura perto do rabo. Briga mais que a sardinha.' },
+  sardinha: { name: 'Sardinha', kind: 'fish', food: 22, desc: 'Um peixe comum na vila. Aparece no rio e nos lagos em qualquer estação, mais de dia. Comestível: recupera 22 de energia.' },
+  tucunare: { name: 'Tucunaré', kind: 'fish', food: 32, desc: 'Peixe de lago, valente e bonito, com uma mancha escura perto do rabo. Briga mais que a sardinha. Comestível: recupera 32 de energia.' },
 
   chapeu_palha:    { name: 'Chapéu de palha',    kind: 'hat', hat: 'palha',    price: 45, desc: 'Sombra para os dias de roça.' },
   boina:           { name: 'Boina',              kind: 'hat', hat: 'boina',    desc: 'Presente de Iara.' },
