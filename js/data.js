@@ -423,13 +423,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Armazém por dentro',
+  title: 'Letreiro e personagens',
   items: [
-    'O Armazém CELESTE virou um mercadinho de verdade: piso de tábuas, papel de parede com lambri, mural de avisos, janelas, prateleira de potes e luz quente.',
-    'O balcão com caixa registradora fica no canto superior esquerdo, com Dona Celeste atrás. No centro e à direita há duas fileiras de gôndolas abastecidas, com corredores entre elas.',
-    'Também há caixas de hortaliças, caixotes de frutas, sacos de sementes e ração, barril, plantas e tapete na entrada. Tudo é decoração: produtos e preços são os mesmos.',
-    'Dá para andar por todos os corredores e passar atrás das gôndolas. Para ser atendido, clique em Dona Celeste ou no balcão.',
-    'A placa CELESTE da fachada ficou mais larga, com o nome centralizado e folga dos dois lados.',
-    'Correção: a dica de pesca não aparece mais dentro de prédios, as dicas somem ao passar por uma porta e avisos longos não passam da tela.',
+    'O letreiro CELESTE agora é uma faixa contínua de uma ponta à outra da fachada, separando o armazém do térreo da casa de Dona Celeste em cima.',
+    'As letras de CELESTE foram redesenhadas numa fonte maior e mais legível, centralizadas e com espaçamento constante.',
+    'Jogador e moradores ficaram cerca de 12% menores nos cenários, em proporção melhor com portas, casas e móveis. O pixel art continua nítido, e os pés ficam no mesmo lugar.',
+    'Sombras, ferramentas, vara de pesca, comida, peixe erguido e objetos dos moradores acompanham o tamanho novo. Velocidade, alcance e interações são os mesmos.',
+    'Retratos, prévias da criação de personagem, ícones e menus continuam no tamanho de antes.',
   ],
 };

@@ -257,6 +257,24 @@ de noite, e o ovo aparece nos ninhos de manhã.
 do ano 1, Bia traz o seu animal favorito. Aceite e dê um nome; se adiar, ela volta
 na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
+### Tamanho dos personagens
+
+No mundo (cenários externos e internos), o jogador e os moradores são cerca de
+12% menores nos dois eixos, para combinar melhor com portas, casas, móveis e
+caminhos. Para o pixel art continuar nítido (sem escala fracionária nem borrão),
+o desenho de cada personagem perde 4 das 32 linhas e 2 das 16 colunas do corpo,
+em pontos que não cortam olhos, boca e mãos, antes do contorno. Chapéus, cabelos,
+roupas e acessórios acompanham. Os pés ficam no mesmo ponto, então o contato com o
+chão e a passagem na frente ou atrás dos objetos continuam iguais, e as diferenças
+de tamanho entre personagens se mantêm (Iara continua menor que os adultos).
+
+Tudo fica numa configuração só, `Sprites.WORLD` (em `js/sprites.js`), que também
+converte as posições presas ao corpo: sombra, mãos com ferramentas, vara de pesca
+e origem da linha, comer, peixe erguido, pincel, caderno e xícara de Iara, balões
+e corações sobre a cabeça. A área de clique dos personagens ficou mais baixa e
+continua larga. Velocidade, alcance e regras não mudaram. Retratos, prévias da
+criação de personagem, ícones e menus continuam no tamanho normal.
+
 ### Construções da vila
 
 Cada prédio da vila tem fachada própria, desenhada por código em pixel art, com
@@ -265,8 +283,11 @@ escuro, telhas com fiadas, beirais, peitoris e sombras):
 
 - **Armazém CELESTE**: dois andares. No térreo, o comércio, com paredes de tábua
   pintada, duas vitrines com mercadorias e toldos listrados, porta dupla de vidro,
-  lampiões, caixotes de frutas e vasos. Entre os andares fica a placa com o nome
-  **CELESTE**, em letras grandes, centralizada, com 10 px de folga de cada lado. Em cima fica a casa de Dona Celeste, com tábuas
+  lampiões, caixotes de frutas e vasos. Entre os andares fica o letreiro
+  **CELESTE**: uma faixa contínua de madeira com fundo bege, de uma ponta à outra
+  da fachada, que divide o comércio da casa de cima. As letras são desenhadas
+  numa fonte própria de 8 × 11 px com traço de 2 px (nada de fonte esticada), e o
+  nome é centralizado pela largura real do texto. Em cima fica a casa de Dona Celeste, com tábuas
   creme, três janelas com floreiras e cortinas e uma empena com janela redonda e
   chaminé. Só o térreo tem porta: a casa de cima não tem interior, escada nem
   entrada para o jogador. Dona Celeste atende das 6h às 18h; depois passeia pela

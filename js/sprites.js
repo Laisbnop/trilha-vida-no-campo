@@ -11,6 +11,15 @@
 
 const Sprites = (() => {
   const W = 24, H = 32;
+  /* Escala dos personagens DENTRO DO MUNDO (cenários externos e internos): cerca de 12% menor
+     nos dois eixos. Para manter o pixel art nítido (sem escala fracionária nem borrão), o corpo
+     perde 4 das 32 linhas e 2 das 16 colunas do desenho, em pontos que não cortam olhos, boca e
+     mãos, antes do contorno. Os pés ficam no mesmo ponto. Retratos, prévias, ícones e menus
+     usam o desenho em tamanho normal. ox/oy convertem uma posição do corpo (mão, cabeça, boca),
+     dada em relação aos pés no desenho normal, para o desenho do mundo. */
+  const WORLD = { scale: 0.88, dropRows: [3, 8, 21, 28], dropCols: [7, 16] };
+  WORLD.oy = dy => dy + WORLD.dropRows.filter(k => k > H - 1 + dy).length;
+  WORLD.ox = dx => { const c = W / 2 + dx, pad = Math.floor(WORLD.dropCols.length / 2); return dx - WORLD.dropCols.filter(k => k < c).length + pad; };
   const OUT = '#2a1a14';
 
   /* [base, sombra, luz] */
@@ -80,7 +89,7 @@ const Sprites = (() => {
   const mix = (a, b, k) => { const A = hex(a), B = hex(b); return toHex(A.map((v, i) => v + (B[i] - v) * k)); };
   const ell = (x, y, cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
 
-  function render(look, frame, dir) {
+  function render(look, frame, dir, small) {
     const grid = Array.from({ length: H }, () => Array(W).fill(null));
     const inb = (x, y) => x >= 1 && x < W - 1 && y >= 0 && y < H - 1;
     const p = (x, y, c) => { if (inb(x, y)) grid[y][x] = c; };
@@ -454,6 +463,12 @@ const Sprites = (() => {
       for (let y = 0; y < H; y++) grid[y] = rows[y];
     }
 
+    /* ---------- tamanho do mundo: tira linhas e colunas (pés no lugar) ---------- */
+    if (small) {
+      const rows = grid.filter((r, y) => !WORLD.dropRows.includes(y)), padL = Math.floor(WORLD.dropCols.length / 2);
+      while (rows.length < H) rows.unshift(Array(W).fill(null));
+      for (let y = 0; y < H; y++) { const r = rows[y].filter((v, x) => !WORLD.dropCols.includes(x)); while (r.length < W) (r.length % 2 === 0 && padL ? r.unshift(null) : r.push(null)); grid[y] = r.length > W ? r.slice(0, W) : r; }
+    }
     /* ---------- contorno ---------- */
     const filled = grid.map(r => r.map(Boolean));
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -478,25 +493,26 @@ const Sprites = (() => {
   };
   /* Quadros por direção: [parado, passo esquerdo, passo direito]. */
   const cache = new Map();
-  function frames(look) {
-    const key = JSON.stringify(look);
+  function frames(look, small = false) {
+    const key = (small ? 'w:' : '') + JSON.stringify(look);
     if (!cache.has(key)) {
-      const set = dir => [0, 1, 2].map(f => render(look, f, dir));
+      const set = dir => [0, 1, 2].map(f => render(look, f, dir, small));
       const down = set('down'), up = set('up'), left = set('side');
       cache.set(key, { down, up, left, right: left.map(flipped) });
-      if (cache.size > 80) cache.delete(cache.keys().next().value);
+      if (cache.size > 120) cache.delete(cache.keys().next().value);
     }
     return cache.get(key);
   }
 
   const WALK = [1, 0, 2, 0];
   /* Desenha com o canto superior esquerdo em (x, y). dir: 'down' | 'up' | 'left' | 'right'. */
-  function draw(ctx, look, x, y, frame = 0, dir = 'down') {
-    const set = frames(look)[dir] || frames(look).down;
+  function draw(ctx, look, x, y, frame = 0, dir = 'down', small = false) {
+    const fr = frames(look, small), set = fr[dir] || fr.down;
     ctx.drawImage(set[Math.abs(frame) % 3 | 0], Math.round(x), Math.round(y));
   }
-  /* Desenha com os pés em (x, y). */
+  /* Desenha com os pés em (x, y). drawWorld = no tamanho do mundo (WORLD). */
   const drawAt = (ctx, look, x, y, frame = 0, dir = 'down') => draw(ctx, look, x - W / 2, y - H + 1, frame, dir);
+  const drawWorld = (ctx, look, x, y, frame = 0, dir = 'down') => draw(ctx, look, x - W / 2, y - H + 1, frame, dir, true);
   const walk = t => WALK[Math.floor(t / 130) % 4];
   /* Pequeno canvas com o personagem, para painéis. */
   function canvas(look, dir = 'down', frame = 0) {
@@ -517,5 +533,5 @@ const Sprites = (() => {
     return look;
   }
 
-  return { genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
+  return { WORLD, drawWorld, genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
 })();
