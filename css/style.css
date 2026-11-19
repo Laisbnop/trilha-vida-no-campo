@@ -554,3 +554,14 @@ body:has(#screen-create:not([hidden])) { background: #2e1c10 repeating-linear-gr
 .painting-body .pf.small { width: 252px; max-width: 252px; }
 .painting-body .pf.small canvas { width: 240px; height: 180px; border-width: 5px; }
 .painting-body figcaption { font-size: 13px; line-height: 1.35; text-align: center; color: #f6ecd2; }
+
+/* indicador de sorte do dia (no painel do topo) */
+.hud .cp-luck { position: relative; pointer-events: auto; cursor: help; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 1; padding: 1px 5px 1px 3px; border-radius: 3px; background: rgba(255, 250, 235, .55); color: #3a2a1a; white-space: nowrap; }
+.hud .cp-luck canvas { width: 18px; height: 18px; }
+.hud .cp-luck.sorte { color: #2a6a22; }
+.hud .cp-luck.ma { color: #6a4a2a; }
+.hud .cp-luck:hover::after { content: attr(data-tip); position: absolute; top: calc(100% + 6px); left: 0; width: 250px; white-space: normal; padding: 6px 8px; border-radius: 4px; background: #2a1a14; color: #f6ecd2; font-size: 12px; line-height: 1.4; z-index: 30; box-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.catch-top.junk .catch-name { text-transform: none; }
+.hud .xp .cp-luck span { color: inherit; }
+.hud:has(.cp-luck:hover) { z-index: 5; }
+.hud .cp-luck:hover::after { font-size: 15px; width: 280px; }

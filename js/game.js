@@ -33,7 +33,7 @@
       farm: { tiles: {} }, coop: { feed: 0, eggs: 0, hens: [] },
       nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
       friends: {}, daily: { talk: {}, gift: {} }, known: {}, scenes: {},
-      quests: {}, world: { banco: false }, dummy: 0, intro: false, seed, cropV: 2,
+      quests: {}, world: { banco: false }, dummy: 0, intro: false, seed, cropV: 3,
       fish: newFishState(2),
     };
     ['enxada', 'regador', 'machado', 'picareta', 'foice', 'espada'].forEach((id, i) => { s.inv[i] = { id, n: 1 }; });
@@ -364,6 +364,47 @@
   /* Clima: a rotina lê o estado único da partida (S.weather === 'chuva'). O jogo ainda não
      sorteia chuva; quando o clima existir, basta preencher S.weather. */
   const isRaining = () => !!S && S.weather === 'chuva';
+  /* =====================================================
+     SORTE DO DIA (só a pesca muda; energia é igual nos três tipos de dia)
+     ===================================================== */
+  const LUCK_KINDS = ['ma', 'neutro', 'sorte'];
+  function shuffle(a, rnd = Math.random) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  /* Lista da estação: exatamente as quantidades de LUCK.counts, embaralhadas. fixed = {índice: tipo}
+     para dias já definidos (jogos antigos); os outros completam as quantidades que faltam. Se o que
+     já existe tornar isso impossível, os dias que sobram ficam neutros. */
+  function buildSeasonLuck(fixed = {}, rnd = Math.random) {
+    const left = { ...LUCK.counts }; Object.values(fixed).forEach(k => { if (left[k] > 0) left[k]--; });
+    const pool = []; LUCK_KINDS.forEach(k => { for (let i = 0; i < left[k]; i++) pool.push(k); }); shuffle(pool, rnd);
+    const list = []; for (let i = 0; i < SEASON_DAYS; i++) list.push(fixed[i] || pool.pop() || 'neutro');
+    return list;
+  }
+  /* Condição do dia (sorteada uma vez por estação e salva; recarregar não muda). */
+  function luckKind(day = S.day) {
+    const L = S.luck, c = calendar(day), key = `${c.year}-${c.si}`;
+    if (L.key !== key || !Array.isArray(L.list) || L.list.length !== SEASON_DAYS) {
+      const fixed = {}; if (L.today && L.today.day === day && LUCK_KINDS.includes(L.today.kind)) fixed[c.day - 1] = L.today.kind;
+      L.key = key; L.list = buildSeasonLuck(fixed); save();
+    }
+    const kind = L.list[c.day - 1];
+    if (day === S.day && (!L.today || L.today.day !== day)) { L.today = { day, kind }; save(); }
+    return kind;
+  }
+  /* Peixes capturados hoje (o contador zera a cada manhã). */
+  function luckFish() { const L = S.luck; if (L.fishDay !== S.day) { L.fishDay = S.day; L.fish = 0; } return L.fish; }
+  const luckLimited = () => luckKind() === 'ma' && luckFish() >= LUCK.badLimit;
+  /* Resultado de um lançamento, decidido uma vez só: 'peixe', 'alga', 'musgo' ou 'lixo'. */
+  function rollCatch(rnd = Math.random) {
+    const T = luckLimited() ? LUCK.afterLimit : LUCK.fishing[luckKind()];
+    let r = rnd() * Object.values(T).reduce((a, b) => a + b, 0);
+    for (const k in T) if ((r -= T[k]) < 0) return k;
+    return Object.keys(T).pop();
+  }
+  function luckEffect(kind = luckKind()) {
+    const T = LUCK.fishing[kind], base = `Pesca: peixe ${T.peixe}% · alga ${T.alga}% · musgo ${T.musgo}% · lixo ${T.lixo}%.`;
+    return kind === 'ma' ? `${base} No máximo ${LUCK.badLimit} peixes hoje (já pescou ${Math.min(luckFish(), LUCK.badLimit)}); depois, só alga, musgo e lixo.` : `${base} Sem limite de peixes.`;
+  }
+  /* Mensagem curta ao começar o dia (uma vez por manhã, mesmo recarregando). */
+  function luckMorning() { const k = luckKind(); S.luck.msgDay = S.day; save(); toast(LUCK.morning[k]); renderHud(); }
   const lookOf = v => (v.lookWinter && S && calendar().si === 3 ? v.lookWinter : v.look);
   /* Rotina de Iara para o dia: [minuto, caminho, mapa, atividade, direção].
      Prioridade: cena em andamento (o jogo para) > chuva > pintura do dia 10 > dia útil/fim de semana. */
@@ -475,9 +516,16 @@
     /* plantações (versão dos cultivos com rebrota): abóboras antigas maduras continuam maduras;
        as que cresciam mantêm as noites já regadas (agora precisam de 13) */
     if (!s.cropV) { for (const key in s.farm.tiles) { const o = s.farm.tiles[key]; if (o.k === 'soil' && o.crop === 'abobora' && (o.g || 0) >= 6) o.g = CROPS.abobora.days; } s.cropV = 2; }
+    /* Rabanete passou de 2 para 3 dias regados: o que já estava maduro (2 dias) continua maduro;
+       o resto mantém o progresso. Tomate (4), abóbora e morango não mudaram de prazo. */
+    if (s.cropV < 3) { for (const key in s.farm.tiles) { const o = s.farm.tiles[key]; if (o.k === 'soil' && o.crop === 'rabanete' && !o.dead && (o.g || 0) >= 2) o.g = CROPS.rabanete.days; } s.cropV = 3; }
     /* Iara: acontecimentos, cor nomeada, pinturas da fonte (por estação e ano) e presentes */
     s.iara = Object.assign({ lastLine: '', again: 0, colorName: null, ev3: 0, ev5: false, paintings: {}, gifts: { week: -1, n: 0 }, bday: 0, missingTold: 0 }, s.iara);
     s.house = Object.assign({ quadro: null }, s.house);
+    /* Sorte do dia: lista da estação (com o ano), condição de hoje, mensagem da manhã,
+       peixes capturados hoje e aviso de limite. Jogos antigos ganham uma lista nova que
+       preserva a condição de hoje, se já houver uma. */
+    s.luck = Object.assign({ key: '', list: null, today: null, msgDay: 0, fishDay: 0, fish: 0, limitDay: 0 }, s.luck);
     s.seasonal = (s.seasonal || []).filter(o => !(o.x > 756 && o.x < 848 && o.y > 200 && o.y < 304));   // nada fica dentro da escola nova
     if (!s.nature.mforage) refreshMountain(s);
     s.nature.cleared = s.nature.cleared || {};
@@ -629,6 +677,7 @@
       if (S.time >= DAY_END) { if (fishing) { endFishing(); toast('São 2h: você recolhe a linha.'); } passOut(); }
       if (S.time >= 1080) iaraFinishPainting(S.day);
     }
+    if (free && !fishing && !passingOut && S.intro && !needsSetup() && S.luck.msgDay !== S.day) luckMorning();
     // carta de Tomé com a vara de pesca (uma vez só)
     if (free && !fishing && !passingOut && S.intro && !needsSetup() && !S.fish.letter && S.day >= S.fish.letterDay) rodLetter();
     floats = floats.filter(f => t - f.t0 < 700);
@@ -1008,7 +1057,7 @@
     if (S.energy >= MAX_ENERGY) return tip('Sua energia já está cheia. Guarde o alimento para depois.');
     const it = ITEMS[ref.id];
     run(async () => {
-      const c = await ask(`Comer ${foodName(ref)}? Recupera ${it.food} de energia.`, ['Sim', 'Não']);
+      const c = await ask(it.eatAsk || `Comer ${foodName(ref)}? Recupera ${it.food} de energia.`, ['Sim', 'Não']);
       if (c === 0) eatNow(idx, ref);
     });
   }
@@ -1165,7 +1214,7 @@
   const lerp = (a, b, k) => a + (b - a) * clamp01(k);
   const grip = d => [P.x + HAND[d][0], P.y + HAND[d][1]];
   function rodTip(d, from, to, k) { const a = POSE[d][from], b = POSE[d][to], [gx, gy] = grip(d); return [gx + lerp(a[0], b[0], k), gy + lerp(a[1], b[1], k)]; }
-  const fishValue = (id, cm) => { const F = FISH[id]; return Math.round(F.value[0] + (F.value[1] - F.value[0]) * (cm - F.cm[0]) / (F.cm[1] - F.cm[0])); };
+  const fishValue = id => FISH[id].price;                   // preço fixo por espécie (o tamanho é só informação e recorde)
   const isRod = it => !!(it && ITEMS[it.id] && ITEMS[it.id].rod);
   const fishLevel = () => S.fish.lvl || 0;
   const zoneWidth = (lvl = fishLevel()) => FISHING.zone.base + FISHING.zone.perLevel * Math.min(FISHING.maxLevel, lvl);
@@ -1245,6 +1294,7 @@
     if (f.bait) S.fish.bait--;                           // uma minhoca por lançamento válido
     S.fish.current = f.rod; renderHud(); renderHotbar(); save();
     f.target = [c.ox + c.ux * best, c.oy + c.uy * best]; f.zone = World.waterZone(map, f.target[0], f.target[1]) || 'lago';
+    f.outcome = rollCatch();                             // decidido uma vez por lançamento: cliques ou teclas depois não mudam
     f.flight = 240 + best * 5; f.phase = 'cast'; f.t = 0; f.power = f.charge; f.charge = null;
     fishUI();
   }
@@ -1266,10 +1316,10 @@
         }
         break;
       case 'wait':
-        if (f.t >= f.wait) { f.phase = 'bite'; f.t = 0; f.fishId = pickFish(f.zone); f.rings.push({ x: f.target[0], y: f.target[1], t0: now }); bang(f.target[0], f.target[1], 'water'); fishUI(); }
+        if (f.t >= f.wait) { f.phase = 'bite'; f.t = 0; f.junk = f.outcome !== 'peixe'; f.fishId = f.junk ? f.outcome : pickFish(f.zone); f.rings.push({ x: f.target[0], y: f.target[1], t0: now }); bang(f.target[0], f.target[1], 'water'); fishUI(); }
         break;
       case 'bite': if (f.t >= FISHING.bite.window) { tip('A boia subiu de novo: o peixe soltou a isca. Tente outra vez.'); reelIn(); } break;
-      case 'hook': if (f.t >= 380) openMinigame(); break;              // transição: "Fisgou!" e a vara puxando antes da barra
+      case 'hook': if (f.t >= 380) { if (f.junk) { f.phase = 'catch'; f.t = 0; fishUI(); } else openMinigame(); } break;   // transição: "Fisgou!"; alga, musgo e lixo vêm direto, sem minijogo
       case 'game': {
         FishCore.step(f.r, dt, fishHeld());
         if (f.t - (f.lastRing || 0) > 520) { f.lastRing = f.t; f.rings.push({ x: f.target[0] + (f.r.dir || 1) * 2, y: f.target[1], t0: now }); }
@@ -1387,7 +1437,10 @@
     f.isNew = !rec; f.isRecord = !!rec && f.cm > rec.max;
     S.fish.dex[f.fishId] = { n: (rec ? rec.n : 0) + 1, max: Math.max(rec ? rec.max : 0, f.cm) };
     if (f.perfect) S.fish.perfect = (S.fish.perfect || 0) + 1;
-    f.levelUp = addFishXp(f.xp); save();               // espécie, recorde, "perfeito" e experiência ficam salvos já na captura (uma vez)
+    f.levelUp = addFishXp(f.xp);                       // espécie, recorde, "perfeito" e experiência ficam salvos já na captura (uma vez)
+    luckFish(); S.luck.fish++;                          // conta a captura do dia (mesmo que depois o peixe seja solto)
+    if (luckKind() === 'ma' && S.luck.fish >= LUCK.badLimit && S.luck.limitDay !== S.day) { S.luck.limitDay = S.day; setTimeout(() => tip(LUCK.limitMsg), 1400); }
+    save();
     f.phase = 'catch'; f.t = 0; $('fishbar').hidden = true; $('fishtip').hidden = true; fishUI();
     if (f.perfect) fishPop('Perfeito!', 'perfect');
     f.rings.push({ x: f.target[0], y: f.target[1], t0: performance.now() }); bang(f.target[0], f.target[1], 'water');
@@ -1475,7 +1528,8 @@
     const f = fishing; f.phase = 'show'; f.t = 0; P.dir = 'down'; f.armed = !fishHeld(); discardSel = -1; discardArm = false; fishUI(); renderCatch(false);
   }
   function renderCatch(full) {
-    const f = fishing, it = ITEMS[f.fishId], box = $('catch'), val = fishValue(f.fishId, f.cm);
+    const f = fishing; if (f.junk) return renderJunk(full);
+    const it = ITEMS[f.fishId], box = $('catch'), val = fishValue(f.fishId, f.cm);
     box.replaceChildren(); box.hidden = false;
     const top = el('div', 'catch-top'), pic = el('canvas', 'pixel catch-pic'); pic.width = 16; pic.height = 16; pic.getContext('2d').drawImage(World.icon(f.fishId), 0, 0);
     const txt = el('div', 'catch-txt');
@@ -1486,12 +1540,24 @@
     if (f.levelUp) tags.append(el('span', 'tag lvl', `Pesca nível ${S.fish.lvl}!`));
     if (tags.childNodes.length) txt.append(tags);
     top.append(pic, txt); box.append(top);
-    const freeSlot = S.inv.findIndex(x => !x);
+    catchFoot(box, full, S.inv.findIndex(x => !x) >= 0, 'Soltar', 'Mochila cheia. Solte o peixe ou jogue fora algo da mochila para abrir espaço; o peixe espera aqui.', 'Espaço livre! Agora dá para guardar o peixe.');
+  }
+  /* Alga, musgo ou lixo: mostra o item, sem experiência nem "perfeito"; guardar ou descartar. */
+  function renderJunk(full) {
+    const f = fishing, it = ITEMS[f.fishId], box = $('catch');
+    box.replaceChildren(); box.hidden = false;
+    const top = el('div', 'catch-top junk'), pic = el('canvas', 'pixel catch-pic'); pic.width = 16; pic.height = 16; pic.getContext('2d').drawImage(World.icon(f.fishId), 0, 0);
+    const txt = el('div', 'catch-txt'); txt.append(el('b', 'catch-name', `Você pescou: ${it.name.toLowerCase()}`), el('span', 'dim', it.desc));
+    top.append(pic, txt); box.append(top);
+    catchFoot(box, full, canAdd(f.fishId), 'Descartar', `Mochila cheia. Descarte ${it.name.toLowerCase()} ou jogue fora algo da mochila para abrir espaço; o item espera aqui.`, 'Espaço livre! Agora dá para guardar.');
+  }
+  /* Botões do resultado e, com a mochila cheia, a grade para abrir espaço. */
+  function catchFoot(box, full, room, relLabel, fullMsg, okMsg) {
     const keep = btn('btn primary', 'Guardar', () => keepFish()); keep.id = 'catch-keep';
-    const rel = btn('btn', 'Soltar', () => releaseFish()); rel.id = 'catch-release';
-    if (full || freeSlot < 0) {
-      keep.disabled = freeSlot < 0;
-      box.append(el('p', 'catch-full', freeSlot < 0 ? 'Mochila cheia. Solte o peixe ou jogue fora algo da mochila para abrir espaço; o peixe espera aqui.' : 'Espaço livre! Agora dá para guardar o peixe.'));
+    const rel = btn('btn', relLabel, () => releaseFish()); rel.id = 'catch-release';
+    if (full || !room) {
+      keep.disabled = !room;
+      box.append(el('p', 'catch-full', !room ? fullMsg : okMsg));
       const grid2 = el('div', 'slots catch-inv');
       S.inv.forEach((s2, i) => {
         const b = slotNode(s2, i === discardSel ? 'sel' : ''); b.dataset.i = i;
@@ -1521,6 +1587,12 @@
   }
   function keepFish() {
     const f = fishing; if (!f || f.phase !== 'show') return;
+    if (f.junk) {
+      if (!canAdd(f.fishId)) return renderCatch(true);
+      addTo(S.inv, f.fishId, 1); f.phase = 'kept'; save(); renderHotbar();
+      floats.push({ icon: f.fishId, x: P.x, y: P.y, t0: performance.now() }); toast(`+1 ${ITEMS[f.fishId].name}`);
+      return endFishing();
+    }
     const i = S.inv.findIndex(x => !x);
     if (i < 0) return renderCatch(true);
     S.inv[i] = { id: f.fishId, n: 1, cm: f.cm }; save();
@@ -1530,12 +1602,12 @@
   }
   function releaseFish() {
     const f = fishing; if (!f || f.phase !== 'show') return;
-    f.phase = 'release'; f.t = 0; $('catch').hidden = true; toast('Você devolveu o peixe à água.');
+    f.phase = 'release'; f.t = 0; $('catch').hidden = true; toast(f.junk ? `Você descartou ${ITEMS[f.fishId].name.toLowerCase()}.` : 'Você devolveu o peixe à água.');
   }
 
   /* ---------- isca e vara aprimorada ---------- */
   function loadBait() {
-    const n = count('minhoca'); if (!n) return toast('Você não tem minhocas. O Armazém vende por 5 moedas.');
+    const n = count('minhoca'); if (!n) return toast(`Você não tem minhocas. O Armazém vende por ${ITEMS.minhoca.price} moedas cada.`);
     removeItem('minhoca', n); S.fish.bait += n; save(); toast(`${n} minhoca(s) na vara · total ${S.fish.bait}`);
   }
   function unloadBait() {
@@ -2149,10 +2221,22 @@
     const top = el('div', 'cp-row'), sky = el('canvas', 'pixel cp-sky'); sky.width = 30; sky.height = 16; drawSky(sky.getContext('2d'), S.time);
     top.append(sky, el('b', 'cp-date', `${WEEKDAYS_SHORT[c.wd]}, ${c.day}`), el('span', 'cp-time', clock()));
     const mid = el('div', 'cp-row'); mid.append(el('span', 'cp-season s' + c.si, `${c.season} · Ano ${c.year}`), el('span', 'cp-coins', `🪙 ${S.coins}`));
+    const lk = luckKind(), luck = el('span', 'cp-luck ' + lk), ic = el('canvas', 'pixel'); ic.width = 9; ic.height = 9; drawClover(ic.getContext('2d'), lk);
+    luck.append(ic, el('span', '', { sorte: 'Sorte', neutro: 'Neutro', ma: 'Má sorte' }[lk]));
+    luck.dataset.tip = `${LUCK.name[lk]}. ${luckEffect(lk)}`; luck.setAttribute('aria-label', luck.dataset.tip);
+    en.append(luck);
     hud.append(top, mid, en);
     hud.title = `${c.weekday}, ${c.day} de ${c.season}, ano ${c.year} — ${clock()}`;
     const o = objective();
     $('objective').replaceChildren(...(o ? [el('b', '', 'MISSÃO'), el('span', '', o)] : S.time >= 1260 ? [el('span', '', 'Já é tarde. A cama espera por você em casa.')] : []));
+  }
+  /* Trevo do indicador de sorte: quatro folhas verdes (sorte), três folhas (neutro), murcho (má sorte). */
+  function drawClover(g, kind) {
+    const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+    const c = { sorte: ['#3fa040', '#9ae070'], neutro: ['#7a9a6a', '#b8ccaa'], ma: ['#7a6a4a', '#a8946a'] }[kind];
+    const leaves = kind === 'sorte' ? [[1, 1], [5, 1], [1, 4], [5, 4]] : kind === 'neutro' ? [[1, 1], [5, 1], [3, 4]] : [[0, 3], [5, 4]];
+    leaves.forEach(([x, y]) => { P(x, y, 3, 3, '#1a1210'); P(x, y, 2, 2, c[0]); P(x, y, 1, 1, c[1]); });
+    P(4, kind === 'ma' ? 5 : 4, 1, 5, kind === 'ma' ? '#6a5a3a' : '#2f7028');
   }
   /* Indicador de dia/noite: o sol (ou a lua) percorre um arco no céu do painel. */
   function drawSky(g, m) {
@@ -2189,7 +2273,7 @@
   /* =====================================================
      PAINÉIS
      ===================================================== */
-  let tab = 'mochila', picked = null, friendSel = null, menuClosedT = 0, fiberArm = false;
+  let shopLock = { key: '', until: 0 }, tab = 'mochila', picked = null, friendSel = null, menuClosedT = 0, fiberArm = false;
   let modalT = 0;
   const MENU_TABS = ['mochila', 'amizades', 'mapa', 'diario', 'personagem', 'config'];
   const TAB_TITLE = { mochila: 'Inventário', amizades: 'Amizades', mapa: 'Mapa', diario: 'Diário', personagem: 'Personagem', config: 'Configurações', bau: 'Baú', roupa: 'Guarda-roupa e espelho', loja: 'Armazém', ajuste: 'Sua fazenda' };
@@ -2263,6 +2347,14 @@
             if (S.fish.bait) { const ub = btn('btn', 'Tirar a isca', () => { unloadBait(); renderTab('mochila'); }); ub.id = 'btn-unload-bait'; info.append(ub); }
           }
           if (s2.id === 'minhoca') info.append(el('span', 'dim', ownsFiber() ? 'Escolha a vara de fibra de vidro e use "Carregar minhocas".' : 'Só a vara de fibra de vidro aceita isca.'));
+          if (it.kind === 'refugo' || s2.id === 'alga') {             // resultados da pesca: dá para jogar fora (com confirmação)
+            const nm = `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}`;
+            const db = btn('btn danger', discardArm ? `Confirmar: jogar fora ${nm}` : `Jogar fora ${nm}`, () => {
+              if (!discardArm) { discardArm = true; return describe(i); }
+              discardArm = false; if (S.inv[i] !== s2) return; S.inv[i] = null; picked = null; save(); renderHotbar(); toast(`Você jogou fora ${nm}.`); renderTab('mochila');
+            });
+            db.id = 'btn-discard'; info.append(db);
+          }
           if (it.kind === 'decor') {
             const hb = btn('btn', S.house.quadro ? 'Já tem um quadro na parede de casa' : 'Pendurar na parede de casa', () => { if (S.house.quadro || !count('quadro_fonte')) return; removeItem('quadro_fonte', 1); S.house.quadro = { si: S.iara.copySi != null ? S.iara.copySi : 0 }; toast('Quadro pendurado na parede de casa'); save(); renderTab('mochila'); });
             hb.id = 'btn-hang'; hb.disabled = !!S.house.quadro; info.append(hb);
@@ -2277,6 +2369,7 @@
           const i = r * HOTBAR + c, b2 = slotNode(S.inv[i], [i === picked ? 'sel' : '', i === S.sel ? 'equip' : ''].join(' ')); b2.dataset.i = i;
           b2.onmouseenter = () => describe(i); b2.onfocus = () => describe(i);
           b2.onclick = () => {
+            discardArm = false;
             if (picked === null) { if (S.inv[i]) picked = i; }
             else if (picked === i) picked = null;
             else { [S.inv[picked], S.inv[i]] = [S.inv[i], S.inv[picked]]; if (S.sel === picked) S.sel = i; else if (S.sel === i) S.sel = picked; S.row = Math.floor(S.sel / HOTBAR); picked = null; save(); }
@@ -2469,11 +2562,13 @@
       body.append(petBox, ok);
     },
     loja(body) {
+      /* Uma transação por vez: cliques rápidos (ou duplo clique) não cobram nem entregam duas vezes. */
+      const tx = (key, fn) => (...a) => { const now = performance.now(); if (shopLock.key === key && now < shopLock.until) return; shopLock = { key, until: now + 450 }; fn(...a); };
       body.append(el('h3', '', 'Armazém da Dona Celeste'), el('p', '', `Suas moedas: ${S.coins}`));
       const row = (id, name, unit, max, label, go, extra) => {
         const li = el('li'), meta = el('div', 'meta'), qty = el('b', 'qty', '1'), tot = el('span', '', '');
-        let n = 1; const upd = () => { qty.textContent = n; tot.textContent = `${label} ${n} por ${n * unit} moedas`; ok.disabled = !max || (label === 'Comprar' && n * unit > S.coins); };
-        const ok = btn('btn primary', 'Confirmar', () => go(n)); ok.dataset.item = id;
+        let n = 1; const upd = () => { qty.textContent = n; tot.textContent = `${label} ${n} × ${unit} = ${n * unit} moedas`; ok.disabled = !max || (label === 'Comprar' && n * unit > S.coins); };
+        const ok = btn('btn primary', 'Confirmar', tx(label + id, () => go(n))); ok.dataset.item = id;
         const left = el('div', 'shop-item'); left.append(cloneIcon(extra || id), el('span', '', `${name} — ${unit} moedas cada`));
         meta.append(btn('btn', '−', () => { n = Math.max(1, n - 1); upd(); }), qty, btn('btn', '+', () => { n = Math.min(Math.max(1, max), n + 1); upd(); }), tot, ok);
         li.append(left, meta); upd(); return li;
@@ -2505,6 +2600,7 @@
       }
       if (qDone('galinheiro') && S.coop.hens.length < MAX_HENS) buy.append(row('galinha', 'Galinha', HEN_PRICE, 1, 'Comprar', () => {
         if (S.coins < HEN_PRICE) return toast('Moedas insuficientes');
+        if (S.coop.hens.length >= MAX_HENS) return toast('O galinheiro está cheio');
         S.coins -= HEN_PRICE; save(); closeModal(); run(() => newHen('narr'));
       }, 'ovo'));
       body.append(buy, el('h3', '', 'Vender'));
@@ -2512,17 +2608,18 @@
       const fishIdx = S.inv.map((x, i) => (x && x.cm ? i : -1)).filter(i => i >= 0);
       if (!ids.length && !fishIdx.length) sell.append(el('li', 'dim', 'Você não tem nada para vender agora. Colheitas, ovos, frutos, peixes e o que achar no bosque têm preço.'));
       fishIdx.forEach(i => {
-        const f = S.inv[i], v = fishValue(f.id, f.cm), li = el('li', 'fish-row'), left = el('div', 'shop-item');
-        left.append(cloneIcon(f.id), el('span', '', `${ITEMS[f.id].name} · ${f.cm} cm — ${v} moedas`));
-        const b = btn('btn primary', 'Vender', () => { if (S.inv[i] !== f) return; S.inv[i] = null; S.coins += v; toast(`+${v} moedas`); save(); renderTab('loja'); }); b.dataset.fish = i;
+        const f = S.inv[i], v = fishValue(f.id), li = el('li', 'fish-row'), left = el('div', 'shop-item');
+        left.append(cloneIcon(f.id), el('span', '', `${ITEMS[f.id].name} · ${f.cm} cm — 1 × ${v} = ${v} moedas`));
+        const b = btn('btn primary', 'Vender', tx('peixe' + i, () => { if (S.inv[i] !== f) return; S.inv[i] = null; S.coins += v; toast(`+${v} moedas`); save(); renderTab('loja'); })); b.dataset.fish = i;
         li.append(left, b); sell.append(li);
       });
       if (fishIdx.length > 1) {
-        const tot = fishIdx.reduce((a, i) => a + fishValue(S.inv[i].id, S.inv[i].cm), 0), li = el('li', 'fish-row');
-        const b = btn('btn', `Vender todos os peixes (${tot} moedas)`, () => { let got = 0; fishIdx.forEach(i => { const f = S.inv[i]; if (f && f.cm) { got += fishValue(f.id, f.cm); S.inv[i] = null; } }); S.coins += got; toast(`+${got} moedas`); save(); renderTab('loja'); }); b.id = 'sell-all-fish';
+        const tot = fishIdx.reduce((a, i) => a + fishValue(S.inv[i].id), 0), li = el('li', 'fish-row');
+        const parts = Object.keys(FISH).map(id => { const n = fishIdx.filter(i => S.inv[i].id === id).length; return n ? `${ITEMS[id].name} ${n} × ${FISH[id].price}` : ''; }).filter(Boolean).join(' + ');
+        const b = btn('btn', `Vender todos os peixes (${parts} = ${tot} moedas)`, tx('peixes', () => { let got = 0; fishIdx.forEach(i => { const f = S.inv[i]; if (f && f.cm && FISH[f.id]) { got += fishValue(f.id); S.inv[i] = null; } }); if (!got) return; S.coins += got; toast(`+${got} moedas`); save(); renderTab('loja'); })); b.id = 'sell-all-fish';
         li.append(b); sell.append(li);
       }
-      ids.forEach(id => sell.append(row(id, `${ITEMS[id].name} (você tem ${count(id)})`, ITEMS[id].sell, count(id), 'Vender', n => {
+      ids.filter(id => !FISH[id]).forEach(id => sell.append(row(id, `${ITEMS[id].name} (você tem ${count(id)})`, ITEMS[id].sell, count(id), 'Vender', n => {
         n = Math.min(n, count(id)); if (!n) return;
         removeItem(id, n); S.coins += n * ITEMS[id].sell; toast(`+${n * ITEMS[id].sell} moedas`); save(); renderTab('loja');
       })));
@@ -2623,6 +2720,7 @@
     villagerAt: id => villagerAt(villagerById(id), S.time), iaraSchedule, iaraLine: () => iaraLine(villagerById('iara')), giftKind: (vid, id) => giftKind(villagerById(vid), id), iaraFinishPainting, tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
     targetAt: (x, y) => targetAt(x, y, actors()), henMenu, newHen: () => { run(() => newHen('narr')); }, get Pobj() { return P; },
+    luckKind, rollCatch, buildSeasonLuck, luckFish, luckEffect,
     get fishing() { return fishing; }, fishCheck, fishValue, pickFish, openTab: t => openModal(t), get fin() { return { ...FIN }; }, zoneWidth, castMax, biteWait, addFishXp,
   };
 

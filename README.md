@@ -212,10 +212,15 @@ na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
 | Cultivo | Estações de plantio | Primeira colheita | Nova colheita | Semente | Venda |
 | --- | --- | --- | --- | --- | --- |
-| Rabanete | qualquer | 2 dias regados | — (a planta sai) | 8 | 18 |
-| Tomate | qualquer | 4 dias regados | — (a planta sai) | 15 | 40 |
-| Morango | Primavera, Outono e Inverno | 5 dias regados (5 estágios de 1 dia) | a cada 4 dias regados | 150 | 360 |
-| Abóbora | Primavera e Outono | 13 dias regados (estágios de 1, 2, 3, 4 e 3 dias) | a cada 6 dias regados | 25 | 75 |
+| Rabanete | qualquer | 3 dias regados | — (colheita única) | 12 | 20 |
+| Tomate | qualquer | 4 dias regados | — (colheita única) | 20 | 60 |
+| Morango | Primavera, Outono e Inverno | 5 dias regados (5 estágios de 1 dia) | a cada 4 dias regados | 150 | 320 |
+| Abóbora | Primavera e Outono | 13 dias regados (estágios de 1, 2, 3, 4 e 3 dias) | a cada 6 dias regados | 42 | 88 |
+
+  Semente: preço de compra por unidade. Venda: preço de cada unidade colhida.
+  **Rabanete e tomate** dão uma única colheita: ao colher, a planta sai e o
+  canteiro continua com a terra preparada para uma nova semente. A aparência de
+  planta madura só aparece quando ela já pode ser colhida.
 
   **Morango e abóbora** dão 1 fruto por colheita e o pé continua plantado,
   voltando ao estado sem frutos (sem precisar de semente nova). Os estágios
@@ -232,14 +237,12 @@ na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
   energia) e plante de novo quando a estação permitir. O morango é comestível
   (+30 de energia) e é o presente favorito da Dona Celeste: vale 150 pontos de
   amizade, com resposta própria. Para os outros moradores, é um presente neutro.
-  O preço da semente de morango (150) foi escolhido para a economia do jogo: uma
-  colheita paga mais que duas sementes, e um pé plantado no começo da estação rende
-  até 6 colheitas.
+  A contagem da próxima produção de morango e abóbora começa depois da colheita.
 - **Árvores frutíferas**: laranjeira e goiabeira. A muda precisa de grama livre,
   sem outra árvore encostada. Ficam adultas em 5 ou 6 dias e dão 2 frutos a cada
   3 dias. Não precisam de rega.
 - **Galinhas**: a primeira vem de uma missão; outras são vendidas no Armazém
-  (até 4). Cada porção de ração no comedouro alimenta uma galinha por noite, e
+  por 130 moedas cada, depois da missão do galinheiro (até 4). Cada porção de ração no comedouro alimenta uma galinha por noite, e
   galinha alimentada bota um ovo, que aparece no ninho na manhã seguinte. Dá
   para dar nome, fazer carinho (uma vez por dia) e ver o bem-estar.
 - **Bosque**: a árvore cortada deixa um toco, que também pode ser removido;
@@ -432,10 +435,12 @@ Vara de bambu.
 
 | Peixe | Onde | Mais comum | Tamanho | Venda | Jeito de nadar | XP |
 | --- | --- | --- | --- | --- | --- | --- |
-| Sardinha | rio e lago (a mais comum no lago da fazenda) | 6h–19h | 5 a 90 cm | 30 a 130 moedas | tranquilo | 20 |
-| Tucunaré | só no lago | 6h–18h | 20 a 80 cm | 60 a 200 moedas | ativo | 30 |
+| Sardinha | rio e lago (a mais comum no lago da fazenda) | 6h–19h | 5 a 90 cm | 50 moedas | tranquilo | 20 |
+| Tucunaré | só no lago | 6h–18h | 20 a 80 cm | 60 moedas | ativo | 30 |
 
-O preço cresce com o tamanho. Há três jeitos de nadar: **tranquilo** (devagar,
+O preço é fixo por espécie: não muda com o tamanho, a sorte do dia, o nível de
+pesca nem a captura perfeita. O tamanho aparece como informação e conta para o
+recorde pessoal. Há três jeitos de nadar: **tranquilo** (devagar,
 com pausas e curvas suaves), **ativo** (mais rápido, muda de direção com mais
 frequência e dá pequenas arrancadas) e **ágil** (arrancadas curtas alternadas com
 pausas; 40 XP). O ágil já está pronto para a próxima espécie que entrar no jogo.
@@ -490,10 +495,51 @@ Nível, progresso e zona aparecem na aba Personagem; subir de nível mostra um a
 1.500 moedas. A compra pede confirmação, confere tudo antes de cobrar e não deixa
 comprar duas. A vara nova toma o lugar da de bambu na barra; a de bambu continua
 na mochila (ou vai para o baú, se a mochila estiver cheia). Ela não aumenta a zona
-verde: aceita **isca de minhoca** (5 moedas no Armazém). Escolha a vara no
+verde: aceita **isca de minhoca** (20 moedas cada no Armazém). Escolha a vara no
 Inventário e use "Carregar minhocas"; a quantidade aparece no ícone da barra. Cada
 lançamento válido gasta uma, e a espera pela mordida cai pela metade. Sem isca, a
 vara funciona normalmente.
+
+**Sorte do dia.** Cada dia é **neutro**, **de sorte** ou **de má sorte**. No início
+de cada estação, o jogo monta uma lista com exatamente 8 dias de má sorte, 12
+neutros e 9 de sorte e a embaralha: não há ordem fixa nem alternância, e pode haver
+vários dias iguais seguidos. Cada estação e cada partida têm a sua. A lista fica
+salva com a estação e o ano, então recarregar, sair do jogo ou mudar de área não
+sorteia de novo. Os próximos dias não são revelados.
+
+Ao começar o dia aparece uma mensagem curta ("Hoje o dia será neutro.", "Hoje será
+um dia de sorte!" ou "Hoje será um dia de má sorte."), uma vez por manhã, sem
+repetir ao recarregar. O painel do topo mostra um trevo com a condição de hoje; ao
+passar o mouse, aparecem a condição e o efeito na pesca.
+
+A sorte **não mexe na energia**: ferramentas, lançamentos, energia máxima e comida
+são iguais nos três tipos de dia. Ela muda só o que vem na linha a cada lançamento
+(sorteado uma vez, no lançamento; cliques e teclas depois não trocam o resultado):
+
+| Resultado | Dia de sorte | Dia neutro | Dia de má sorte |
+| ---: | ---: | ---: | ---: |
+| Peixe | 90% | 70% | 30% |
+| Alga | 6% | 15% | 30% |
+| Musgo | 2% | 8% | 20% |
+| Lixo | 2% | 7% | 20% |
+
+"Peixe" é uma chance de fisgar: a captura ainda depende do minijogo. Nos dias de
+sorte e neutros não há limite. Nos dias de má sorte, depois de **5 peixes
+capturados** no dia (somando todos os lugares; peixes soltos contam, fugas e
+refugo não), os lançamentos trazem só alga (50%), musgo (25%) ou lixo (25%), e
+aparece uma vez o aviso "Os peixes estão difíceis hoje. Talvez seja melhor tentar
+amanhã." Dá para continuar pescando, e o contador zera na manhã seguinte. A sorte
+não muda a zona verde, a dificuldade das espécies nem a experiência. Os números
+ficam em `LUCK`, no `js/data.js`.
+
+**Alga, musgo e lixo.** Quando vem um deles, "Fisgou!" aparece, a linha traz o
+item até as mãos (sem minijogo, sem experiência e sem "Perfeito!") e o cartão
+mostra o que veio: **Guardar** ou **Descartar**. Com a mochila cheia, o item espera
+enquanto você abre espaço ou o descarta. A **alga** é comestível ("Comer alga?",
+recupera 3 de energia) e pode ser vendida (2 moedas) ou dada de presente. O **musgo** e o **lixo** (uma bota
+velha) não têm utilidade por enquanto: não se comem, não se vendem, não entram em
+missões nem em presentes; podem ser guardados no baú ou jogados fora na mochila
+("Jogar fora", com confirmação).
 
 **Configuração central.** Os números da pesca ficam juntos em `FISHING`, no
 `js/data.js`: progresso (início 30, +10/s dentro, −8/s fora, 0,75 s de tolerância),
@@ -503,8 +549,8 @@ tempo decorrido, em passos fixos de 10 ms: a mesma em qualquer taxa de quadros.
 
 Peixes são vendidos no Armazém, um a um ou todos de uma vez. O Diário mostra o
 nível, as espécies descobertas, o maior tamanho de cada uma e as capturas perfeitas.
-Zonas de qualidade, lixo, tesouros, outras iscas, anzóis e encantamentos ficam
-para uma próxima versão.
+Zonas de qualidade, tesouros, outras iscas, anzóis, encantamentos e usos para
+musgo e lixo ficam para uma próxima versão.
 
 ## Missões
 
@@ -599,6 +645,7 @@ Comestíveis (regra do vale, cadastrada item a item em `EDIBLE`, no `js/data.js`
 | Laranja | +15 |
 | Narciso | +10 |
 | Amora silvestre | +8 |
+| Alga | +3 |
 
 Outras flores, cogumelos e colheitas não são comestíveis. A energia nunca passa de 100; o valor de cada alimento
 está na descrição dele. Só escolher o alimento na barra não come nada: é preciso um
@@ -610,8 +657,32 @@ unidade só. Ao acabar a pilha, o espaço fica vazio. Dormir recupera tudo e mos
 noite.
 
 O Armazém (Dona Celeste atende das 6h às 18h; a quantidade escolhida aparece em preto) vende sementes, mudas, ração,
-galinhas e um chapéu, e compra colheitas, ovos, frutos, madeira, pedra e itens
-do bosque. Preço, quantidade e total aparecem antes de confirmar.
+galinhas e um chapéu, e compra colheitas, ovos, frutos, peixes, alga, madeira,
+pedra e itens do bosque. Antes de confirmar aparecem a quantidade, o preço por
+unidade e o total (por exemplo, "Comprar 3 × 12 = 36 moedas"). Ao confirmar, o
+jogo confere moedas, quantidade e espaço na mochila, entrega ou retira a
+quantidade certa, atualiza as moedas e salva. Cliques rápidos ou duplos fazem uma
+única transação. "Vender todos os peixes" mostra a conta por espécie e o total.
+
+| Compra no Armazém | Preço |
+| --- | --- |
+| Ração | 10 |
+| Chapéu de palha | 200 |
+| Minhoca (isca) | 20 |
+| Galinha | 130 |
+
+| Venda no Armazém | Preço |
+| --- | --- |
+| Ovo | 8 |
+| Alga | 2 |
+| Sardinha | 50 |
+| Tucunaré | 60 |
+
+Musgo e lixo não são vendidos. Os preços novos valem para as próximas compras e
+vendas, inclusive de itens já guardados; nada é cobrado ou devolvido de antes.
+Plantações em crescimento mantêm o progresso: rabanetes que já estavam maduros
+(com o prazo antigo de 2 dias) continuam maduros, e os outros seguem do ponto em
+que estavam.
 
 ## Itens
 
@@ -630,7 +701,12 @@ posição). Jogos salvos antes do calendário de 29 dias são convertidos pelo d
 absoluto, sem perder nada. De Lúcio: amizade, conversa do
 dia, presentes do dia e da semana (com a semana de referência), presente de
 aniversário do ano, permissão da tenda, etapas das missões, melhoria da tenda,
-apito encontrado e entregue, cenas vistas e a conversa de Iara. De Iara:
+apito encontrado e entregue, cenas vistas e a conversa de Iara. Da sorte do dia:
+a lista embaralhada da estação (com o ano), a condição de hoje, a mensagem da
+manhã já mostrada, os peixes capturados hoje e o aviso de limite já mostrado.
+Jogos salvos antes ganham a lista na hora, preservando a condição de hoje se ela já
+existir e completando as quantidades da estação; se isso não for possível, o que
+existe é mantido e a próxima estação já vem exata. De Iara:
 presentes do dia e da semana, presente de aniversário do ano, nome da cor,
 etapas dos acontecimentos de 3 e 5 corações, pinturas da fonte por estação e
 ano e o quadro pendurado em casa. Recarregar a

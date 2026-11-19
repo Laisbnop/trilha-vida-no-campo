@@ -7,7 +7,7 @@ const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem 
 const MS_PER_GAME_MIN = 900;       // 54 s reais por hora de jogo (9 s a cada 10 min) → 20 horas em 18 minutos ativos
 /* Comestíveis do jogo (regra do vale): só os itens desta lista podem ser comidos, cada um
    com o valor "food" (energia recuperada) definido no item. Outras flores e plantas não. */
-const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango'];
+const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango', 'alga'];
 const MAX_ENERGY = 100;
 const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
@@ -21,16 +21,16 @@ const ITEMS = {
   espada:   { name: 'Espada simples', kind: 'tool', desc: 'Velha, mas firme. Treine no boneco da fazenda.' },
   vara:     { name: 'Vara de bambu', kind: 'tool', rod: true, desc: 'A primeira vara de Tomé. Na beira da água, segure o clique sobre a água (ou Espaço, virado para ela) e solte para lançar.' },
   vara_fibra: { name: 'Vara de fibra de vidro', kind: 'tool', rod: true, bait: true, desc: 'Leve e firme. Aceita isca de minhoca, que faz o peixe morder mais rápido.' },
-  minhoca:  { name: 'Minhoca (isca)', kind: 'bait', price: 5, desc: 'Isca simples. Carregue na vara de fibra de vidro pelo inventário: cada lançamento usa uma.' },
+  minhoca:  { name: 'Minhoca', kind: 'bait', price: 20, desc: 'Isca simples. Carregue na vara de fibra de vidro pelo inventário: cada lançamento usa uma.' },
 
-  sem_rabanete: { name: 'Sementes de rabanete', kind: 'seed', crop: 'rabanete', price: 8,  desc: 'Cresce em 2 dias regados.' },
-  sem_tomate:   { name: 'Sementes de tomate',   kind: 'seed', crop: 'tomate',   price: 15, desc: 'Cresce em 4 dias regados.' },
-  sem_abobora:  { name: 'Sementes de abóbora',  kind: 'seed', crop: 'abobora',  price: 25, seasons: [0, 2], desc: 'Plante na Primavera ou no Outono. Precisa de rega: 13 dias regados até a primeira abóbora e depois 6 para cada nova (1 por colheita); o pé continua no lugar. O pé seca no fim da estação.' },
-  sem_morango:  { name: 'Sementes de morango',  kind: 'seed', crop: 'morango',  price: 150, seasons: [0, 2, 3], desc: 'Plante na Primavera, no Outono ou no Inverno. Precisa de rega: 5 dias regados até o primeiro morango e depois 4 para cada novo (1 por colheita); o pé continua no lugar. O pé seca no fim da estação.' },
-  rabanete: { name: 'Rabanete', sell: 18, desc: 'Crocante e ardidinho.' },
-  tomate:   { name: 'Tomate',   sell: 40, desc: 'Vermelho e suculento.' },
-  abobora:  { name: 'Abóbora',  sell: 75, desc: 'Pesada e doce.' },
-  morango:  { name: 'Morango',  cat: 'fruta', sell: 360, food: 30, desc: 'Fruta vermelha, perfumada e rara por aqui. Comestível: recupera 30 de energia. Dona Celeste adora.' },
+  sem_rabanete: { name: 'Sementes de rabanete', kind: 'seed', crop: 'rabanete', price: 12, desc: 'Precisa de rega: 3 dias regados até a colheita. Colheita única: depois de colher, o canteiro fica com a terra preparada para uma nova semente. Cada rabanete vende por 20 moedas.' },
+  sem_tomate:   { name: 'Sementes de tomate',   kind: 'seed', crop: 'tomate',   price: 20, desc: 'Precisa de rega: 4 dias regados até a colheita. Colheita única: depois de colher, o canteiro fica com a terra preparada para uma nova semente. Cada tomate vende por 60 moedas.' },
+  sem_abobora:  { name: 'Sementes de abóbora',  kind: 'seed', crop: 'abobora',  price: 42, seasons: [0, 2], desc: 'Plante na Primavera ou no Outono. Precisa de rega: 13 dias regados até a primeira abóbora e depois 6 para cada nova (1 por colheita, contando a partir da colheita); o pé continua no lugar e seca no fim da estação. Cada abóbora vende por 88 moedas.' },
+  sem_morango:  { name: 'Sementes de morango',  kind: 'seed', crop: 'morango',  price: 150, seasons: [0, 2, 3], desc: 'Plante na Primavera, no Outono ou no Inverno. Precisa de rega: 5 dias regados até o primeiro morango e depois 4 para cada novo (1 por colheita, contando a partir da colheita); o pé continua no lugar e seca no fim da estação. Cada morango vende por 320 moedas.' },
+  rabanete: { name: 'Rabanete', sell: 20, desc: 'Crocante e ardidinho.' },
+  tomate:   { name: 'Tomate',   sell: 60, desc: 'Vermelho e suculento.' },
+  abobora:  { name: 'Abóbora',  sell: 88, desc: 'Pesada e doce.' },
+  morango:  { name: 'Morango',  cat: 'fruta', sell: 320, food: 30, desc: 'Fruta vermelha, perfumada e rara por aqui. Comestível: recupera 30 de energia. Dona Celeste adora.' },
 
   muda_laranja: { name: 'Muda de laranjeira', kind: 'sapling', tree: 'laranja', price: 60, desc: 'Vira árvore em 5 dias. Dá frutos a cada 3.' },
   muda_goiaba:  { name: 'Muda de goiabeira',  kind: 'sapling', tree: 'goiaba',  price: 70, desc: 'Vira árvore em 6 dias. Dá frutos a cada 3.' },
@@ -39,8 +39,8 @@ const ITEMS = {
 
   madeira: { name: 'Madeira', sell: 3, desc: 'De galhos e árvores comuns.' },
   pedra:   { name: 'Pedra',   sell: 3, desc: 'De pedras quebradas.' },
-  racao:   { name: 'Ração',   price: 5, desc: 'Coloque no comedouro do galinheiro.' },
-  ovo:     { name: 'Ovo',     sell: 14, food: 20, desc: 'Fresquinho. Comestível: recupera 20 de energia.' },
+  racao:   { name: 'Ração',   price: 10, desc: 'Coloque no comedouro do galinheiro.' },
+  ovo:     { name: 'Ovo',     sell: 8, food: 20, desc: 'Fresquinho. Comestível: recupera 20 de energia.' },
   amora:    { name: 'Amora silvestre', sell: 7, food: 8, desc: 'Colhida no bosque, na serra e, no outono, pela vila. Comestível: recupera 8 de energia.' },
   narciso:        { name: 'Narciso', cat: 'flor', sell: 30, food: 10, desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila. Comestível (só aqui no vale, não na vida real!): recupera 10 de energia.' },
   ervilha_cheiro: { name: 'Ervilha-de-cheiro', cat: 'flor', sell: 45, desc: 'Flor perfumada do verão, em tons de rosa e lilás.' },
@@ -51,9 +51,12 @@ const ITEMS = {
   flor:     { name: 'Flor-do-campo', cat: 'flor', sell: 6, desc: 'Simples e bonita.' },
 
   sardinha: { name: 'Sardinha', kind: 'fish', food: 22, desc: 'Um peixe comum na vila. Aparece no rio e nos lagos em qualquer estação, mais de dia. Comestível: recupera 22 de energia.' },
+  alga:     { name: 'Alga', sell: 2, food: 3, eatAsk: 'Comer alga?', desc: 'Fita verde e escorregadia que veio na linha de pesca. Recupera 3 de energia.' },
+  musgo:    { name: 'Musgo', kind: 'refugo', desc: 'Um tufo de musgo encharcado que veio na linha de pesca. Sem utilidade no momento.' },
+  lixo:     { name: 'Lixo', kind: 'refugo', desc: 'Uma bota velha e furada que veio na linha de pesca. Sem utilidade no momento.' },
   tucunare: { name: 'Tucunaré', kind: 'fish', food: 32, desc: 'Peixe de lago, valente e bonito, com uma mancha escura perto do rabo. Briga mais que a sardinha. Comestível: recupera 32 de energia.' },
 
-  chapeu_palha:    { name: 'Chapéu de palha',    kind: 'hat', hat: 'palha',    price: 45, desc: 'Sombra para os dias de roça.' },
+  chapeu_palha:    { name: 'Chapéu de palha',    kind: 'hat', hat: 'palha',    price: 200, desc: 'Sombra para os dias de roça.' },
   boina:           { name: 'Boina',              kind: 'hat', hat: 'boina',    desc: 'Presente de Iara.' },
   chapeu_pescador: { name: 'Chapéu de pescador', kind: 'hat', hat: 'pescador', desc: 'Feito por Tomé.' },
   encomenda:   { name: 'Encomenda de tintas', kind: 'quest', desc: 'Estojo de tintas da Iara, para a aula de artes. Entregue a ela.' },
@@ -68,7 +71,7 @@ const ITEMS = {
    de plantio (0 Primavera, 1 Verão, 2 Outono, 3 Inverno); seasonal = o pé seca quando a
    estação muda. Sem rega, a noite não conta. */
 const CROPS = {
-  rabanete: { name: 'Rabanete', days: 2, seed: 'sem_rabanete' },
+  rabanete: { name: 'Rabanete', days: 3, seed: 'sem_rabanete' },
   tomate:   { name: 'Tomate',   days: 4, seed: 'sem_tomate' },
   abobora:  { name: 'Abóbora',  days: 13, seed: 'sem_abobora', stages: [1, 2, 3, 4, 3], regrow: 6, yield: 1, seasons: [0, 2], seasonal: true },
   morango:  { name: 'Morango',  days: 5, seed: 'sem_morango', stages: [1, 1, 1, 1, 1], regrow: 4, yield: 1, seasons: [0, 2, 3], seasonal: true },
@@ -90,7 +93,7 @@ const TREES = {
 };
 
 const SHOP = ['sem_rabanete', 'sem_tomate', 'sem_abobora', 'sem_morango', 'muda_laranja', 'muda_goiaba', 'racao', 'chapeu_palha', 'minhoca'];
-const HEN_PRICE = 80, MAX_HENS = 4;
+const HEN_PRICE = 130, MAX_HENS = 4;
 
 /* Aparência. Todas as opções valem para qualquer gênero. */
 const mkLook = (skin, hair, hairColor, top, topColor, bottom, bottomColor, extra) =>
@@ -362,11 +365,12 @@ const TOOL_NAME = { vara: 'a vara de bambu', vara_fibra: 'a vara de fibra de vid
 
 /* Pesca. zones = chance relativa em cada tipo de água (lago: lago da fazenda e lagoa do bosque;
    rio: rio do bosque e nascente da serra). peak = horário em que o peixe é mais comum
-   (fora dele a chance cai para off). cm = tamanho mínimo e máximo; value = venda do menor ao maior.
+   (fora dele a chance cai para off). cm = tamanho mínimo e máximo (só informação e recorde);
+   price = venda fixa por peixe, sem depender de tamanho, sorte, nível ou captura perfeita.
    behavior = jeito de nadar no minijogo (FISHING.behaviors); a experiência vem do comportamento. */
 const FISH = {
-  sardinha: { zones: { rio: 1, lago: 0.6 }, peak: [360, 1140], off: 0.35, cm: [5, 90], value: [30, 130], behavior: 'tranquilo' },
-  tucunare: { zones: { lago: 0.4 }, peak: [360, 1080], off: 0.3, cm: [20, 80], value: [60, 200], behavior: 'ativo' },
+  sardinha: { zones: { rio: 1, lago: 0.6 }, peak: [360, 1140], off: 0.35, cm: [5, 90], price: 50, behavior: 'tranquilo' },
+  tucunare: { zones: { lago: 0.4 }, peak: [360, 1080], off: 0.3, cm: [20, 80], price: 60, behavior: 'ativo' },
 };
 /* Configuração central da pesca: mude aqui para equilibrar. Posições do minijogo são
    proporções da pista (0 = esquerda, 1 = direita); velocidades em pistas por segundo. */
@@ -384,7 +388,24 @@ const FISHING = {
   maxLevel: 10, nextLevel: lvl => 100 + 25 * lvl,                     // experiência para passar do nível lvl ao seguinte
   bite: { window: 1200, waitMin: 3000, waitMax: 10000, maxCutPerLevel: 200, baitFactor: 0.5 },   // tempos reais (ms)
   cast: { min: 12, max: 72, step: 16, stepLevels: [1, 4, 8], shore: 24, energy: 2 },             // distâncias em pixels do mapa (16 = um quadrado)
-  fiber: { price: 1500, level: 4 }, baitPrice: 5,
+  fiber: { price: 1500, level: 4 }, baitPrice: 20,
+};
+/* Sorte do dia. Cada estação de 29 dias sorteia uma lista embaralhada com exatamente estas
+   quantidades (sem ordem fixa: pode haver dias iguais seguidos). A sorte só mexe na pesca:
+   chance de cada resultado por lançamento (em %), sem tocar em energia, zona verde, espécies
+   ou experiência. Nos dias de má sorte, depois de 5 peixes capturados no dia, só vem refugo. */
+const LUCK = {
+  counts: { ma: 8, neutro: 12, sorte: 9 },
+  name: { sorte: 'Dia de sorte', neutro: 'Dia neutro', ma: 'Dia de má sorte' },
+  morning: { neutro: 'Hoje o dia será neutro.', sorte: 'Hoje será um dia de sorte!', ma: 'Hoje será um dia de má sorte.' },
+  fishing: {
+    sorte: { peixe: 90, alga: 6, musgo: 2, lixo: 2 },
+    neutro: { peixe: 70, alga: 15, musgo: 8, lixo: 7 },
+    ma: { peixe: 30, alga: 30, musgo: 20, lixo: 20 },
+  },
+  badLimit: 5,                                          // peixes capturados por dia de má sorte (soltos contam; fugas não)
+  afterLimit: { alga: 50, musgo: 25, lixo: 25 },
+  limitMsg: 'Os peixes estão difíceis hoje. Talvez seja melhor tentar amanhã.',
 };
 const FISH_ZONE_NAME = { lago: 'lago', rio: 'rio' };
 const CAST_ENERGY = FISHING.cast.energy;  // energia por lançamento válido
@@ -395,22 +416,20 @@ const ROD_LETTER = {
     'Dá para pescar no lago da sua fazenda, na lagoa do bosque e no rio que desce dela até o fim da mata. No rio é quase só sardinha. Nos lagos também aparece tucunaré, que briga mais.',
     'Com a vara na mão, chegue na beira da água. Segure o clique sobre a água, ou a barra de espaço com você virado para ela, para pegar força; solte para lançar. Quanto mais força, mais longe a boia cai.',
     'Quando a boia afundar e aparecer o "!", clique ou aperte Espaço de novo, rápido. Aí o peixe briga numa barrinha: segure o clique ou o Espaço para a faixa verde ir para a direita; solte para ela voltar. Deixe o peixe dentro da faixa até a barra de baixo encher.',
-    'Esc recolhe a linha. Cada lançamento cansa um pouquinho. Peixe se vende no Armazém, e a Dona Celeste paga mais pelos grandes. Com prática, você pesca melhor.',
+    'Esc recolhe a linha. Cada lançamento cansa um pouquinho. Peixe se vende no Armazém, por um preço fixo para cada espécie. Com prática, você pesca melhor.',
   ],
   sign: 'Boa pescaria,\nTomé',
 };
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Iara',
+  title: 'Preços e cultivos',
   items: [
-    'Iara agora tem 13 anos e está na sexta série: é distraída, pinta paisagens, dá nomes às cores que mistura e toma chá de maçã com canela toda manhã. Aparência nova, com jardineira lilás manchada de tinta, e roupa de inverno com gorro e casaco.',
-    'Retratos novos com cinco expressões (neutra, contente, concentrada, triste e surpresa) e animações discretas no mapa: pintando no cavalete, desenhando, lendo e tomando chá.',
-    'A vila ganhou uma escola, e a casa de Iara pode ser visitada: tem um cantinho de pintura e uma mesinha de chá.',
-    'Rotina: escola de segunda a sexta (7h30 às 12h30), tarde na fonte e na praça, e em casa depois das 18h. No fim de semana, praça de manhã e fonte à tarde. Ela anda pelos caminhos, sem sumir de um lugar para outro.',
-    'Todo dia 10 de cada estação, das 14h às 18h, Iara pinta a fonte, sem interromper o seu passeio. Depois de pronta, a pintura pode ser vista na conversa ("Ver a pintura"). A rotina já está preparada para a chuva, quando o clima chegar ao jogo.',
-    'Presentes: 1 por dia e 2 por semana, com um presente extra no aniversário (4 do Verão), que vale 8 vezes mais. Ela adora pincel, bolo de morango, flores aquáticas e conchas raras; gosta de flores e pães; não gosta de rabanete, espinafre nem de leite.',
-    'Acontecimentos de amizade: dar nome a uma cor nova (1 coração), achar um detalhe escondido na praça (3 corações) e ver as quatro versões da fonte, com um quadro de presente para pendurar em casa (5 corações).',
-    'Jogos salvos continuam com a amizade, os presentes e as missões de Iara.',
+    'Sementes (por unidade): rabanete 12, tomate 20, abóbora 42 e morango 150 moedas. Venda (por unidade colhida): rabanete 20, tomate 60, abóbora 88 e morango 320.',
+    'Rabanete fica pronto em 3 dias regados e tomate em 4, com colheita única: a planta sai e a terra continua preparada. Abóbora: 13 dias e depois a cada 6; morango: 5 dias e depois a cada 4, contando a partir da colheita.',
+    'Armazém: ração 10, chapéu de palha 200, minhoca 20 e galinha 130 moedas.',
+    'Peixes têm preço fixo: sardinha 50 e tucunaré 60, de qualquer tamanho. O tamanho continua aparecendo e valendo como recorde. Ovo vende por 8 e alga por 2.',
+    'Antes de confirmar, o Armazém mostra quantidade, preço por unidade e total. Cliques rápidos fazem uma transação só.',
+    'Partidas salvas mantêm mochila, moedas, animais e plantações; rabanetes que já estavam maduros continuam maduros.',
   ],
 };
