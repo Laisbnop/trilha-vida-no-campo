@@ -213,6 +213,31 @@ das 13h. Os outros horários continuam os mesmos.
 Interiores: a **casa** (cama, baú e guarda-roupa), o **Armazém** e o
 **galinheiro** (comedouro com placa "RAÇÃO", três ninhos, feno e bebedouro).
 
+**Armazém CELESTE por dentro:** um mercadinho de 304 × 208 px, com:
+
+- piso de tábuas com variação discreta;
+- papel de parede claro com raminhos, lambri de madeira, duas janelas com cortina,
+  mural de avisos, cartaz de frutas, relógio e prateleira de potes;
+- o balcão de atendimento no canto superior esquerdo, com caixa registradora,
+  balança, pote de balas e sacolas, e Dona Celeste atrás dele;
+- duas fileiras de gôndolas abastecidas (garrafas, potes e pacotes) no centro e à
+  direita, com corredores entre elas;
+- caixas de hortaliças na parede, caixotes de frutas com pazinha, sacos de sementes
+  e de ração, barril, vasos de planta e tapete na entrada;
+- luz quente das luminárias no piso.
+
+Os móveis altos são desenhados na ordem certa: quem anda atrás de uma gôndola
+fica escondido por ela. Só a base de cada móvel bloqueia. A entrada fica embaixo,
+no centro, com caminho livre até o balcão, e corredores largos entre as gôndolas e
+nos dois lados. Para ser atendido, fale com Dona Celeste ou clique no balcão,
+pelo lado do cliente. Os objetos expostos são decorativos: o catálogo, os preços,
+os horários e as regras de compra e venda continuam os mesmos.
+
+A câmera deixa uma folga embaixo da loja, para a saída nunca ficar sob a barra de
+ferramentas. Ao passar por uma porta, as dicas temporárias da cena anterior somem. Com a vara
+na mão, a dica de pesca só aparece onde há água, e Espaço não faz nada dentro dos
+prédios. Avisos longos quebram linha e não passam da tela.
+
 **Tela do mapa** (M ou botão Mapa): mostra o mapa de verdade, com a fazenda pelo
 nome, casa, galinheiro, cercado, roça, lago, Vila Acapulco, Armazém, praça, casas
 dos moradores, escola, praça do coreto, horta, beira-rio, bosque, bairro leste,
@@ -241,7 +266,7 @@ escuro, telhas com fiadas, beirais, peitoris e sombras):
 - **Armazém CELESTE**: dois andares. No térreo, o comércio, com paredes de tábua
   pintada, duas vitrines com mercadorias e toldos listrados, porta dupla de vidro,
   lampiões, caixotes de frutas e vasos. Entre os andares fica a placa com o nome
-  **CELESTE**, em letras grandes. Em cima fica a casa de Dona Celeste, com tábuas
+  **CELESTE**, em letras grandes, centralizada, com 10 px de folga de cada lado. Em cima fica a casa de Dona Celeste, com tábuas
   creme, três janelas com floreiras e cortinas e uma empena com janela redonda e
   chaminé. Só o térreo tem porta: a casa de cima não tem interior, escada nem
   entrada para o jogador. Dona Celeste atende das 6h às 18h; depois passeia pela

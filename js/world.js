@@ -444,18 +444,22 @@ const World = (() => {
     R(x - 1, 53, w + 2, 44, OUT); FX.planksH(x, 54, w, 42, '#efe2c4'); R(x, 54, w, 3, shade('#efe2c4', 0.7));
     sideTrim(x, 54, 42, '#6a4426'); sideTrim(x + w - 2, 54, 42, '#6a4426');
     [x + 12, cx - 6, x + w - 24].forEach(wx => win(wx, 63, 12, 14, { shutters: '#3f7a4a', box: true, curtain: '#e8a0a8', flowers: ['#ff7088', '#ffe066', '#c8a0ff'] }));
-    // cornija e letreiro CELESTE
-    R(x - 4, 94, w + 8, 5, OUT); R(x - 3, 95, w + 6, 3, '#7a4a2a'); for (let i = x - 2; i < x + w + 2; i += 4) R(i, 98, 2, 1, '#5a3a1e');
-    R(cx - 34, 98, 68, 16, OUT); R(cx - 33, 99, 66, 14, '#5a3a22'); R(cx - 31, 101, 62, 10, '#f6e6b8'); R(cx - 31, 101, 62, 1, '#fff6d8');
-    bigText(cx - 27, 102, 'CELESTE', '#8a2a18');
     // térreo: comércio de madeira pintada, vitrines com toldos listrados, porta dupla de vidro
     R(x - 1, 113, w + 2, b - 112, OUT); FX.planksV(x, 114, w, b - 114, '#5f8f6a'); R(x, 114, w, 2, shade('#5f8f6a', 0.6));
     sideTrim(x, 114, b - 114, '#4a3020'); sideTrim(x + w - 2, 114, b - 114, '#4a3020');
     [[x + 8, 26], [x + w - 34, 26]].forEach(([vx, vw]) => {
-      for (let i = 0; i < vw + 4; i++) { R(vx - 2 + i, 115, 1, 5, Math.floor(i / 3) % 2 ? '#f4ecd8' : '#c8402e'); R(vx - 2 + i, 120, 1, 1, Math.floor(i / 3) % 2 ? '#d8ccb0' : '#8a2a1a'); }
-      R(vx - 3, 114, vw + 6, 1, OUT); R(vx - 3, 121, vw + 6, 1, OUT);
-      win(vx, 123, vw, 15, { frame: '#e8dcc0', noBars: true, inside: (ix, iy, iw, ih) => { R(ix, iy + ih - 4, iw, 1, '#8a5e36'); R(ix, iy + 5, iw, 1, '#8a5e36'); for (let i = 1; i < iw - 2; i += 4) { R(ix + i, iy + ih - 7, 3, 3, ['#e04a3a', '#f0a020', '#58b858', '#ffe066'][(i >> 2) % 4]); R(ix + i + 1, iy + 1, 2, 4, ['#c89858', '#f4f0e4', '#e8a0a8'][(i >> 2) % 3]); } } });
+      for (let i = 0; i < vw + 4; i++) { R(vx - 2 + i, 117, 1, 5, Math.floor(i / 3) % 2 ? '#f4ecd8' : '#c8402e'); R(vx - 2 + i, 122, 1, 1, Math.floor(i / 3) % 2 ? '#d8ccb0' : '#8a2a1a'); }
+      R(vx - 3, 116, vw + 6, 1, OUT); R(vx - 3, 123, vw + 6, 1, OUT);
+      win(vx, 125, vw, 13, { frame: '#e8dcc0', noBars: true, inside: (ix, iy, iw, ih) => { R(ix, iy + ih - 4, iw, 1, '#8a5e36'); R(ix, iy + 5, iw, 1, '#8a5e36'); for (let i = 1; i < iw - 2; i += 4) { R(ix + i, iy + ih - 7, 3, 3, ['#e04a3a', '#f0a020', '#58b858', '#ffe066'][(i >> 2) % 4]); R(ix + i + 1, iy + 1, 2, 4, ['#c89858', '#f4f0e4', '#e8a0a8'][(i >> 2) % 3]); } } });
     });
+    // cornija e letreiro CELESTE
+    R(x - 4, 94, w + 8, 5, OUT); R(x - 3, 95, w + 6, 3, '#7a4a2a'); for (let i = x - 2; i < x + w + 2; i += 4) R(i, 98, 2, 1, '#5a3a1e');
+    // placa: 54 px de texto com 10 px de folga de cada lado e 2 px em cima e embaixo
+    const sw = 54 + 20, sx = Math.round(cx - sw / 2);
+    R(sx - 3, 97, sw + 6, 19, OUT); R(sx - 2, 98, sw + 4, 17, '#5a3a22'); R(sx - 2, 98, sw + 4, 1, '#7a5030');
+    R(sx, 100, sw, 14, '#f6e6b8'); R(sx, 100, sw, 1, '#fff6d8'); R(sx, 113, sw, 1, '#d8c490');
+    R(sx + 1, 96, 2, 2, '#c8c0b0'); R(sx + sw - 3, 96, 2, 2, '#c8c0b0');
+    bigText(sx + 10, 102, 'CELESTE', '#6a1c10');
     FX.stone(x, b - 4, w, 4);
     const dc = door(cx, b, 18, 24, '#7a4a2a', { double: true, glass: true, frame: '#f0e0b8' });
     lantern(cx - 15, 118); lantern(cx + 14, 118);
@@ -1093,7 +1097,130 @@ const World = (() => {
     chest(x, y) { box(x, y - 12, 18, 12, '#8a5e36'); R(x, y - 12, 18, 4, '#b88448'); R(x + 8, y - 8, 2, 3, '#ffd75e'); R(x, y - 7, 18, 1, '#5a3a22'); solid(x, y - 12, 18, 12); },
   };
 
+  /* ================= Armazém CELESTE por dentro =================
+     Mercadinho de 304×208: parede com papel de parede e lambri, balcão com caixa no canto
+     superior esquerdo, duas fileiras de gôndolas no centro e à direita, caixotes, sacos,
+     mural de avisos, plantas e tapete na entrada. Móveis altos são sprites (o personagem
+     passa atrás deles), e só a base de cada um bloqueia. */
+  const LOJA = { w: 304, h: 208, wallH: 62, keeper: [52, 76] };
+  function jar(x, y, c, lid = '#c8b8a0') { R(x - 1, y - 1, 6, 9, OUT); R(x, y + 1, 4, 6, c); R(x, y + 1, 1, 6, shade(c, 1.35)); R(x, y, 4, 1, lid); R(x + 1, y + 3, 2, 2, '#f4ecd8'); }
+  function bottle(x, y, c) { R(x, y - 1, 2, 2, OUT); R(x - 1, y + 1, 4, 8, OUT); R(x, y + 2, 2, 6, c); R(x, y + 2, 1, 6, shade(c, 1.4)); R(x, y + 5, 2, 1, '#f4ecd8'); }
+  function boxPack(x, y, c) { R(x - 1, y - 1, 7, 9, OUT); R(x, y, 5, 7, c); R(x, y, 5, 2, shade(c, 1.25)); R(x + 1, y + 3, 3, 2, '#f4ecd8'); }
+  function sack(x, y, c, tag) {
+    R(x - 1, y - 1, 18, 17, OUT); R(x, y + 2, 16, 13, c); R(x + 1, y, 14, 3, shade(c, 0.85)); R(x + 6, y - 2, 4, 3, shade(c, 0.7)); R(x + 6, y - 3, 4, 1, OUT);
+    R(x + 1, y + 3, 2, 11, shade(c, 1.15)); R(x + 13, y + 4, 2, 10, shade(c, 0.82)); if (tag) { R(x + 4, y + 6, 8, 6, '#f4ecd8'); R(x + 5, y + 7, 6, 4, tag); }
+  }
+  /* Gôndola (prateleira dupla) vista de frente: topo com mercadorias e três prateleiras abastecidas. */
+  function gondola(x, base, w) {
+    const top = base - 30;
+    shadowOval(x + w / 2, base + 1, w / 2 + 2, 3);
+    R(x - 1, top - 9, w + 2, 40, OUT);
+    R(x, top - 8, w, 7, '#efe8f4'); R(x, top - 8, w, 1, '#ffffff'); R(x, top - 2, w, 2, '#b8a8c8');                 // tampo
+    for (let i = 2; i < w - 6; i += 9) { const k = (i / 9 | 0) % 4; if (k === 0) bottle(x + i + 1, top - 15, '#c8402e'); else if (k === 1) boxPack(x + i, top - 14, '#d8a868'); else if (k === 2) { R(x + i - 1, top - 13, 9, 7, OUT); R(x + i, top - 12, 7, 5, '#5ac0c8'); R(x + i + 1, top - 12, 5, 1, '#9ae8ec'); R(x + i + 3, top - 15, 1, 3, '#3f9648'); } else jar(x + i + 1, top - 15, '#f0d040'); }
+    R(x, top, w, 30, '#e4dcec'); R(x, top, 2, 30, '#ffffff'); R(x + w - 2, top, 2, 30, '#a898b8');
+    const cols = ['#c8402e', '#3f86d0', '#58b858', '#f0a020', '#e8e0c8', '#8a5ad9', '#e0607a'];
+    for (let s = 0; s < 3; s++) {
+      const sy = top + 2 + s * 9;
+      R(x + 2, sy, w - 4, 7, '#4a3a58'); R(x + 2, sy + 7, w - 4, 2, '#cfc4dc'); R(x + 2, sy + 7, w - 4, 1, '#ffffff');
+      for (let i = 3; i < w - 5; i += 3) { const c = cols[(i * 3 + s * 5 + x) % cols.length], hh = 3 + ((i + s) % 3); R(x + i, sy + 7 - hh, 2, hh, c); R(x + i, sy + 7 - hh, 1, 1, shade(c, 1.4)); }
+    }
+    R(x + 2, base - 1, w - 4, 1, '#8a7a98');
+    cur.lights.push({ kind: 'glow', x: x + w / 2, y: top - 4, r: 10 });
+  }
+  function produceBin(x, y, w, c1, c2) {
+    R(x - 1, y - 1, w + 2, 12, OUT); R(x, y + 4, w, 7, '#a8743e'); R(x, y + 4, w, 1, '#d8a868'); R(x, y + 8, w, 1, '#7a5028');
+    for (let i = 0; i < w - 2; i += 3) { R(x + 1 + i, y + 1 + (i % 2), 3, 3, OUT); R(x + 1 + i, y + 1 + (i % 2), 2, 2, i % 6 < 3 ? c1 : c2); R(x + 1 + i, y + 1 + (i % 2), 1, 1, shade(c1, 1.4)); }
+  }
+  function buildLoja() {
+    const m = newMap('loja', LOJA.w, LOJA.h, 29), WH = LOJA.wallH;
+    // ---------- parede: papel de parede suave, faixa, lambri de madeira e rodapé ----------
+    R(0, 0, W, 36, '#f4ead4'); for (let x = 4; x < W; x += 10) { R(x, 0, 3, 36, '#e6ecd8'); if (x % 20 === 4) for (let y = 6; y < 34; y += 10) { R(x + 6, y, 1, 1, '#e8a0a8'); R(x + 5, y + 1, 3, 1, '#c8d8b0'); } }
+    R(0, 34, W, 3, '#8a5a32'); R(0, 34, W, 1, '#b88448');
+    for (let x = 0; x < W; x += 6) { R(x, 37, 6, 21, '#c48a52'); R(x, 37, 1, 21, '#a06a3a'); R(x + 1, 37, 1, 21, '#d8a068'); }
+    R(0, 56, W, 2, '#8a5a32'); R(0, 58, W, 4, '#5a3a22');
+    // janelas no fundo, à direita
+    [[236, 6], [270, 6]].forEach(([x, y]) => { R(x - 2, y - 2, 26, 28, OUT); R(x - 1, y - 1, 24, 26, '#f4f0e4'); R(x + 1, y + 1, 20, 22, '#9ad4f4'); R(x + 1, y + 1, 20, 6, '#c8ecff'); R(x + 11, y + 1, 1, 22, '#f4f0e4'); R(x + 1, y + 12, 20, 1, '#f4f0e4'); R(x + 1, y + 1, 4, 22, '#e8a0a8'); R(x + 17, y + 1, 4, 22, '#e8a0a8'); R(x - 3, y + 24, 28, 3, OUT); R(x - 2, y + 24, 26, 2, '#d8c8a8'); cur.lights.push({ kind: 'win', x: x + 1, y: y + 1, w: 20, h: 22 }); });
+    // mural de avisos (cortiça com bilhetes)
+    R(112, 6, 46, 28, OUT); R(113, 7, 44, 26, '#8a5a32'); R(115, 9, 40, 22, '#c89a62'); for (let i = 0; i < 30; i++) R(116 + rand() * 38, 10 + rand() * 20, 1, 1, '#a87a48');
+    [[118, 11, '#f4f0e4'], [131, 13, '#f8e8a0'], [144, 10, '#c8f0e8'], [121, 21, '#f8c8d8'], [138, 22, '#f4f0e4']].forEach(([x, y, c]) => { R(x, y, 9, 8, c); R(x + 1, y + 3, 6, 1, '#8a8a98'); R(x + 1, y + 5, 4, 1, '#8a8a98'); R(x + 4, y - 1, 2, 2, '#e04a3a'); });
+    obj({ id: 'mural-loja', kind: 'text', x: 135, y: 72, r: 16, hit: [110, 4, 50, 32], label: 'Mural de avisos', text: 'Bilhetes presos com tachinhas: "Vendo mudas de goiabeira", "Quem achou um chapéu velho no bosque?", "Ensaio no coreto, sábado à tarde".' });
+    // cartaz de frutas e relógio
+    R(166, 8, 28, 24, OUT); R(167, 9, 26, 22, '#f8f0dc'); [[170, 12, '#e04a3a'], [178, 12, '#f0a020'], [186, 12, '#58b858'], [170, 20, '#8a5ad9'], [178, 20, '#ffe066'], [186, 20, '#e0607a']].forEach(([x, y, c]) => { R(x, y, 5, 5, OUT); R(x + 1, y + 1, 3, 3, c); }); R(170, 27, 20, 1, '#8a8a98');
+    R(204, 10, 14, 14, OUT); R(205, 11, 12, 12, '#f4f0e4'); R(210, 13, 1, 5, OUT); R(210, 17, 4, 1, OUT); R(205, 11, 12, 1, '#c8a060');
+    // prateleira de parede com potes, sobre o balcão
+    R(10, 18, 78, 3, OUT); R(11, 18, 76, 2, '#8a5a32'); [14, 24, 34, 44, 54, 64, 74].forEach((x, i) => jar(x, 10, ['#e04a3a', '#f0d040', '#58b858', '#e8a050', '#c8a0ff', '#f4ecd8', '#e0607a'][i]));
+    // ---------- piso de tábuas com variação discreta ----------
+    for (let y = WH, r = 0; y < H; y += 8, r++) for (let x = -((r * 13) % 32), c = 0; x < W; x += 32, c++) {
+      const k = (r * 7 + c * 3) % 5, col = ['#c8925a', '#c08a52', '#cc985e', '#bc8650', '#c48e56'][k];
+      R(x, y, 32, 8, col); R(x, y, 32, 1, shade(col, 1.12)); R(x, y + 7, 32, 1, '#8a5a32'); R(x + 31, y, 1, 8, '#8a5a32');
+      if ((r + c) % 3 === 0) R(x + 8 + (c * 5) % 14, y + 3, 4, 1, shade(col, 0.86)); if ((r * c) % 7 === 1) R(x + 20, y + 4, 1, 1, '#6a4426');
+    }
+    g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(0, WH, W, 3);
+    // luz quente das luminárias no piso
+    g.fillStyle = 'rgba(255,220,150,.10)'; [[60, 104], [160, 136], [250, 136]].forEach(([cx, cy]) => { for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(cx, cy, 34 - k * 10, 16 - k * 5, 0, 0, Math.PI * 2); g.fill(); } });
+    [[60, 40], [160, 40], [250, 40]].forEach(([x, y]) => cur.lights.push({ kind: 'glow', x, y: y + 30, r: 40 }));
+    // ---------- tapete da entrada ----------
+    const cx = W / 2;
+    R(cx - 24, H - 34, 48, 26, OUT); R(cx - 23, H - 33, 46, 24, '#a8402e'); R(cx - 20, H - 30, 40, 18, '#c8683a'); R(cx - 17, H - 27, 34, 12, '#a8402e');
+    for (let i = 0; i < 34; i += 4) { R(cx - 17 + i, H - 22, 2, 2, '#f0c050'); } R(cx - 23, H - 33, 46, 1, '#d8885a');
+    // ---------- balcão de atendimento (canto superior esquerdo) com caixa registradora ----------
+    bldSprite(4, 44, 96, 56, 96, () => {
+      R(9, 67, 86, 30, OUT); R(10, 68, 84, 9, '#f0e8f4'); R(10, 68, 84, 1, '#ffffff'); R(10, 76, 84, 1, '#b8a8c8');
+      R(10, 77, 84, 19, '#7a9aa8'); R(10, 77, 84, 2, '#5a7a88'); for (let x = 14; x < 90; x += 20) { R(x, 81, 15, 12, '#6a8a98'); R(x, 81, 15, 1, '#8ab0c0'); }
+      R(10, 94, 84, 2, '#4a6a78');
+      // caixa registradora
+      R(55, 58, 20, 14, OUT); R(56, 59, 18, 12, '#5a5a6a'); R(56, 59, 18, 2, '#7a7a8e'); R(58, 62, 14, 4, '#9ad0a8'); R(59, 63, 6, 1, '#2f5a3a');
+      for (let i = 0; i < 4; i++) R(58 + i * 4, 67, 3, 2, '#e8e0d0'); R(54, 71, 22, 3, OUT); R(55, 71, 20, 2, '#3a3a48');
+      // balança, pote de balas, sacolas de papel e uma plantinha
+      R(18, 66, 14, 6, OUT); R(19, 67, 12, 4, '#c8c8d4'); R(23, 62, 4, 4, OUT); R(24, 63, 2, 2, '#c8c8d4'); R(17, 61, 16, 2, '#a8a8b8');
+      R(38, 62, 9, 11, OUT); R(39, 63, 7, 9, '#c8ecff'); [[40, 66, '#e04a3a'], [42, 68, '#ffe066'], [43, 65, '#58b858'], [40, 69, '#e0607a']].forEach(([x, y, c]) => R(x, y, 2, 2, c)); R(39, 62, 7, 1, '#e04a3a');
+      R(78, 62, 9, 11, OUT); R(79, 63, 7, 9, '#d8b078'); R(79, 63, 7, 2, '#b88448');
+      potPlant(87, 68, '#2f8a40');
+    });
+    solid(4, 62, 90, 34);                                                          // células de 8 px: o balcão ocupa x < 96 e y < 96
+    obj({ id: 'counter', kind: 'counter', x: 52, y: 106, r: 24, hit: [8, 58, 88, 40], label: 'Balcão do Armazém' });
+    // ---------- caixas de hortaliças na parede da esquerda ----------
+    bldSprite(0, 100, 30, 84, 180, () => {
+      R(3, 103, 22, 77, OUT); R(4, 104, 20, 75, '#8a5a32');
+      [['#e04a3a', '#c8402e'], ['#f0a020', '#e88a20'], ['#58b858', '#3f9648'], ['#8a5ad9', '#6a3ab8'], ['#ffe066', '#e8c040'], ['#9ac850', '#78b04c']].forEach(([a, b], i) => produceBin(6, 106 + i * 12, 16, a, b));
+    });
+    solid(2, 104, 24, 76);
+    // ---------- caixotes de frutas com pazinhas ----------
+    bldSprite(30, 120, 60, 52, 166, () => {
+      [[36, 128, '#e04a3a', '#c8402e'], [62, 128, '#f0c040', '#e0a020'], [36, 148, '#58b858', '#3f9648'], [62, 148, '#5a7ad8', '#3f5ab8']].forEach(([x, y, a, b]) => {
+        R(x - 1, y - 1, 24, 20, OUT); R(x, y + 6, 22, 13, '#b88448'); R(x, y + 6, 22, 1, '#d8a868'); R(x, y + 12, 22, 1, '#7a5028'); R(x + 10, y + 6, 2, 13, '#7a5028');
+        for (let i = 0; i < 20; i += 3) for (let j = 0; j < 2; j++) { R(x + 1 + i, y + 1 + j * 3, 3, 3, OUT); R(x + 1 + i, y + 1 + j * 3, 2, 2, (i + j) % 2 ? a : b); R(x + 1 + i, y + 1 + j * 3, 1, 1, shade(a, 1.4)); }
+        R(x + 15, y + 1, 4, 4, '#c8c8d4'); R(x + 17, y - 3, 1, 4, '#8a5a32');
+      });
+    });
+    solid(34, 144, 52, 24);
+    obj({ id: 'caixotes-loja', kind: 'text', x: 60, y: 178, r: 16, hit: [34, 126, 52, 42], label: 'Caixotes de frutas e verduras', text: 'Frutas e verduras da estação, escolhidas uma a uma. Para comprar, fale com Dona Celeste no balcão.' });
+    // ---------- duas fileiras de gôndolas, com corredores ----------
+    [[128, 64], [216, 72]].forEach(([x, w]) => [112, 160].forEach(base => {    // vãos e corredores alinhados às células de 8 px
+      bldSprite(x - 4, base - 46, w + 8, 50, base, () => gondola(x, base, w));
+      solid(x, base - 8, w, 8);
+      obj({ id: `gondola-${x}-${base}`, kind: 'text', x: x + w / 2, y: base + 10, r: 16, hit: [x, base - 40, w, 40], label: 'Prateleira', text: 'Potes, garrafas e pacotes bem arrumados. Os produtos à venda ficam no balcão, com Dona Celeste.' });
+    }));
+    // ---------- sacos de sementes e de ração, barril e plantas ----------
+    bldSprite(232, 168, 72, 36, 200, () => {
+      sack(240, 182, '#d8c08a', '#58b858'); sack(258, 180, '#d8c08a', '#e04a3a'); sack(276, 182, '#c8b078', '#f0a020');
+      sack(268, 168, '#b89868', '#8a5a32');
+    });
+    solid(238, 182, 60, 18);
+    obj({ id: 'sacos-loja', kind: 'text', x: 268, y: 172, r: 16, hit: [236, 164, 64, 38], label: 'Sacos de sementes e ração', text: 'Sacos de sementes da estação e de ração para galinhas. O que está à venda aparece no balcão.' });
+    bldSprite(4, 180, 24, 24, 200, () => { R(7, 185, 14, 15, OUT); R(8, 186, 12, 13, '#9a6a3a'); R(9, 186, 2, 13, '#c08a4e'); R(8, 189, 12, 1, '#5a4030'); R(8, 195, 12, 1, '#5a4030'); for (let i = 0; i < 10; i += 3) { R(9 + i, 182, 3, 3, OUT); R(9 + i, 182, 2, 2, '#e04a3a'); } });
+    solid(6, 192, 16, 8);
+    [[292, 84], [224, 202]].forEach(([x, y]) => bldSprite(x - 10, y - 24, 20, 26, y, () => FLOOR.plant(x - 4, y)));
+    // ---------- paredes e saída ----------
+    solid(0, 0, W, WH + 4); solid(0, 0, 4, H); solid(W - 4, 0, 4, H); solid(0, H - 3, W, 3);
+    R(cx - 16, H - 8, 32, 8, '#6a4426'); R(cx - 14, H - 6, 28, 6, '#c8a878'); R(cx - 10, H - 5, 20, 1, '#a88858');
+    obj({ id: 'exit', kind: 'exit', x: cx, y: H - 8, r: 14, hit: [cx - 20, H - 16, 40, 16], label: 'Sair' });
+    m.spawn = { x: cx, y: H - 14 }; m.keeper = LOJA.keeper; m.padB = 40;
+    return m;
+  }
+
   function buildRoom(id) {
+    if (id === 'loja') return buildLoja();
     const m = newMap(id, RW, RH, 29);
     if (id === 'casa') {
       roomBase('#eadfc4', '#b08a5a', '#96744a', true);
@@ -1357,7 +1484,8 @@ const World = (() => {
   const solidAt = (map, x, y) => { const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL); return cx < 0 || cy < 0 || cx >= map.cols || cy >= map.rows || !!map.solid[cy * map.cols + cx]; };
   /* Câmera: segue o personagem; se o mapa for menor que a tela, fica centralizado. */
   const axis = (size, view, p) => size <= view ? Math.round((size - view) / 2) : Math.round(Math.max(0, Math.min(size - view, p - view / 2)));
-  const camera = (map, px, py) => ({ x: axis(map.w, VW, px), y: axis(map.h, VH, py - 14) });
+  /* padB: folga embaixo (interiores mais altos que a tela): a saída nunca fica sob a barra de ferramentas. */
+  const camera = (map, px, py) => ({ x: axis(map.w, VW, px), y: axis(map.h + (map.padB || 0), VH, py - 14) });
   /* Canteiro da grade da fazenda que contém o ponto (ou -1). */
   const tileAt = (x, y) => { const c = Math.floor((x - GRID.x0) / GRID.s), r = Math.floor((y - GRID.y0) / GRID.s); return c < 0 || r < 0 || c >= GRID.cols || r >= GRID.rows ? -1 : r * GRID.cols + c; };
   const tilePos = i => ({ x: GRID.x0 + (i % GRID.cols) * GRID.s, y: GRID.y0 + Math.floor(i / GRID.cols) * GRID.s });
@@ -1556,7 +1684,7 @@ const World = (() => {
   /* v: { map, cam, t, state, actors, hens, cursor, markers, tint, floats } */
   function render(ctx, v) {
     const { map, cam, t, state: S } = v;
-    if (cam.x < 0 || cam.y < 0 || map.w < VW || map.h < VH) { ctx.fillStyle = map.id === 'fora' ? '#2f6a2c' : '#1c1420'; ctx.fillRect(0, 0, VW, VH); }
+    if (cam.x < 0 || cam.y < 0 || map.w < VW || map.h < VH || cam.y + VH > map.h) { ctx.fillStyle = map.id === 'fora' ? '#2f6a2c' : '#1c1420'; ctx.fillRect(0, 0, VW, VH); }
     ctx.drawImage(map.bg, -cam.x, -cam.y);
     g = ctx;
     ctx.save(); ctx.translate(-cam.x, -cam.y);

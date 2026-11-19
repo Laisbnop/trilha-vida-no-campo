@@ -579,6 +579,7 @@
   }
   function enterMap(id, x, y, dir) {
     map = World.get(id);
+    $('toasts').replaceChildren(); hover = null; $('hint').hidden = true; $('hint').dataset.t = '';   // dicas do cenário anterior não atravessam a porta
     P.x = x; P.y = y; P.dir = dir || 'down'; P.moving = false; P.work = 0; P.tool = null;
     if (!World.free(map, P.x, P.y) || dynBlocked(P.x, P.y)) {           // posição salva inválida (ex.: o mapa mudou): o ponto livre mais próximo
       let best = null;
@@ -1033,7 +1034,7 @@
     if (blocked() || P.work || performance.now() - menuClosedT < 200) return;   // menu/conversa aberta, golpe em andamento ou menu recém-fechado: o clique não conta
     const [wx, wy] = mouseWorld(), tg = targetAt(wx, wy, actors());
     if (tg && tg.fish) return startCharge(tg.check);
-    if (!tg) { const it = equipped(); if (it && it.id === 'espada') { faceTo(wx, wy); useTool('espada', 0); } else if (isRod(it)) tip('Com a vara na mão, segure o clique sobre a água, perto da margem (ou Espaço virado para ela), e solte para lançar.'); else if (it && isFood(it.id)) askEat(); return; }
+    if (!tg) { const it = equipped(); if (it && it.id === 'espada') { faceTo(wx, wy); useTool('espada', 0); } else if (isRod(it) && hasWater(map)) tip('Vara na mão: segure o clique sobre a água, perto da margem, e solte para lançar.'); else if (it && isFood(it.id)) askEat(); return; }
     if (!reachable(tg)) return tip(`Longe demais: chegue mais perto de ${tg.label.split(' — ')[0].replace(/ \(.*\)$/, '').replace(/^(Falar com|Entrar:) /, '').toLowerCase()}.`);
     const [cx, cy] = center(tg.near || tg.rect); faceTo(cx, cy);
     if (tg.act) tg.act();
@@ -1281,7 +1282,9 @@
     return { ok: true, ux, uy, first, ox, oy };
   }
   /* Espaço: mira para onde o personagem olha, sem depender do cursor. */
+  const hasWater = m => !!((m.waters && m.waters.length) || (m.streams && m.streams.length));   // dentro de prédios não há onde pescar: nada de dica de pesca
   function keyCast() {
+    if (!hasWater(map)) return;
     const [dx, dy] = DIRV[P.dir], c = fishCheck(P.x + dx * 90, P.y - 4 + dy * 90);
     if (startCharge(c)) FIN.key = true;
   }
