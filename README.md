@@ -174,17 +174,51 @@ Um mapa externo maior que a tela, com a câmera acompanhando o personagem:
   parte tomada por mato, galhos, pedras e tocos —, lago para encher o regador,
   placa com o nome da fazenda, boneco de treino e, no sul, o **galinheiro**
   (celeiro vermelho com porta para a estrada) ao lado do cercado das galinhas.
-- **Vila** (centro): praça com fonte, Armazém e as casas dos moradores. Entre a
-  vila e o bosque, uma **trilha** sobe para o norte, até a serra.
-- **Bosque** (leste): árvores comuns, rochas, amoras, cogumelos e flores.
+- **Vila** (centro): a praça com a fonte continua sendo o centro, com o Armazém e
+  as casas dos moradores em volta. Entre a vila e o bosque, uma **trilha** sobe
+  para o norte, até a serra.
+- **Vila sul**: três ruelas descem da rua de Bia e de Iara até a **rua de baixo**,
+  passando pela **praça do coreto** (canteiros, bancos e postes). A **escola** fica
+  no leste da vila, de frente para a rua de baixo. Ao sul da rua ficam a **horta
+  comunitária**, jardins com canteiros, um banco e uma mesa de piquenique.
+- **Beira-rio** (sul): o **rio do sul** cruza o mapa de oeste a leste, com areia
+  nas duas margens, duas pontes, um píer de tábuas e o encontro com o rio do
+  bosque. Dá para pescar sardinhas da areia, do píer e da margem sul.
+- **Bosque** (leste do centro): árvores comuns, rochas, amoras, cogumelos e flores,
+  nos mesmos lugares de antes. O rio do bosque agora desce até o rio do sul, com
+  uma ponte na rua de baixo e outra na beira-rio.
+- **Bairro leste**: a estrada principal segue até uma avenida norte-sul. Nela ficam
+  dois **terrenos reservados** com estacas e placa: o de cima para um futuro
+  ferreiro e o de baixo, ao sul dele, para o **museu** (só o terreno, sem prédio,
+  coleção ou entrada nesta versão). Há também um laguinho para pescar com bancos,
+  um pomarzinho, uma trilha até a margem leste da lagoa, um poço antigo e
+  trilhas até o rio.
+- **Mata** (sudoeste): floresta fechada ao sul da fazenda, por onde o rio entra no mapa.
+
+O mundo tem 1600 × 896 px, com cerca de 2,7 vezes a área caminhável de antes fora
+da fazenda, na mesma escala de personagens e construções. A fazenda, os
+canteiros, o galinheiro e tudo o que é do bosque continuam nas mesmas
+coordenadas, então plantações, animais, baús e objetos não mudam. Se uma posição
+salva cair dentro de algo novo, o personagem aparece no ponto livre mais próximo.
+Coletáveis sazonais que estivessem num lugar agora ocupado somem; os novos podem
+surgir também na vila sul, na beira-rio e no bairro leste. Os trajetos dos
+moradores são reservados no mapa (a vegetação nunca cai neles); o de Tomé passou a
+contornar a lagoa e a placa do bosque, e o de Iara contorna o banco da praça.
+
+**Iara e a escola nova:** nos dias úteis, ela sai de casa às 7h, desce a ruela ao
+lado da casa dela e segue pela rua de baixo até a escola (cerca de 27 minutos a
+pé), chegando às 7h30. Às 12h30 faz o caminho de volta e chega em casa por volta
+das 13h. Os outros horários continuam os mesmos.
 
 Interiores: a **casa** (cama, baú e guarda-roupa), o **Armazém** e o
 **galinheiro** (comedouro com placa "RAÇÃO", três ninhos, feno e bebedouro).
 
 **Tela do mapa** (M ou botão Mapa): mostra o mapa de verdade, com a fazenda pelo
 nome, casa, galinheiro, cercado, roça, lago, Vila Acapulco, Armazém, praça, casas
-dos moradores, bosque, estradas, a sua posição e o destino da missão
-acompanhada, com legenda. O tempo para enquanto ele está aberto, e ele não
+dos moradores, escola, praça do coreto, horta, beira-rio, bosque, bairro leste,
+os terrenos reservados (com ícone próprio de "terreno reservado", nunca como
+prédio aberto), estradas, a sua posição e o destino da missão acompanhada, com
+legenda. O tempo para enquanto ele está aberto, e ele não
 teleporta. O cenário não tem setas: para saber aonde ir, use o Diário (F) ou o
 mapa (M). No Diário, "Acompanhar" escolhe a missão mostrada no objetivo e no mapa.
 

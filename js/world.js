@@ -116,10 +116,14 @@ const World = (() => {
       calcada: ['#c8c8c0', '#8c8c88', '#b0b0a8', '#e0e0d8'],
       asfalto: ['#5a5a66', '#3c3c46', '#4e4e5a', '#6a6a76'],
       laje:    ['#e4dcc8', '#a89c84', '#cfc6ae', '#f6f0e0'],
+      areia:   ['#ecd49a', '#c8a868', '#f4e2b4', '#fff0c8'],
     }[kind];
     R(x - 1, y - 1, w + 2, h + 2, P[1]);
     R(x, y, w, h, P[0]);
-    if (kind === 'terra') {
+    if (kind === 'areia') {                              // areia da beira-rio: grãos claros e conchinhas
+      for (let i = 0; i < w * h / 12; i++) R(x + rand() * (w - 1), y + rand() * (h - 1), 1, 1, rand() < 0.5 ? P[2] : P[3]);
+      for (let i = 0; i < w * h / 400; i++) R(x + 2 + rand2() * (w - 4), y + 1 + rand2() * (h - 2), 2, 1, rand2() < 0.5 ? '#c8a868' : '#ffffff');
+    } else if (kind === 'terra') {
       for (let i = 0; i < w * h / 10; i++) R(x + rand() * (w - 2), y + rand() * (h - 1), 2, 1, rand() < 0.5 ? P[2] : P[3]);
       for (let i = x; i < x + w; i += 3) if (rand() < 0.4) { R(i, y - 1, 2, 1, '#58a83c'); R(i + 1, y + h, 2, 1, '#58a83c'); }
       // pedrinhas e marcas de terra dourada
@@ -261,6 +265,60 @@ const World = (() => {
     blob(x, y, 14, OUT, 0.6); blob(x, y, 13, '#d8d2c4', 0.6); blob(x, y, 10, '#3f86d8', 0.6); blob(x - 2, y - 1, 6, '#6aacf0', 0.6);
     R(x - 2, y - 10, 4, 10, OUT); R(x - 1, y - 9, 2, 9, '#e8e2d4');
     R(x - 4, y - 12, 8, 3, OUT); R(x - 3, y - 11, 6, 1, '#bfe4ff');
+  }
+
+  /* Coreto da praça sul: piso redondo de tábuas, colunas e telhado em ponta. (x, y) = centro do piso. */
+  function coreto(x, y) {
+    shadowOval(x + 2, y + 14, 30, 6);
+    blob(x, y + 6, 27, OUT, 0.45); blob(x, y + 6, 26, '#c8a070', 0.45); blob(x, y + 5, 22, '#dcb886', 0.45);
+    for (let i = -20; i <= 20; i += 5) R(x + i, y, 1, 11, '#b08458');
+    [[-22, 2], [22, 2], [-12, 11], [12, 11]].forEach(([dx, dy]) => { R(x + dx - 1, y + dy - 20, 4, 21, OUT); R(x + dx, y + dy - 19, 2, 19, '#f4ead4'); });
+    for (let r = 0; r < 18; r++) { const hw = 6 + Math.round(r * 1.5); R(x - hw - 1, y - 38 + r, hw * 2 + 2, 1, OUT); R(x - hw, y - 38 + r, hw * 2, 1, r % 4 === 3 ? '#8a3a2a' : r < 3 ? '#e07a5a' : '#c8583e'); }
+    R(x - 1, y - 43, 3, 6, OUT); R(x, y - 42, 1, 4, '#f0c050');
+    snowCap(x - 26, y - 22, 52, 3);
+  }
+  /* Canteiro de flores com moldura de madeira. */
+  function flowerBed(x, y, w, h) {
+    R(x - 1, y - 1, w + 2, h + 2, OUT); R(x, y, w, h, '#8a5e36'); R(x + 1, y + 1, w - 2, h - 2, '#6a4426');
+    const cs = ['#ff7088', '#ffe066', '#ffffff', '#c8a0ff', '#ff9ec0'];
+    for (let yy = y + 2; yy < y + h - 2; yy += 3) for (let xx = x + 2; xx < x + w - 2; xx += 3) {
+      if (paintSeason === 3) { R(xx, yy, 2, 1, '#eef3f8'); continue; }
+      R(xx, yy + 1, 1, 1, '#2f7028');
+      R(xx, yy, 1, 1, paintSeason === 2 ? ['#c8581e', '#e09030', '#8a3a18'][(xx + yy) % 3] : cs[(xx * 3 + yy) % cs.length]);
+    }
+    solid(x, y, w, h);
+  }
+  /* Banco de madeira (só enfeite; o banco da praça principal é o de Seu Honório). */
+  function benchDeco(x, y) {
+    R(x - 1, y - 1, 22, 6, OUT); R(x, y, 20, 4, '#b88448'); R(x, y, 20, 1, '#d8a868');
+    R(x - 1, y - 6, 22, 4, OUT); R(x, y - 5, 20, 2, '#a8743e');
+    R(x + 1, y + 4, 2, 3, '#5a3a1e'); R(x + 17, y + 4, 2, 3, '#5a3a1e'); solid(x, y - 4, 20, 8);
+  }
+  /* Mesa de piquenique. */
+  function picnic(x, y) {
+    shadowOval(x + 13, y + 12, 16, 3);
+    R(x - 1, y - 1, 28, 12, OUT); R(x, y, 26, 10, '#c08a4e'); R(x, y, 26, 2, '#dcae6e'); for (let i = 6; i < 26; i += 7) R(x + i, y + 2, 1, 8, '#9a6a3a');
+    R(x - 3, y - 6, 32, 4, OUT); R(x - 2, y - 5, 30, 2, '#a8743e'); R(x - 3, y + 12, 32, 4, OUT); R(x - 2, y + 13, 30, 2, '#a8743e');
+    solid(x - 3, y - 6, 32, 22);
+  }
+  /* Terreno reservado: estacas com fita, mato baixo e uma placa. */
+  function lot(x, y, w, h, gapY) {
+    for (let i = 0; i < w * h / 60; i++) R(x + 3 + rand() * (w - 6), y + 3 + rand() * (h - 6), 2, 1, rand() < 0.5 ? '#a8a060' : '#c8b878');
+    const stake = (sx, sy) => { R(sx - 1, sy - 9, 4, 10, OUT); R(sx, sy - 8, 2, 8, '#d8a868'); R(sx, sy - 8, 2, 1, '#e04a3a'); };
+    for (let xx = x; xx <= x + w; xx += 16) { stake(xx, y); stake(xx, y + h); }
+    for (let yy = y + 16; yy < y + h; yy += 16) { if (!(yy > gapY - 14 && yy < gapY + 14)) stake(x, yy); stake(x + w, yy); }
+    R(x, y - 6, w + 2, 1, '#e8d070'); R(x, y + h - 6, w + 2, 1, '#e8d070'); R(x + w, y - 6, 1, h + 1, '#e8d070');
+    R(x, y - 6, 1, gapY - 12 - y, '#e8d070'); R(x, gapY + 10, 1, y + h - gapY - 10, '#e8d070');
+    solid(x - 2, y - 4, w + 4, 6); solid(x - 2, y + h - 4, w + 4, 6); solid(x + w - 2, y, 6, h);
+    solid(x - 2, y, 6, gapY - 12 - y); solid(x - 2, gapY + 12, 6, y + h - gapY - 12);
+  }
+  /* Píer de tábuas sobre a água, para pescar. */
+  function pier(x, y, w, h) {
+    R(x - 1, y - 1, w + 2, h + 3, OUT); R(x, y, w, h, '#b88448');
+    for (let yy = y + 3; yy < y + h; yy += 4) R(x, yy, w, 1, '#7a5028');
+    R(x, y, 1, h, '#d8a868'); R(x + w - 2, y, 2, h, '#6a4426');
+    [[x - 2, y + h - 4], [x + w - 1, y + h - 4]].forEach(([px, py]) => { R(px - 1, py - 1, 4, 7, OUT); R(px, py, 2, 5, '#5a3a1e'); });
+    open(x, y, w, h); keep(x - 8, y - 8, w + 16, h + 16);
   }
 
   /* Casa vista de cima, de frente. opts: x, y (canto de cima), w, h, cores. */
@@ -450,7 +508,7 @@ const World = (() => {
 
 
   /* ================= posições fixas do mapa externo ================= */
-  const FORA = { w: 1200, h: 512 };
+  const FORA = { w: 1600, h: 896 };              // fazenda (oeste), vila, bosque, beira-rio (sul) e bairro leste
   const GRID = { x0: 40, y0: 196, cols: 20, rows: 10, s: 16 };            // terra cultivável da fazenda
   const YARD = { x0: 156, y0: 402, x1: 290, y1: 440 };                    // onde as galinhas ciscam (cercado)
   const SPOT = { water: [336, 136], dummy: [214, 142], bench: [598, 206], hat: [1150, 470] };
@@ -484,6 +542,14 @@ const World = (() => {
     return true;
   };
   function road(kind, x, y, w, h) { ground(kind, x, y, w, h); keep(x - 4, y - 4, w + 8, h + 8); }
+  /* Trilha de terra em curva (pontos [x, y]), com borda e pedrinhas. */
+  function trail(pts, r = 9) {
+    const L = [];
+    for (let i = 0; i < pts.length - 1; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2); for (let k = 0; k <= n; k++) L.push([x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n]); }
+    const disc = (x, y, rr, c) => { for (let dy = -rr; dy <= rr; dy++) { const w = Math.round(Math.sqrt(rr * rr - dy * dy)); R(Math.round(x) - w, Math.round(y) + dy, w * 2 + 1, 1, c); } };
+    L.forEach(([x, y]) => disc(x, y, r + 1, '#b4945a')); L.forEach(([x, y]) => disc(x, y, r, '#dcc48c'));
+    L.forEach(([x, y], i) => { if (i % 3 === 0) R(x - r + 2 + rand2() * (r * 2 - 4), y - r + 2 + rand2() * (r * 2 - 4), 2, 1, rand2() < 0.5 ? '#f0e0b0' : '#c8ac70'); keep(x - r - 4, y - r - 4, r * 2 + 8, r * 2 + 8); });
+  }
   const obj = o => { cur.objs.push(Object.assign({ r: 18 }, o)); };
 
   /* Figura alta em canvas próprio: o personagem pode passar por trás. */
@@ -530,7 +596,8 @@ const World = (() => {
   }
   /* Rio: água corrente ao longo de uma linha (pontos [x, y]), com margem de terra.
      A margem não é pintada por cima de um lago em que o rio desemboca. hw = meia largura da água. */
-  function stream(pts, hw, bridge) {
+  function stream(pts, hw, bridges) {
+    const BR = !bridges ? [] : typeof bridges[0] === 'number' ? [bridges] : bridges;
     const L = [], inLake = (x, y) => cur.waters.some(w => ((x - w.cx) / (w.rx - 1)) ** 2 + ((y - w.cy) / (w.ry - 1)) ** 2 < 1);
     for (let i = 0; i < pts.length - 1; i++) {
       const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
@@ -542,26 +609,40 @@ const World = (() => {
     L.forEach(([x, y]) => disc(Math.round(x), Math.round(y), hw - 1, '#3f86d8'));
     L.forEach(([x, y]) => disc(Math.round(x), Math.round(y), hw - 4, '#3478cc'));
     L.forEach(([x, y], i) => { if (i % 3 === 0) { solid(x - hw + 3, y - 2, hw * 2 - 6, 4); keep(x - hw - 8, y - hw - 8, hw * 2 + 16, hw * 2 + 16); } });
-    if (bridge) {                                   // ponte de tábuas: dá para atravessar a pé
-      const [bx, by, bw, bh] = bridge;
+    BR.forEach(([bx, by, bw, bh]) => {              // ponte de tábuas: dá para atravessar a pé
+      const across = bh > bw;                        // ponte comprida no sentido norte-sul: tábuas deitadas
       R(bx - 1, by - 1, bw + 2, bh + 3, OUT); R(bx, by, bw, bh, '#a8743e');
-      for (let x = bx + 3; x < bx + bw; x += 4) R(x, by, 1, bh, '#7a5028');
-      R(bx, by, bw, 1, '#d8a868'); R(bx, by + bh - 1, bw, 2, '#5a3a1e');
+      if (across) { for (let y = by + 3; y < by + bh; y += 4) R(bx, y, bw, 1, '#7a5028'); R(bx, by, 1, bh, '#d8a868'); R(bx + bw - 2, by, 2, bh, '#5a3a1e'); }
+      else { for (let x = bx + 3; x < bx + bw; x += 4) R(x, by, 1, bh, '#7a5028'); R(bx, by, bw, 1, '#d8a868'); R(bx, by + bh - 1, bw, 2, '#5a3a1e'); }
       [[bx + 1, by - 3], [bx + bw - 3, by - 3], [bx + 1, by + bh - 1], [bx + bw - 3, by + bh - 1]].forEach(([x, y]) => { R(x - 1, y - 1, 4, 5, OUT); R(x, y, 2, 3, '#6a4426'); });
       open(bx, by, bw, bh); keep(bx - 10, by - 10, bw + 20, bh + 20);
-    }
+    });
     cur.streams = cur.streams || [];
-    cur.streams.push({ pts: L, hw, zone: 'rio', bridge: bridge || null });
+    cur.streams.push({ pts: L, hw, zone: 'rio', bridges: BR });
   }
 
   function buildFora() {
     const m = newMap('fora', FORA.w, FORA.h, 11); m.waters = [];
     grass();
     // ---------- estradas ----------
-    road('terra', 60, 152, 1130, 24);
+    road('terra', 60, 152, 1500, 24);                                              // estrada principal: fazenda → vila → bosque → bairro leste
     road('terra', 366, 176, 20, 298); road('terra', 52, 458, 334, 16);
     road('pedra', 560, 110, 140, 122);
     road('terra', 450, 176, 20, 124); road('terra', 622, 232, 20, 68); road('terra', 440, 300, 392, 22);
+    // vila sul: ruelas descem até a rua de baixo, a praça do coreto e a beira-rio
+    road('terra', 450, 322, 20, 264);                                              // ruela de Bia
+    road('terra', 622, 322, 20, 120); road('terra', 622, 534, 20, 54);              // ruela da fonte ao coreto e à rua de baixo
+    road('terra', 770, 322, 20, 264);                                              // ruela de Iara (caminho da escola)
+    road('pedra', 560, 440, 150, 96);                                              // praça do coreto
+    road('terra', 440, 586, 1120, 22);                                             // rua de baixo: vila → escola → bairro leste
+    road('terra', 770, 608, 20, 162); road('terra', 1300, 608, 20, 162);            // descidas para a beira-rio
+    road('areia', 410, 770, 1186, 22);                                             // areia da beira-rio (margem norte)
+    road('areia', 410, 840, 1186, 30);                                             // margem sul do rio
+    road('terra', 1300, 176, 20, 410);                                             // avenida do bairro leste
+    trail([[1302, 300], [1262, 292], [1222, 280], [1186, 272], [1172, 266]]);          // trilha até a margem leste da lagoa
+    trail([[710, 500], [736, 508], [756, 520], [772, 536]], 8);                     // atalho do coreto à ruela de Iara
+    trail([[1110, 608], [1130, 640], [1166, 668], [1180, 700], [1168, 740], [1150, 770]], 8);   // trilha do poço à beira-rio
+    trail([[1560, 608], [1530, 640], [1500, 690], [1470, 730], [1440, 770]], 8);     // trilha do pomar leste ao rio
     // ---------- fazenda ----------
     keep(GRID.x0 - 6, GRID.y0 - 6, GRID.cols * GRID.s + 12, GRID.rows * GRID.s + 12);
     {
@@ -605,10 +686,14 @@ const World = (() => {
     building('honorio', 'Casa de Seu Honório', { x: 720, y: 70, w: 70, h: 78, roof: '#6a5a4a', wall: '#e0d4bc', windows: [[6, 8], [54, 8]], chimney: 50, door: '#5a3a22' }, false);
     building('bia', 'Casa de Bia', { x: 480, y: 228, w: 70, h: 72, roof: '#4a8a5a', wall: '#f0e2c0', windows: [[6, 8], [54, 8]], flowerBox: true, door: '#c8683a' }, false);
     building('iara', 'Casa de Iara', { x: 690, y: 228, w: 70, h: 72, roof: '#8a5ad9', wall: '#f4eef8', timber: false, windows: [[6, 8], [54, 8]], shutters: '#e0a23a', door: '#3f86d0' }, true);
-    // escola da vila: prédio simples a leste da casa de Iara, com placa e sino
-    building('escola', 'Escola da vila', { x: 768, y: 212, w: 70, h: 72, roof: '#4a7a4a', wall: '#f2e8d2', timber: false, windows: [[6, 10], [54, 10]], shutters: '#c8683a', door: '#8a4a2a' }, true);
-    R(784, 236, 38, 9, OUT); R(785, 237, 36, 7, '#f8f0dc'); pixelText(791, 238, 'ESCOLA', '#3a5a2a');
-    R(801, 204, 4, 8, OUT); R(802, 205, 2, 6, '#e8c060'); R(800, 210, 6, 2, '#8a5e36');
+    // escola da vila: no leste da vila, de frente para a rua de baixo, com placa e sino
+    {
+      const X = 880, Y = 498;
+      building('escola', 'Escola da vila', { x: X, y: Y, w: 76, h: 72, roof: '#4a7a4a', wall: '#f2e8d2', timber: false, windows: [[6, 10], [60, 10]], shutters: '#c8683a', door: '#8a4a2a' }, true);
+      R(X + 19, Y + 24, 38, 9, OUT); R(X + 20, Y + 25, 36, 7, '#f8f0dc'); pixelText(X + 26, Y + 26, 'ESCOLA', '#3a5a2a');
+      R(X + 36, Y - 8, 4, 8, OUT); R(X + 37, Y - 7, 2, 6, '#e8c060'); R(X + 35, Y - 2, 6, 2, '#8a5e36');
+      fence(X - 34, X - 8, Y + 64, '#d8b078'); fence(X + 84, X + 112, Y + 64, '#d8b078'); solid(X - 36, Y + 54, 30, 10); solid(X + 82, Y + 54, 32, 10);   // pátio cercado dos dois lados
+    }
     fountain(630, 136); solid(616, 126, 28, 16);
     [[566, 226], [694, 226], [566, 116], [694, 116]].forEach(([x, y]) => addLamp(x, y));
     keep(SPOT.bench[0] - 18, SPOT.bench[1] - 14, 36, 22); solid(SPOT.bench[0] - 13, SPOT.bench[1] - 8, 26, 8);
@@ -617,7 +702,12 @@ const World = (() => {
     building('tome', 'Cabana de Tomé', { x: 980, y: 66, w: 60, h: 76, roof: '#5a7a5a', wall: '#b89868', brick: true, windows: [[6, 8, 9, 8]], chimney: 40, door: '#5a3a22', doorX: 30 }, false);
     water(1104, 258, 62, 36);
     // rio do bosque: sai da lagoa e desce até o fim da mata, com uma ponte de tábuas
-    stream([[1110, 280], [1126, 330], [1129, 365], [1114, 392], [1106, 418], [1092, 445], [1086, 475], [1084, 520]], 6, [1106, 371, 36, 12]);
+    stream([[1110, 280], [1126, 330], [1129, 365], [1114, 392], [1106, 418], [1092, 445], [1086, 475], [1084, 520], [1082, 570], [1080, 620], [1070, 680], [1058, 740], [1050, 812]], 6,
+      [[1106, 371, 36, 12], [1062, 588, 38, 18], [1036, 768, 40, 24]]);              // pontes: trilha do bosque, rua de baixo e beira-rio
+    // rio do sul: atravessa a vila de oeste a leste, com margens de areia, duas pontes e um píer
+    stream([[-20, 836], [200, 842], [420, 826], [620, 812], [800, 816], [1000, 808], [1200, 818], [1400, 806], [1620, 812]], 13,
+      [[769, 790, 22, 50], [1299, 786, 22, 54]]);
+    pier(566, 784, 18, 26);
     NTREES.forEach(([x, y]) => keep(x - 16, y - 34, 32, 44)); NROCKS.forEach(([x, y]) => keep(x - 12, y - 14, 24, 22)); FORAGE.forEach(([x, y]) => keep(x - 12, y - 14, 24, 24));
     keep(SPOT.hat[0] - 12, SPOT.hat[1] - 14, 24, 24);
     R(846, 150, 14, 10, OUT); R(847, 151, 12, 8, '#f0e6cc'); R(852, 160, 2, 8, '#6a4426'); solid(848, 162, 10, 5);
@@ -625,6 +715,48 @@ const World = (() => {
     // ---------- trilha da serra: sobe ao norte, entre a vila e o bosque ----------
     road('terra', 812, 18, 18, 136);
     R(836, 34, 22, 12, OUT); R(837, 35, 20, 10, '#c89a62'); R(840, 39, 9, 1, '#6a4426'); R(848, 37, 1, 5, '#6a4426'); R(847, 38, 3, 1, '#6a4426'); R(846, 46, 2, 10, '#6a4426'); solid(844, 48, 8, 8);
+    // ---------- vila sul: praça do coreto, horta comunitária e jardins da beira-rio ----------
+    coreto(635, 486); solid(608, 464, 56, 34);
+    flowerBed(568, 448, 26, 12); flowerBed(676, 448, 26, 12); flowerBed(568, 516, 26, 12); flowerBed(676, 516, 26, 12);
+    [[566, 538], [706, 538], [566, 444], [706, 444]].forEach(([x, y]) => addLamp(x, y));
+    benchDeco(588, 532); benchDeco(662, 532);
+    obj({ id: 'coreto', kind: 'text', x: 635, y: 504, r: 16, hit: [608, 448, 56, 52], label: 'Coreto', text: 'O coreto da praça sul. Em dia de festa tem música aqui; nos outros, é sombra e conversa.' });
+    {                                                                             // horta comunitária: canteiros cercados ao sul da rua de baixo
+      const X0 = 482, X1 = 590, Y0 = 628, Y1 = 708;
+      R(X0, Y0, X1 - X0, Y1 - Y0, '#9a7a4a');
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) { const bx = X0 + 8 + c * 25, by = Y0 + 8 + r * 18; R(bx - 1, by - 1, 19, 12, '#6a4426'); R(bx, by, 17, 10, '#7a5230');
+        for (let k = 2; k < 16; k += 4) { if (paintSeason === 3) { R(bx + k, by + 3, 2, 1, '#eef3f8'); continue; } R(bx + k, by + 2, 1, 6, '#3f9648'); R(bx + k - 1, by + 3, 3, 1, (r + c) % 3 ? '#58b858' : '#e04a3a'); } }
+      fence(X0, X1, Y0, '#d8b078'); fence(X0, 526, Y1, '#d8b078'); fence(548, X1, Y1, '#d8b078');
+      for (let y = Y0; y <= Y1; y += 6) { R(X0 - 1, y - 6, 3, 7, OUT); R(X0, y - 5, 1, 6, '#d8b078'); R(X1 + 1, y - 6, 3, 7, OUT); R(X1 + 2, y - 5, 1, 6, '#d8b078'); }
+      solid(X0 - 2, Y0 - 8, X1 - X0 + 6, 8); solid(X0 - 2, Y1 - 6, 532 - X0, 8); solid(546, Y1 - 6, X1 - 542, 8); solid(X0 - 2, Y0, 6, Y1 - Y0); solid(X1 - 2, Y0, 6, Y1 - Y0);
+      keep(X0 - 6, Y0 - 12, X1 - X0 + 12, Y1 - Y0 + 24);
+      obj({ id: 'horta', kind: 'text', x: 537, y: 716, r: 14, hit: [X0, Y0 - 10, X1 - X0, Y1 - Y0 + 10], label: 'Horta comunitária', text: 'Canteiros cuidados pelos moradores da vila. Cada um planta um pouco e todo mundo colhe.' });
+    }
+    flowerBed(810, 640, 30, 12); flowerBed(860, 640, 30, 12); flowerBed(810, 690, 30, 12); flowerBed(860, 690, 30, 12);
+    benchDeco(830, 730); picnic(940, 660); keep(800, 630, 180, 120);
+    [[800, 760], [1000, 760], [600, 760], [1200, 760]].forEach(([x, y]) => addLamp(x, y));
+    obj({ id: 'piquenique', kind: 'text', x: 953, y: 684, r: 14, hit: [936, 652, 34, 24], label: 'Mesa de piquenique', text: 'Uma mesa de piquenique de frente para o rio. Alguém esqueceu uma casca de laranja aqui.' });
+    // ---------- bairro leste: avenida, terrenos reservados (ferraria e museu) e pomar ----------
+    lot(1350, 206, 120, 84, 248);
+    sign(1326, 230, '#8a8478'); solid(1328, 232, 8, 8);
+    obj({ id: 'lote-ferraria', kind: 'text', x: 1332, y: 250, r: 14, hit: [1322, 218, 20, 26], label: 'Terreno reservado', text: 'Terreno reservado. Dizem que um ferreiro vai se instalar aqui. Por enquanto, só estacas e capim.' });
+    lot(1350, 336, 150, 124, 398);
+    sign(1326, 380, '#c8a050'); solid(1328, 382, 8, 8);
+    obj({ id: 'lote-museu', kind: 'text', x: 1332, y: 400, r: 14, hit: [1322, 368, 20, 26], label: 'Terreno do futuro museu', text: 'Terreno reservado para o museu da vila. A obra ainda não começou.' });
+    keep(1340, 196, 170, 276);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) { const x = 1206 + c * 22 + (r % 2) * 10, y = 470 + r * 34; addTree(x, y, 9); keep(x - 14, y - 30, 28, 40); }   // pomarzinho
+    flowerBed(1352, 640, 30, 12); flowerBed(1402, 640, 30, 12); benchDeco(1380, 700); picnic(1440, 640);
+    water(1246, 380, 26, 15);                                                      // laguinho do bairro leste (dá para pescar)
+    well(1192, 664); solid(1190, 650, 22, 28); keep(1180, 640, 44, 44);
+    obj({ id: 'poco', kind: 'text', x: 1201, y: 688, r: 14, hit: [1188, 644, 26, 34], label: 'Poço antigo', text: 'Um poço antigo, de pedra. A água lá embaixo é fria e reflete o céu.' });
+    benchDeco(1226, 404); benchDeco(1252, 356);
+    // ---------- floresta fechada ao sul da fazenda ----------
+    solid(0, 500, 404, FORA.h - 500);
+    // trajetos dos moradores na vila: a vegetação sorteada nunca cai neles
+    (typeof VILLAGERS !== 'undefined' ? VILLAGERS : []).filter(v => !v.map).forEach(v => v.sched.forEach(([, path]) => {
+      if (!Array.isArray(path)) return;
+      path.forEach((q, i) => { const a = path[i - 1] || q, n = Math.max(1, Math.ceil(Math.hypot(q[0] - a[0], q[1] - a[1]) / 6)); for (let k = 0; k <= n; k++) keep(a[0] + (q[0] - a[0]) * k / n - 10, a[1] + (q[1] - a[1]) * k / n - 12, 20, 16); });
+    }));
     // ---------- vegetação: bordas fechadas e enfeites ----------
     solid(0, 0, W, 26); solid(0, H - 10, W, 10); solid(0, 0, 8, H); solid(W - 8, 0, 8, H);
     open(810, 0, 22, 26);
@@ -632,14 +764,21 @@ const World = (() => {
     obj({ id: 'door:montanha', kind: 'door', to: 'montanha', x: 821, y: 40, r: 14, hit: [806, 0, 30, 40], label: 'Subir a trilha da serra' });
     for (let x = 14; x < W; x += 26) { if (Math.abs(x - 821) > 22) (x % 3 ? addTree : addPine)(x, 30 + (x % 4) * 3, 10); (x % 2 ? addTree : addPine)(x + 8, H - 4 - (x % 3) * 2, 10); }
     for (let y = 60; y < H - 30; y += 34) { addPine(10, y); addTree(W - 10, y, 9); }
+    const riverY = x => (x < 420 ? 836 + (x / 420) * -10 : 826);
+    for (let y = 512; y < H - 20; y += 24) for (let x = 22; x < 400; x += 26) {        // mata fechada ao sul da fazenda (o rio passa por baixo dela)
+      const xx = x + ((y / 24) % 2) * 12, yy = y + ((x * 7) % 9);
+      if (Math.abs(yy - riverY(xx)) < 26 || xx > 396) continue;
+      ((xx + yy) % 3 ? addTree : addPine)(xx, yy, 10);
+    }
     let placed = 0;
-    for (let i = 0; i < 900 && placed < 26; i++) {
+    const villageArea = (x, y) => x > 410 && y < 770 && !(x > 850 && x < 1200 && y < 500) && (y > 40 || x > 1200);   // fora da fazenda, do bosque e da beira-rio
+    for (let i = 0; i < 4000 && placed < 96; i++) {
       const x = 30 + Math.floor(rand() * (W - 60)), y = 60 + Math.floor(rand() * (H - 90));
-      if (x < 410 || x > 850 || !isFree(x - 16, y - 30, 32, 40)) continue;                 // só na vila: o bosque e a fazenda têm as próprias árvores
+      if (!villageArea(x, y) || !isFree(x - 16, y - 30, 32, 40)) continue;                 // só na vila: o bosque e a fazenda têm as próprias árvores
       (rand() < 0.35 ? addPine : addTree)(x, y, 9 + Math.floor(rand() * 3)); keep(x - 16, y - 30, 32, 40); placed++;
     }
-    for (let i = 0; i < 46; i++) { const x = 30 + rand() * (W - 60), y = 50 + rand() * (H - 80); if (x > 404 && isFree(x - 8, y - 10, 16, 14)) { bush(Math.round(x), Math.round(y), 4 + Math.floor(rand() * 2)); solid(x - 4, y - 4, 8, 5); } }
-    flowers(520, (x, y) => !isFree(x - 2, y - 2, 6, 8));
+    for (let i = 0; i < 150; i++) { const x = 30 + rand() * (W - 60), y = 50 + rand() * (H - 80); if (x > 404 && isFree(x - 8, y - 10, 16, 14)) { bush(Math.round(x), Math.round(y), 4 + Math.floor(rand() * 2)); solid(x - 4, y - 4, 8, 5); } }
+    flowers(1200, (x, y) => !isFree(x - 2, y - 2, 6, 8));
     m.spawn = { x: m.doors.casa.x, y: m.doors.casa.y };
     m.places = PLACES;
     m.spawns = villageSpawns(m);
@@ -656,8 +795,10 @@ const World = (() => {
     };
     const covered = (x, y) => m.sprites.some(sp => x > sp.x - 4 && x < sp.x + sp.img.width + 4 && y > sp.y - 4 && y < sp.base + 8)
       || m.objs.some(o => { const r = o.hit || [o.x - 10, o.y - 20, 20, 22]; return x > r[0] - 10 && x < r[0] + r[2] + 10 && y > r[1] - 6 && y < r[1] + r[3] + 16; })
-      || m.waters.some(w => ((x - w.cx) / (w.rx + 12)) ** 2 + ((y - w.cy) / (w.ry + 12)) ** 2 < 1);
-    for (let y = 70; y <= 336; y += 10) for (let x = 424; x <= 848; x += 10) {
+      || m.waters.some(w => ((x - w.cx) / (w.rx + 12)) ** 2 + ((y - w.cy) / (w.ry + 12)) ** 2 < 1)
+      || (m.streams || []).some(st => st.pts.some(([px, py], i) => i % 4 === 0 && (x - px) ** 2 + (y - py) ** 2 < (st.hw + 10) ** 2));
+    for (let y = 70; y <= 860; y += 10) for (let x = 424; x <= 1580; x += 10) {
+      if (x > 848 && x < 1200 && y < 500) continue;                            // o bosque tem coletas próprias
       if (blocked(x - 9, y - 20, 18, 26) || covered(x, y)) continue;           // folga em volta de paredes e telhados
       if (pts.some(([px, py]) => Math.abs(px - x) < 22 && Math.abs(py - y) < 18)) continue;
       pts.push([x, y]);
@@ -677,7 +818,12 @@ const World = (() => {
     { id: 'honorio', label: 'Seu Honório', x: 755, y: 112, icon: 'morador' },
     { id: 'bia', label: 'Bia', x: 515, y: 266, icon: 'morador' },
     { id: 'iara', label: 'Casa de Iara', x: 725, y: 266, icon: 'morador' },
-    { id: 'escola', label: 'Escola', x: 803, y: 250, icon: 'casa' },
+    { id: 'escola', label: 'Escola', x: 918, y: 540, icon: 'casa' },
+    { id: 'coreto', label: 'Praça do coreto', x: 635, y: 488, icon: 'praca' },
+    { id: 'horta', label: 'Horta comunitária', x: 536, y: 668, icon: 'roca' },
+    { id: 'beirario', label: 'Beira-rio', x: 700, y: 800, icon: 'agua' },
+    { id: 'lote-ferraria', label: 'Terreno reservado', x: 1410, y: 248, icon: 'obra' },
+    { id: 'lote-museu', label: 'Terreno do museu (reservado)', x: 1425, y: 398, icon: 'obra' },
     { id: 'tome', label: 'Tomé', x: 1010, y: 106, icon: 'morador' },
     { id: 'bosque', label: 'Bosque', x: 950, y: 330, icon: 'bosque' },
     { id: 'rio', label: 'Lagoa do bosque', x: 1104, y: 258, icon: 'agua' },
@@ -955,7 +1101,7 @@ const World = (() => {
   function waterZone(map, x, y) {
     for (const w of map.waters || []) if (((x - w.cx) / (w.rx - 2)) ** 2 + ((y - w.cy) / (w.ry - 2)) ** 2 <= 1) return w.zone || 'lago';
     for (const st of map.streams || []) {
-      if (st.bridge) { const [bx, by, bw, bh] = st.bridge; if (x >= bx - 1 && x <= bx + bw && y >= by - 3 && y <= by + bh + 1) continue; }
+      if ((st.bridges || []).some(([bx, by, bw, bh]) => x >= bx - 1 && x <= bx + bw && y >= by - 3 && y <= by + bh + 1)) continue;
       for (let i = 0; i < st.pts.length; i += 2) { const [px, py] = st.pts[i]; if ((x - px) ** 2 + (y - py) ** 2 <= (st.hw - 1) ** 2) return st.zone; }
     }
     return null;

@@ -413,11 +413,12 @@
     const c = calendar(day), weekday = c.wd <= 4, day10 = c.day === 10;
     const EXIT = [128, 148], TEA = [167, 138], CORNER = [54, 124], READ = [206, 140], SHELF = [196, 118], DESK = [85, 132];
     const F = [664, 150], PR1 = [596, 182], PR2 = [684, 198];
-    const toSchool = [HD, [SD[0], 312], SD], fromSchool = [SD, [SD[0], 312], HD];
-    const toFonte = [HD, [632, 312], [632, 224], [656, 204], [664, 172], F], fonteToPr1 = [F, [630, 168], PR1], pr1ToHome = [PR1, [632, 224], [632, 312], HD];
+    // escola no leste da vila: desce a ruela de Iara (x 780) até a rua de baixo e segue a leste (≈ 490 px, 27 min a pé)
+    const toSchool = [HD, [780, HD[1]], [780, 597], [SD[0], 597], SD], fromSchool = toSchool.slice().reverse();
+    const toFonte = [HD, [632, 312], [632, 224], [656, 204], [664, 172], F], fonteToPr1 = [F, [630, 168], PR1], pr1ToHome = [PR1, [632, 182], [632, 224], [632, 312], HD];   // contorna o banco da praça
     const fonteToHome = [F, [664, 172], [656, 204], [632, 224], [632, 312], HD], fonteToPr2 = [F, [672, 176], PR2], pr2ToFonte = [PR2, [672, 176], F];
     const E = [[360, [TEA], 'iara', 'tea', 'up'], [400, [SHELF], 'iara', 'draw', 'up']];
-    const school = () => E.push([418, [EXIT], 'iara'], [424, toSchool, 'fora', null, 'up'], [450, [EXIT, DESK], 'escola', 'study', 'up'], [750, [EXIT], 'escola'], [754, fromSchool, 'fora'], [762, [EXIT, TEA], 'iara', 'tea', 'up']);
+    const school = () => E.push([414, [EXIT], 'iara'], [420, toSchool, 'fora', null, 'up'], [450, [EXIT, DESK], 'escola', 'study', 'up'], [748, [EXIT], 'escola'], [751, fromSchool, 'fora'], [782, [EXIT, TEA], 'iara', 'tea', 'up']);
     if (rain) {                                              // chuva: aulas mantidas; lazer e pintura dentro de casa
       if (weekday) school(); else E.push([480, [CORNER], 'iara', 'brush', 'left'], [600, [READ], 'iara', 'read', 'up'], [720, [TEA], 'iara', 'tea', 'up']);
       E.push([800, [CORNER], 'iara', 'brush', 'left']);
@@ -427,7 +428,7 @@
       return E.sort((a, b) => a[0] - b[0]);
     }
     if (weekday) { school(); E.push([800, [CORNER], 'iara', 'draw', 'left']); }
-    else E.push([420, [CORNER], 'iara', 'draw', 'left'], [596, [EXIT], 'iara'], [600, [HD, [632, 312], [632, 224], PR1], 'fora', 'draw', 'down'], [750, pr1ToHome, 'fora'], [766, [EXIT, TEA], 'iara', 'tea', 'up']);
+    else E.push([420, [CORNER], 'iara', 'draw', 'left'], [596, [EXIT], 'iara'], [600, [HD, [632, 312], [632, 224], [632, 182], PR1], 'fora', 'draw', 'down'], [750, pr1ToHome, 'fora'], [766, [EXIT, TEA], 'iara', 'tea', 'up']);
     E.push([838, [EXIT], 'iara'], [842, toFonte, 'fora', day10 ? 'paint' : 'draw', 'left']);
     if (day10) E.push([1080, fonteToHome, 'fora']);                       // dia 10: pinta a fonte das 14h às 18h
     else if (weekday) E.push([990, fonteToPr1, 'fora', 'draw', 'down'], [1080, pr1ToHome, 'fora']);
@@ -526,7 +527,7 @@
        peixes capturados hoje e aviso de limite. Jogos antigos ganham uma lista nova que
        preserva a condição de hoje, se já houver uma. */
     s.luck = Object.assign({ key: '', list: null, today: null, msgDay: 0, fishDay: 0, fish: 0, limitDay: 0 }, s.luck);
-    s.seasonal = (s.seasonal || []).filter(o => !(o.x > 756 && o.x < 848 && o.y > 200 && o.y < 304));   // nada fica dentro da escola nova
+    { const f = World.get('fora'); s.seasonal = (s.seasonal || []).filter(o => World.free(f, o.x, o.y) && !World.waterZone(f, o.x, o.y)); }   // mapa ampliado: nada fica dentro de prédio, árvore ou água
     if (!s.nature.mforage) refreshMountain(s);
     s.nature.cleared = s.nature.cleared || {};
     if (!s.stumps) {                                    // alguns tocos em grama livre, longe da casa
@@ -578,7 +579,14 @@
   function enterMap(id, x, y, dir) {
     map = World.get(id);
     P.x = x; P.y = y; P.dir = dir || 'down'; P.moving = false; P.work = 0; P.tool = null;
-    if (!World.free(map, P.x, P.y) || dynBlocked(P.x, P.y)) { P.x = map.spawn.x; P.y = map.spawn.y; }
+    if (!World.free(map, P.x, P.y) || dynBlocked(P.x, P.y)) {           // posição salva inválida (ex.: o mapa mudou): o ponto livre mais próximo
+      let best = null;
+      for (let r = 8; r <= 160 && !best; r += 8) for (let a = 0; a < 16 && !best; a++) {
+        const x = Math.round(P.x + Math.cos(a * Math.PI / 8) * r), y = Math.round(P.y + Math.sin(a * Math.PI / 8) * r);
+        if (World.free(map, x, y) && !dynBlocked(x, y)) best = { x, y };
+      }
+      P.x = best ? best.x : map.spawn.x; P.y = best ? best.y : map.spawn.y;
+    }
     S.pos = { map: id, x: Math.round(P.x), y: Math.round(P.y), dir: P.dir };
   }
   function travel(to, x, y, dir) {
@@ -2651,6 +2659,8 @@
      sua posição e o destino da missão. Pausa o tempo; não teleporta.
      ===================================================== */
   const MAP_ICON = {
+    obra: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 9, y - 7, 18, 14); g.fillStyle = '#a8a060'; g.fillRect(x - 8, y - 6, 16, 12); g.fillStyle = '#e8d070'; g.fillRect(x - 8, y - 6, 16, 1); g.fillRect(x - 8, y + 5, 16, 1);
+      g.fillStyle = '#d8a868'; [-8, -2, 4].forEach(i => g.fillRect(x + i, y - 8, 2, 16)); g.fillStyle = '#e04a3a'; [-8, -2, 4].forEach(i => g.fillRect(x + i, y - 8, 2, 2)); },
     casa: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 9, y - 4, 18, 13); g.fillStyle = '#b47c48'; g.fillRect(x - 8, y - 3, 16, 11); g.fillStyle = '#a24c32'; for (let i = 0; i < 8; i++) g.fillRect(x - 9 + i, y - 5 - i, 18 - i * 2, 1); g.fillStyle = '#ffd98a'; g.fillRect(x - 2, y + 2, 4, 6); },
     galinha: (g, x, y) => { g.fillStyle = '#241a2c'; g.fillRect(x - 8, y - 5, 16, 12); g.fillStyle = '#ffffff'; g.fillRect(x - 7, y - 4, 14, 10); g.fillStyle = '#e04a3a'; g.fillRect(x + 2, y - 8, 4, 4); g.fillStyle = '#f0a020'; g.fillRect(x + 7, y - 2, 3, 2); },
     cerca: (g, x, y) => { g.fillStyle = '#d8b078'; for (let i = -8; i <= 8; i += 4) g.fillRect(x + i, y - 6, 2, 12); g.fillRect(x - 8, y - 3, 18, 2); g.fillRect(x - 8, y + 2, 18, 2); },
@@ -2675,8 +2685,8 @@
   }
   /* Onde o personagem está, no mapa externo (dentro de um prédio = a porta dele). */
   const playerPoint = () => (map.id === 'fora' || map.id === 'montanha' ? outdoorPoint(map.id, P.x, P.y) : outdoorPoint(map.id, 0, 0));
-  const PLACE_NAME = { casa: 'dentro de casa', loja: 'no Armazém', galinheiro: 'no galinheiro', montanha: 'na serra', tenda: 'na tenda de Lúcio' };
-  const LEGEND = { casa: 'Sua casa', galinha: 'Galinheiro', cerca: 'Cercado das galinhas', roca: 'Roça (terra cultivável)', agua: 'Água (lago, lagoa e nascente)', loja: 'Armazém', praca: 'Praça e fonte', morador: 'Casa de morador', bosque: 'Bosque e mata', trilha: 'Trilha da serra (norte)', tenda: 'Tenda de Lúcio', rocha: 'Rochedos da serra' };
+  const PLACE_NAME = { escola: 'na escola', iara: 'na casa de Iara', casa: 'dentro de casa', loja: 'no Armazém', galinheiro: 'no galinheiro', montanha: 'na serra', tenda: 'na tenda de Lúcio' };
+  const LEGEND = { obra: 'Terreno reservado (ainda sem construção)', casa: 'Sua casa', galinha: 'Galinheiro', cerca: 'Cercado das galinhas', roca: 'Roça (terra cultivável)', agua: 'Água (lago, lagoa e nascente)', loja: 'Armazém', praca: 'Praça e fonte', morador: 'Casa de morador', bosque: 'Bosque e mata', trilha: 'Trilha da serra (norte)', tenda: 'Tenda de Lúcio', rocha: 'Rochedos da serra' };
   function renderMap() {
     const m = World.get('fora'), mt = World.get('montanha'), c = $('map-canvas'), g = c.getContext('2d');
     c.width = m.w; c.height = m.h + MAP_FY; g.imageSmoothingEnabled = false;
@@ -2687,6 +2697,7 @@
     $('map-title').textContent = `${S.farmName}, ${VILA} e a serra — ${REGIAO}`;
     // nomes de regiões
     label(g, S.farmName, 200, 186 + MAP_FY, 16); label(g, VILA, 640, 36 + MAP_FY, 16); label(g, 'Serra', MAP_SX + 320, 90, 16);
+    label(g, 'Bairro leste', 1420, 112 + MAP_FY, 16); label(g, 'Vila sul', 640, 404 + MAP_FY, 16); label(g, 'Rio do sul', 1100, 846 + MAP_FY, 14); label(g, 'Mata', 200, 640 + MAP_FY, 16);
     const leg = $('map-legend'); leg.replaceChildren();
     const seenKinds = new Set();
     const put = (pl, mapId, name) => {
