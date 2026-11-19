@@ -457,7 +457,8 @@
     const n = v.sched.length, wrap = idx < 0; if (wrap) idx = n - 1;
     const e = v.sched[idx];
     if (e[1] === 'loja') return { where: 'loja', x: World.get('loja').keeper[0], y: World.get('loja').keeper[1], dir: 'down' };
-    const prev = v.sched[(idx - 1 + n) % n][1], start = prev === 'loja' ? [510, 160] : prev[prev.length - 1];
+    if (e[1] === 'residencia') return { where: 'residencia', x: 506, y: 120, dir: 'down' };   // em casa, no andar de cima do Armazém: não aparece em lugar nenhum
+    const prev = v.sched[(idx - 1 + n) % n][1], start = typeof prev === 'string' ? [510, 160] : prev[prev.length - 1];
     const pts = [start, ...e[1]]; let d = wrap ? 1e9 : (tm - e[0]) * 18;
     for (let i = 1; i < pts.length; i++) {
       const dx = pts[i][0] - pts[i - 1][0], dy = pts[i][1] - pts[i - 1][1], len = Math.hypot(dx, dy);
@@ -1738,7 +1739,7 @@
   /* Para onde a missão leva agora: o lugar da tarefa ou, quando está pronta, quem recebe. */
   function questTarget(id) {
     const q = QUESTS[id]; if (!q) return null;
-    const toPerson = () => { const v = villagerById(q.to || q.giver), p = villagerAt(v, S.time); return { map: p.where, x: p.x, y: p.y - 36, label: v.name }; };
+    const toPerson = () => { const v = villagerById(q.to || q.giver), p = villagerAt(v, S.time); return p.where === 'residencia' ? { map: 'fora', x: p.x, y: p.y, label: `${v.name} (em casa, em cima do Armazém; volta às 6h)` } : { map: p.where, x: p.x, y: p.y - 36, label: v.name }; };
     if (!q.selfDone && qReady(id)) return toPerson();
     if (q.where) return { map: q.where[0], x: q.where[1], y: q.where[2], label: q.where[3] };
     return toPerson();
@@ -2693,6 +2694,7 @@
     g.fillStyle = '#3e4a34'; g.fillRect(0, 0, m.w, MAP_FY);
     for (let i = 0; i < 40; i++) { g.fillStyle = i % 2 ? '#56604a' : '#6a6a5a'; const x = (i * 97) % m.w, y = (i * 53) % (MAP_FY - 40); for (let r = 0; r < 18; r++) g.fillRect(x - r, y + r, r * 2, 1); }   // morros
     g.drawImage(mt.bg, MAP_SX, 0); g.drawImage(m.bg, 0, MAP_FY);
+    [[mt, MAP_SX, 0], [m, 0, MAP_FY]].forEach(([mm, ox, oy]) => mm.sprites.slice().sort((a, b2) => a.base - b2.base).forEach(sp => g.drawImage(sp.img, sp.x + ox, sp.y + oy)));   // prédios e árvores
     g.fillStyle = 'rgba(16,20,40,.18)'; g.fillRect(0, 0, c.width, c.height);
     $('map-title').textContent = `${S.farmName}, ${VILA} e a serra — ${REGIAO}`;
     // nomes de regiões
@@ -2720,7 +2722,7 @@
 
   function shop() {
     const c = villagerById('celeste'), at = villagerAt(c, S.time);
-    if (at.where !== 'loja') return run(() => say('narr', 'O balcão está vazio. Dona Celeste atende das 6h às 18h; depois disso, costuma estar na praça.'));
+    if (at.where !== 'loja') return run(() => say('narr', S.time >= 1290 || S.time < 360 ? 'O balcão está vazio. Dona Celeste já subiu para a casa dela, em cima do Armazém. Ela atende das 6h às 18h.' : 'O balcão está vazio. Dona Celeste atende das 6h às 18h; depois disso, costuma estar na praça.'));
     talkTo(c);
   }
 
