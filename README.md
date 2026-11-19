@@ -257,6 +257,53 @@ de noite, e o ovo aparece nos ninhos de manhã.
 do ano 1, Bia traz o seu animal favorito. Aceite e dê um nome; se adiar, ela volta
 na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
+## Habilidades
+
+O jogador tem três habilidades, **Cultivo**, **Pesca** e **Coleta**, cada uma
+com a própria experiência, do nível 0 ao 10. A tabela usa experiência **total
+acumulada** (do nível 1 ao 2, por exemplo, faltam 380 − 100 = 280 XP):
+
+| Nível | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| XP total | 100 | 380 | 770 | 1.300 | 2.150 | 3.300 | 4.800 | 6.900 | 10.000 | 15.000 |
+
+| Habilidade | Como ganha experiência | Benefício por nível |
+| --- | --- | --- |
+| Cultivo | colher rabanete 15, tomate 12, morango 18, abóbora 31 (uma vez por colheita; morango e abóbora dão de novo a cada nova produção); carinho em galinha 5 (uma vez por dia por galinha); ovo recolhido do ninho 5 | enxada e regador gastam 5% menos energia (50% no nível 10) |
+| Pesca | captura concluída: sardinha 13, tucunaré 20; alga, musgo ou lixo 3. Captura perfeita de peixe: × 2,4, arredondado para baixo (não vale para alga, musgo e lixo) | zona verde do minijogo: 22% da pista + 1 ponto por nível (32% no 10); vara de fibra de vidro liberada no nível 2 |
+| Coleta | coletável da natureza (flor, fruto, cogumelo; na vila, no bosque e na serra) 7 por ponto; árvore derrubada com o machado 12 (só quando cai); toco da árvore 1 | machado gasta 5% menos energia (50% no nível 10) |
+
+Não dão experiência: andar, abrir menus, comprar, vender, arar, plantar, regar,
+golpes que não terminam nada, peixes que escapam, pescarias canceladas, itens
+movidos entre espaços, comprados, ganhos de presente ou tirados do baú. A
+quantidade colhida não multiplica a experiência: conta a colheita, o ponto de
+coleta ou a árvore, uma vez. O tamanho do peixe não muda a experiência.
+
+**Quando sobe de nível.** A experiência entra na hora (um aviso discreto,
+"+15 Cultivo", sobe do personagem, sem abrir janela). O nível novo e o benefício
+só são confirmados ao dormir, e passam a valer no dia seguinte. Durante o dia, a
+aba Habilidades ganha um "!" e mostra o nível a confirmar. No resumo da noite
+aparece um quadro com todas as habilidades que subiram, o nível novo e o
+benefício; vários níveis podem subir na mesma noite. Desmaiar às 2h também
+confirma, e cada avanço é confirmado uma vez só.
+
+**Energia.** A redução vale sobre o custo normal da ferramenta (enxada 2,
+regador 1, machado 2) e guarda frações: no nível 1 de Cultivo, arar gasta 1,9.
+A sorte do dia não muda a energia.
+
+**Aba Habilidades** (E → estrela): ícone, nome, nível confirmado, dez marcas de
+nível, barra de progresso com o XP dentro do nível ("50 de 280 XP para o nível
+2"), o total, o benefício atual e como ganhar experiência. No nível 10 aparece
+"Nível máximo". Mineração e combate não existem neste jogo e não aparecem.
+
+**Saves antigos.** Cultivo e Coleta começam em 0 XP, sem experiência
+retroativa. A pesca antiga (nível com 100 + 25 × N de XP por nível) foi
+convertida em XP total: a soma dos níveis completos mais o que sobrava. O nível
+passa a vir da tabela nova, já confirmado (ex.: nível 4 com 50 XP = 600 XP totais
+= Pesca nível 2). O sistema antigo de nível de pesca deixou de existir. Ficam
+salvos o XP de cada habilidade e o nível confirmado; o que está a confirmar vem
+da diferença entre os dois.
+
 ### Ruas e caminhos
 
 A área rural e o centrinho têm pisos diferentes:
@@ -576,15 +623,15 @@ Vara de bambu.
 
 | Peixe | Onde | Mais comum | Tamanho | Venda | Jeito de nadar | XP |
 | --- | --- | --- | --- | --- | --- | --- |
-| Sardinha | rio e lago (a mais comum no lago da fazenda) | 6h–19h | 5 a 90 cm | 50 moedas | tranquilo | 20 |
-| Tucunaré | só no lago | 6h–18h | 20 a 80 cm | 60 moedas | ativo | 30 |
+| Sardinha | rio e lago (a mais comum no lago da fazenda) | 6h–19h | 5 a 90 cm | 50 moedas | tranquilo | 13 |
+| Tucunaré | só no lago | 6h–18h | 20 a 80 cm | 60 moedas | ativo | 20 |
 
 O preço é fixo por espécie: não muda com o tamanho, a sorte do dia, o nível de
 pesca nem a captura perfeita. O tamanho aparece como informação e conta para o
 recorde pessoal. Há três jeitos de nadar: **tranquilo** (devagar,
 com pausas e curvas suaves), **ativo** (mais rápido, muda de direção com mais
 frequência e dá pequenas arrancadas) e **ágil** (arrancadas curtas alternadas com
-pausas; 40 XP). O ágil já está pronto para a próxima espécie que entrar no jogo.
+pausas). O ágil já está pronto para a próxima espécie que entrar no jogo.
 
 **Comando único.** A pesca inteira funciona com o **botão esquerdo do mouse** ou
 com a **barra de espaço**, e os dois contam como o mesmo botão: ele está
@@ -621,18 +668,17 @@ desiste e recolhe a linha. Cada lançamento válido gasta 2 de energia; lançame
 inválidos (longe da margem, sem água ou com parede no caminho) não gastam energia
 nem isca. Se der 2h com a linha na água, ela é recolhida antes de o dia acabar.
 
-**Captura perfeita.** Se o centro do peixe não sair da zona verde depois da
-tolerância inicial, a captura é perfeita: "Perfeito!" aparece e a experiência
-ganha 50% a mais.
+**Captura perfeita.** Se o centro do peixe ficar dentro da zona verde durante
+todo o minijogo, a captura é perfeita: "Perfeito!" aparece e a experiência da
+captura é multiplicada por 2,4 (arredondada para baixo).
 
-**Nível de pesca (0 a 10).** Cada captura dá a experiência do jeito de nadar
-(guardando ou soltando o peixe, uma vez só). Passar do nível N ao seguinte pede
-100 + 25 × N de experiência, e o que sobra continua contando. O nível aumenta a
-zona verde (22% da barra no nível 0, +1 ponto por nível, 32% no 10), o alcance do
+**Nível de pesca (0 a 10).** É o nível da habilidade **Pesca** (veja
+"Habilidades"): cada captura concluída dá experiência (guardando ou soltando o
+peixe, uma vez só) e o nível novo vale depois de dormir. O nível aumenta a zona
+verde (22% da barra no nível 0, +1 ponto por nível, 32% no 10), o alcance do
 lançamento e encurta a espera; os peixes não ficam mais difíceis para compensar.
-Nível, progresso e zona aparecem na aba Personagem; subir de nível mostra um aviso.
 
-**Vara de fibra de vidro.** À venda no Armazém a partir do nível 4 de pesca, por
+**Vara de fibra de vidro.** À venda no Armazém a partir do nível 2 de Pesca, por
 1.500 moedas. A compra pede confirmação, confere tudo antes de cobrar e não deixa
 comprar duas. A vara nova toma o lugar da de bambu na barra; a de bambu continua
 na mochila (ou vai para o baú, se a mochila estiver cheia). Ela não aumenta a zona
@@ -674,7 +720,7 @@ não muda a zona verde, a dificuldade das espécies nem a experiência. Os núme
 ficam em `LUCK`, no `js/data.js`.
 
 **Alga, musgo e lixo.** Quando vem um deles, "Fisgou!" aparece, a linha traz o
-item até as mãos (sem minijogo, sem experiência e sem "Perfeito!") e o cartão
+item até as mãos (sem minijogo e sem "Perfeito!"; vale 3 de experiência de Pesca) e o cartão
 mostra o que veio: **Guardar** ou **Descartar**. Com a mochila cheia, o item espera
 enquanto você abre espaço ou o descarta. A **alga** é comestível ("Comer alga?",
 recupera 3 de energia) e pode ser vendida (2 moedas) ou dada de presente. O **musgo** e o **lixo** (uma bota
@@ -862,10 +908,11 @@ salvos antes desta versão: as maduras continuam maduras e as que cresciam mant�
 as noites já regadas (agora contam até 13).
 
 Da pesca: vara recebida (ou guardada esperando espaço), carta de Tomé lida, dica
-do minijogo vista, nível e experiência, vara usada por último, compra da vara de
+do minijogo vista, vara usada por último, compra da vara de
 fibra, minhocas carregadas, peixes guardados com o tamanho de cada um, espécies
-descobertas com o maior tamanho e as capturas perfeitas. A experiência acumulada
-nas versões anteriores vira nível na primeira vez que o jogo é aberto. A tentativa em andamento
+descobertas com o maior tamanho e as capturas perfeitas. O nível e a
+experiência de pesca antigos foram convertidos para a habilidade Pesca (veja
+"Habilidades"). A tentativa em andamento
 não é salva: recarregar no meio dela só recolhe a linha, sem peixe de graça e sem
 devolver a energia do lançamento. Espécie, recorde e experiência são gravados no
 momento da captura; o peixe entra na mochila ao escolher "Guardar".

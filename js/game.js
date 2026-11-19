@@ -50,7 +50,7 @@
   }
   /* Pesca: vara recebida, carta de Tomé (dia em que chega), presente guardado (mochila cheia),
      tutorial visto, experiência e espécies descobertas { id: { n, max } }. */
-  const newFishState = letterDay => ({ rod: false, letterDay, letter: false, pending: false, tut: false, lvl: 0, xp: 0, dex: {}, perfect: 0, bait: 0, fiber: false, current: null, v: 2 });
+  const newFishState = letterDay => ({ rod: false, letterDay, letter: false, pending: false, tut: false, dex: {}, perfect: 0, bait: 0, fiber: false, current: null, v: 2 });
   /* Frutos e flores da serra, sorteados a cada dia. */
   function refreshMountain(s) {
     let sd = (s.seed + s.day * 104729) >>> 0; const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -365,6 +365,33 @@
      sorteia chuva; quando o clima existir, basta preencher S.weather. */
   const isRaining = () => !!S && S.weather === 'chuva';
   /* =====================================================
+     HABILIDADES: Cultivo, Pesca e Coleta
+     O XP é somado na hora, junto da ação concluída. O nível novo (e o benefício) só é
+     confirmado ao dormir; até lá, a aba Habilidades mostra que há um avanço a confirmar.
+     ===================================================== */
+  function skillLevelFor(xp) { let l = 0; while (l < 10 && xp >= SKILL_XP[l + 1]) l++; return l; }
+  const skillLvl = k => (S && S.skills && S.skills[k] ? S.skills[k].lvl : 0);
+  const skillPending = k => S.skills[k] && skillLevelFor(S.skills[k].xp) > S.skills[k].lvl;
+  function addXp(k, n, x, y) {
+    if (!S || !S.skills || !S.skills[k] || !(n > 0)) return 0;
+    S.skills[k].xp += n;
+    if (x != null && map && (map.id === 'fora' || map.id === 'montanha' || map.id === 'galinheiro')) fishPop(`+${n} ${SKILLS[k].name}`, 'xp', x, y);   // aviso discreto, sem janela
+    renderTabsBadge();
+    return n;
+  }
+  /* Confirma os níveis novos (na noite, uma vez só). Devolve os avanços. */
+  function confirmSkills() {
+    const ups = [];
+    Object.keys(SKILLS).forEach(k => { const sk = S.skills[k], nl = skillLevelFor(sk.xp); if (nl > sk.lvl) { ups.push({ k, from: sk.lvl, to: nl }); sk.lvl = nl; } });
+    return ups;
+  }
+  /* Gasto de energia da ferramenta com o benefício da habilidade (fracionário, sem arredondar). */
+  function toolEnergy(id, base) {
+    if (!base) return 0;
+    const k = Object.keys(SKILLS).find(sk => (SKILLS[sk].tools || []).includes(id));
+    return k ? +(base * (1 - SKILL_GAIN.energyCut * skillLvl(k))).toFixed(4) : base;
+  }
+  /* =====================================================
      SORTE DO DIA (só a pesca muda; energia é igual nos três tipos de dia)
      ===================================================== */
   const LUCK_KINDS = ['ma', 'neutro', 'sorte'];
@@ -509,9 +536,22 @@
     s.fish = Object.assign(newFishState(s.day + 1), s.fish);
     if (hadFish && oldXp !== null) {                    // pesca da versão anterior: a experiência acumulada vira nível (o que sobra continua)
       s.fish.lvl = 0; s.fish.xp = oldXp;
-      while (s.fish.lvl < FISHING.maxLevel && s.fish.xp >= FISHING.nextLevel(s.fish.lvl)) { s.fish.xp -= FISHING.nextLevel(s.fish.lvl); s.fish.lvl++; }
+      while (s.fish.lvl < FISHING.maxLevel && s.fish.xp >= FISHING.legacyNextLevel(s.fish.lvl)) { s.fish.xp -= FISHING.legacyNextLevel(s.fish.lvl); s.fish.lvl++; }
       s.fish.v = 2;
     }
+    /* habilidades: Cultivo, Pesca e Coleta. Sem histórico, começam em 0 XP. A pesca antiga (nível com
+       XP por nível: 100 + 25 × nível) vira XP total = soma dos níveis completos + o que sobrava, e o
+       nível passa a vir da tabela nova (SKILL_XP), já confirmado. O sistema antigo deixa de existir. */
+    if (!s.skills) {
+      s.skills = {}; Object.keys(SKILLS).forEach(k => { s.skills[k] = { xp: 0, lvl: 0 }; });
+      if (s.fish && (s.fish.lvl || s.fish.xp)) {
+        let total = s.fish.xp || 0; for (let i = 0; i < (s.fish.lvl || 0); i++) total += FISHING.legacyNextLevel(i);
+        s.skills.pesca = { xp: total, lvl: skillLevelFor(total) }; s.fish.legacyXp = total;
+      }
+    }
+    Object.keys(SKILLS).forEach(k => { s.skills[k] = Object.assign({ xp: 0, lvl: 0 }, s.skills[k]); });
+    if (s.fish) { delete s.fish.lvl; delete s.fish.xp; }
+    s.skillPets = s.skillPets || {};
     if (s.inv.some(x => x && x.id === 'vara_fibra') || s.chest.some(x => x && x.id === 'vara_fibra')) s.fish.fiber = true;
     if (!s.fish.dex || typeof s.fish.dex !== 'object') s.fish.dex = {};
     if (s.inv.some(x => x && x.id === 'vara') || s.chest.some(x => x && x.id === 'vara')) { s.fish.rod = true; s.fish.pending = false; }
@@ -782,8 +822,8 @@
         const [x, y] = World.NTREES[n], stumpNow = !!S.nature.trees[n];
         const r = stumpNow ? [x - 7, y - 10, 14, 12] : [x - 14, y - 48, 28, 52];
         if (!inRect(r, wx, wy)) continue;
-        return stumpNow ? hitTarget('s' + n, 'stump', r, r, [x, y - 6], () => { cleared[n] = true; })
-          : hitTarget('t' + n, 'trunk', r, [x - 5, y - 8, 10, 8], [x, y - 12], () => { S.nature.trees[n] = S.day + 4; });
+        return stumpNow ? hitTarget('s' + n, 'stump', r, r, [x, y - 6], () => { cleared[n] = true; addXp('coleta', SKILL_GAIN.stump, x, y - 20); })
+          : hitTarget('t' + n, 'trunk', r, [x - 5, y - 8, 10, 8], [x, y - 12], () => { S.nature.trees[n] = S.day + 4; addXp('coleta', SKILL_GAIN.tree, x, y - 30); });   // XP só quando a árvore cai
       }
       for (let n = 0; n < World.NROCKS.length; n++) {
         if (S.nature.rocks[n]) continue;
@@ -792,7 +832,7 @@
       }
       for (let n = 0; n < World.FORAGE.length; n++) {
         const id = S.nature.forage[n], [x, y] = World.FORAGE[n], r = [x - 8, y - 12, 16, 14];
-        if (id && inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[id].name.toLowerCase(), rect: r, act: () => { if (gain(id)) { delete S.nature.forage[n]; bang(x, y - 6, 'leaf'); save(); } } };
+        if (id && inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[id].name.toLowerCase(), rect: r, act: () => { if (gain(id)) { delete S.nature.forage[n]; addXp('coleta', SKILL_GAIN.forage, x, y - 16); bang(x, y - 6, 'leaf'); save(); } } };
       }
       for (let n = S.seasonal.length - 1; n >= 0; n--) {
         const o = S.seasonal[n], r = [o.x - 8, o.y - 14, 16, 16];
@@ -805,7 +845,7 @@
       if (keepsakeVisible()) { const [x, y] = World.SERRA.keepsake, r = [x - 8, y - 10, 16, 12]; if (inRect(r, wx, wy)) return { label: 'Pegar o apito de madeira', rect: r, act: () => { if (gain('apito')) { S.lucio.found = true; save(); } } }; }
       for (let n = 0; n < World.SERRA.forage.length; n++) {
         const id = S.nature.mforage[n], [x, y] = World.SERRA.forage[n], r = [x - 8, y - 12, 16, 14];
-        if (id && inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[id].name.toLowerCase(), rect: r, act: () => { if (gain(id)) { delete S.nature.mforage[n]; bang(x, y - 6, 'leaf'); save(); } } };
+        if (id && inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[id].name.toLowerCase(), rect: r, act: () => { if (gain(id)) { delete S.nature.mforage[n]; addXp('coleta', SKILL_GAIN.forage, x, y - 16); bang(x, y - 6, 'leaf'); save(); } } };
       }
     }
     if (map.id === 'fora' && S.iara.ev3 === 'seek') {           // 3 corações: o detalhe que quase ninguém olha
@@ -839,7 +879,7 @@
      No último, remove o objeto e entrega o que ele rende, uma única vez. */
   function strike(key, R, id, [x, y], onBreak) {
     const d = (S.dmg[key] || 0) + 1, last = d >= R.hp;
-    if (S.energy < R.energy) return tip('Sem energia para outro golpe. Coma algo ou durma para recuperar.');
+    if (S.energy < toolEnergy(id, R.energy)) return tip('Sem energia para outro golpe. Coma algo ou durma para recuperar.');
     if (last && R.drop && !canAdd(R.drop[0], R.drop[1])) return tip('Mochila cheia: abra espaço antes do último golpe.');
     useTool(id, R.energy);
     bang(x, y, R.fx); shake = { key, t0: performance.now() };
@@ -878,6 +918,7 @@
     if (o && o.k === 'soil' && o.crop && cropState(o).ripe) return T('Colher ' + CROPS[o.crop].name.toLowerCase(), () => {
       const C = CROPS[o.crop];
       if (!gain(o.crop, C.yield || 1)) return;                         // mochila cheia: o fruto continua na planta
+      addXp('cultivo', SKILL_GAIN.harvest[o.crop] || 0, cx, cy - 10);   // uma vez por colheita (a quantidade não multiplica)
       if (C.regrow) { o.cyc = (o.cyc || 0) + 1; o.g = 0; }             // o pé fica e começa a próxima produção
       else S.farm.tiles[i] = { k: 'soil' };
       P.hop = performance.now() + 300; bang(cx, cy, 'leaf'); qEvent('harvest'); save();
@@ -948,8 +989,9 @@
 
   /* Anima a ferramenta e gasta energia. Devolve false se faltar energia. */
   function useTool(id, energy) {
+    energy = toolEnergy(id, energy);                       // Cultivo (enxada, regador) e Coleta (machado) reduzem o gasto
     if (S.energy < energy) { toast('Sem energia. Durma para recuperar.'); return false; }
-    S.energy -= energy;
+    S.energy = +(S.energy - energy).toFixed(4);
     const now = performance.now(); P.tool = { id, t0: now }; P.work = now + SWING;
     renderHud();
     return true;
@@ -1226,7 +1268,7 @@
   function rodTip(d, from, to, k) { const a = POSE[d][from], b = POSE[d][to], [gx, gy] = grip(d); return [gx + lerp(a[0], b[0], k), gy + lerp(a[1], b[1], k)]; }
   const fishValue = id => FISH[id].price;                   // preço fixo por espécie (o tamanho é só informação e recorde)
   const isRod = it => !!(it && ITEMS[it.id] && ITEMS[it.id].rod);
-  const fishLevel = () => S.fish.lvl || 0;
+  const fishLevel = () => skillLvl('pesca');               // fonte única: o nível confirmado da habilidade Pesca
   const zoneWidth = (lvl = fishLevel()) => FISHING.zone.base + FISHING.zone.perLevel * Math.min(FISHING.maxLevel, lvl);
   const castMax = (lvl = fishLevel()) => FISHING.cast.max + FISHING.cast.step * FISHING.cast.stepLevels.filter(n => lvl >= n).length;
   const behaviorOf = id => FISHING.behaviors[FISH[id].behavior] || FISHING.behaviors.tranquilo;
@@ -1331,7 +1373,7 @@
         if (f.t >= f.wait) { f.phase = 'bite'; f.t = 0; f.junk = f.outcome !== 'peixe'; f.fishId = f.junk ? f.outcome : pickFish(f.zone); f.rings.push({ x: f.target[0], y: f.target[1], t0: now }); bang(f.target[0], f.target[1], 'water'); fishUI(); }
         break;
       case 'bite': if (f.t >= FISHING.bite.window) { tip('A boia subiu de novo: o peixe soltou a isca. Tente outra vez.'); reelIn(); } break;
-      case 'hook': if (f.t >= 380) { if (f.junk) { f.phase = 'catch'; f.t = 0; fishUI(); } else openMinigame(); } break;   // transição: "Fisgou!"; alga, musgo e lixo vêm direto, sem minijogo
+      case 'hook': if (f.t >= 380) { if (f.junk) { f.phase = 'catch'; f.t = 0; if (!f.xpGiven) { f.xpGiven = true; f.xp = SKILL_GAIN.junk; addFishXp(f.xp); save(); } fishUI(); } else openMinigame(); } break;   // alga, musgo e lixo: 3 XP na captura, sem bônus de perfeito   // transição: "Fisgou!"; alga, musgo e lixo vêm direto, sem minijogo
       case 'game': {
         FishCore.step(f.r, dt, fishHeld());
         if (f.t - (f.lastRing || 0) > 520) { f.lastRing = f.t; f.rings.push({ x: f.target[0] + (f.r.dir || 1) * 2, y: f.target[1], t0: now }); }
@@ -1433,23 +1475,18 @@
     if (!S.fish.tut) { S.fish.tut = true; save(); const tp = $('fishtip'); tp.hidden = false; tp.textContent = 'Segure: a faixa vai → · Solte: ela volta ←'; f.tipUntil = 3600; }
     fishUI(); drawBar(performance.now());
   }
-  /* Sobe de nível com a experiência; o que sobra passa para o nível seguinte. */
-  function addFishXp(n) {
-    S.fish.xp += n; let up = 0;
-    while (S.fish.lvl < FISHING.maxLevel && S.fish.xp >= FISHING.nextLevel(S.fish.lvl)) { S.fish.xp -= FISHING.nextLevel(S.fish.lvl); S.fish.lvl++; up++; }
-    if (up) { toast(`Pesca: nível ${S.fish.lvl}!`); setTimeout(() => fishPop(`Pesca nível ${S.fish.lvl}!`, 'lvl'), 700); }
-    return up;
-  }
+  /* Experiência de pesca (habilidade Pesca). O nível novo só vale depois de dormir. */
+  const addFishXp = n => addXp('pesca', n);
   function fishCaught() {
     const f = fishing, F = FISH[f.fishId], B = behaviorOf(f.fishId);
     f.cm = Math.round(F.cm[0] + (F.cm[1] - F.cm[0]) * Math.pow(Math.random(), 1.6));
     f.perfect = !!f.r.perfect;
-    f.xp = Math.round(B.xp * (f.perfect ? 1 + FISHING.perfectBonus : 1));
+    f.xp = Math.floor((SKILL_GAIN.fish[f.fishId] || 0) * (f.perfect ? SKILL_GAIN.perfectMult : 1));   // perfeito: ×2,4, arredondado para baixo
     const rec = S.fish.dex[f.fishId];
     f.isNew = !rec; f.isRecord = !!rec && f.cm > rec.max;
     S.fish.dex[f.fishId] = { n: (rec ? rec.n : 0) + 1, max: Math.max(rec ? rec.max : 0, f.cm) };
     if (f.perfect) S.fish.perfect = (S.fish.perfect || 0) + 1;
-    f.levelUp = addFishXp(f.xp);                       // espécie, recorde, "perfeito" e experiência ficam salvos já na captura (uma vez)
+    addFishXp(f.xp);                                   // espécie, recorde, "perfeito" e experiência ficam salvos já na captura (uma vez)
     luckFish(); S.luck.fish++;                          // conta a captura do dia (mesmo que depois o peixe seja solto)
     if (luckKind() === 'ma' && S.luck.fish >= LUCK.badLimit && S.luck.limitDay !== S.day) { S.luck.limitDay = S.day; setTimeout(() => tip(LUCK.limitMsg), 1400); }
     save();
@@ -1545,11 +1582,10 @@
     box.replaceChildren(); box.hidden = false;
     const top = el('div', 'catch-top'), pic = el('canvas', 'pixel catch-pic'); pic.width = 16; pic.height = 16; pic.getContext('2d').drawImage(World.icon(f.fishId), 0, 0);
     const txt = el('div', 'catch-txt');
-    txt.append(el('b', 'catch-name', it.name), el('span', 'catch-size', `${f.cm} cm · vale ${val} moedas`), el('span', 'dim', `+${f.xp} de experiência de pesca${f.perfect ? ' (perfeito: +50%)' : ''}`));
+    txt.append(el('b', 'catch-name', it.name), el('span', 'catch-size', `${f.cm} cm · vale ${val} moedas`), el('span', 'dim', `+${f.xp} de experiência de pesca${f.perfect ? ' (perfeito: ×2,4)' : ''}`));
     const tags = el('div', 'catch-tags');
     if (f.perfect) tags.append(el('span', 'tag perfect', 'Perfeito!'));
     if (f.isNew) tags.append(el('span', 'tag new', 'Nova espécie!')); if (f.isRecord) tags.append(el('span', 'tag rec', 'Novo recorde!'));
-    if (f.levelUp) tags.append(el('span', 'tag lvl', `Pesca nível ${S.fish.lvl}!`));
     if (tags.childNodes.length) txt.append(tags);
     top.append(pic, txt); box.append(top);
     catchFoot(box, full, S.inv.findIndex(x => !x) >= 0, 'Soltar', 'Mochila cheia. Solte o peixe ou jogue fora algo da mochila para abrir espaço; o peixe espera aqui.', 'Espaço livre! Agora dá para guardar o peixe.');
@@ -1559,7 +1595,7 @@
     const f = fishing, it = ITEMS[f.fishId], box = $('catch');
     box.replaceChildren(); box.hidden = false;
     const top = el('div', 'catch-top junk'), pic = el('canvas', 'pixel catch-pic'); pic.width = 16; pic.height = 16; pic.getContext('2d').drawImage(World.icon(f.fishId), 0, 0);
-    const txt = el('div', 'catch-txt'); txt.append(el('b', 'catch-name', `Você pescou: ${it.name.toLowerCase()}`), el('span', 'dim', it.desc));
+    const txt = el('div', 'catch-txt'); txt.append(el('b', 'catch-name', `Você pescou: ${it.name.toLowerCase()}`), el('span', 'dim', it.desc), el('span', 'dim', `+${SKILL_GAIN.junk} de experiência de pesca`));
     top.append(pic, txt); box.append(top);
     catchFoot(box, full, canAdd(f.fishId), 'Descartar', `Mochila cheia. Descarte ${it.name.toLowerCase()} ou jogue fora algo da mochila para abrir espaço; o item espera aqui.`, 'Espaço livre! Agora dá para guardar.');
   }
@@ -2075,6 +2111,7 @@
       if (c === 0) {
         if (h.pet === S.day) return say('narr', `${h.name} já ganhou carinho hoje, mas se aninha na sua mão mesmo assim.`);
         h.pet = S.day; h.well = Math.min(100, h.well + 8); h.petT = performance.now() + 2500;
+        addXp('cultivo', SKILL_GAIN.henPet, P.x, P.y - 40); save();       // uma vez por galinha por dia
         return say('narr', `Você faz carinho em ${h.name}. Ela fecha os olhos e cacareja baixinho.`);
       }
       if (c === 1) return say('narr', `${h.name} está ${wellText(h.well)}. ${S.coop.feed ? 'Há ração no comedouro para esta noite.' : 'O comedouro está vazio: sem ração, ela não bota e fica triste.'} Galinha alimentada bota um ovo, que aparece no ninho na manhã seguinte.`);
@@ -2089,6 +2126,7 @@
   function nest() {
     if (!S.coop.eggs) return run(() => say('narr', S.coop.hens.length ? 'O ninho está vazio. Com ração no comedouro, cada galinha bota um ovo durante a noite.' : 'Um ninho de palha, vazio. O galinheiro ainda não tem moradoras.'));
     let got = 0; while (S.coop.eggs && canAdd('ovo')) { addTo(S.inv, 'ovo', 1); S.coop.eggs--; got++; }
+    if (got) addXp('cultivo', SKILL_GAIN.egg * got, P.x, P.y - 40);   // só ovos postos no ninho
     if (!got) return toast('Mochila cheia');
     floats.push({ icon: 'ovo', x: P.x, y: P.y, t0: performance.now() }); toast(`+${got} Ovo${got > 1 ? 's' : ''}`); if (S.coop.eggs) toast('Mochila cheia: ficaram ovos no ninho');
     renderHotbar(); save();
@@ -2163,7 +2201,7 @@
     const name = ITEMS[o.id].name;
     if (!canAdd(o.id)) return tip(`Mochila cheia: ${name.toLowerCase()} continua aqui no chão.`);
     if (!gain(o.id)) return;
-    S.seasonal = S.seasonal.filter(q => q !== o); bang(o.x, o.y - 6, 'leaf'); save();
+    S.seasonal = S.seasonal.filter(q => q !== o); addXp('coleta', SKILL_GAIN.forage, o.x, o.y - 16); bang(o.x, o.y - 6, 'leaf'); save();
   }
 
   /* =====================================================
@@ -2180,7 +2218,7 @@
   function processNight() {
     if (S.lastNight === S.day) return null;                   // esta noite já foi processada
     S.lastNight = S.day;
-    const notes = [];
+    const notes = [], skillUps = confirmSkills();              // níveis novos confirmados uma vez só, também ao desmaiar
     let grew = 0, ripe = 0, fruits = 0, eggs = 0, hungry = 0;
     for (const key in S.farm.tiles) {
       const o = S.farm.tiles[key];
@@ -2211,13 +2249,21 @@
     if (newSeason) notes.push(`Chegou ${calendar().season === 'Verão' ? 'o' : 'a'} ${calendar().season}! A paisagem mudou${spawned ? ' e há coisas novas para colher na vila' : ''}.`);
     else if (spawned) notes.push(`${spawned} coisa(s) nova(s) para colher apareceram pela vila.`);
     if (!notes.length) notes.push('Uma noite tranquila no sítio.');
-    return { notes, finished };
+    renderTabsBadge();
+    return { notes, finished, skillUps };
   }
   function sleep() {
     const r = processNight(); if (!r) return;
-    const { notes, finished } = r;
+    const { notes, finished, skillUps } = r;
     const box = $('summary-body'); box.replaceChildren(el('h3', '', `${dateText(finished)} — dia encerrado`));
-    const ul = el('ul', 'list'); notes.forEach(n => ul.append(el('li', '', n))); box.append(ul, el('p', 'dim', 'Você acorda com a energia completa.'));
+    const ul = el('ul', 'list'); notes.forEach(n => ul.append(el('li', '', n))); box.append(ul);
+    if (skillUps && skillUps.length) {                         // todos os avanços da noite numa apresentação só
+      const sb = el('div', 'skill-ups'); sb.append(el('h3', '', skillUps.length > 1 ? 'Habilidades que subiram' : 'Habilidade que subiu'));
+      skillUps.forEach(u => { const li = el('div', 'skill-up'); li.dataset.skill = u.k; const ic = el('canvas', 'pixel'); ic.width = 16; ic.height = 16; ic.getContext('2d').drawImage(World.icon(SKILL_ICON[u.k]), 0, 0);
+        li.append(ic, el('b', '', `${SKILLS[u.k].name}: nível ${u.to}${u.to - u.from > 1 ? ` (+${u.to - u.from})` : ''}`), el('span', '', SKILLS[u.k].perk(u.to))); sb.append(li); });
+      box.append(sb);
+    }
+    box.append(el('p', 'dim', 'Você acorda com a energia completa.'));
     const go = btn('btn primary', `Começar o dia ▶`, () => { $('summary').hidden = true; renderHud(); toast(dateText()); VILLAGERS.forEach(v => { if (isBirthday(v) && (!v.hidden || S.lucio.met)) toast(`Hoje é aniversário de ${v.name}!`); }); petEvent(); }); go.id = 'summary-go';
     box.append(go); $('summary').hidden = false; go.focus(); renderHud(); renderHotbar();
   }
@@ -2237,7 +2283,7 @@
     luck.append(ic, el('span', '', { sorte: 'Sorte', neutro: 'Neutro', ma: 'Má sorte' }[lk]));
     luck.dataset.tip = `${LUCK.name[lk]}. ${luckEffect(lk)}`; luck.setAttribute('aria-label', luck.dataset.tip);
     en.append(luck);
-    hud.append(top, mid, en);
+    hud.append(top, mid, en); renderTabsBadge();
     hud.title = `${c.weekday}, ${c.day} de ${c.season}, ano ${c.year} — ${clock()}`;
     const o = objective();
     $('objective').replaceChildren(...(o ? [el('b', '', 'MISSÃO'), el('span', '', o)] : S.time >= 1260 ? [el('span', '', 'Já é tarde. A cama espera por você em casa.')] : []));
@@ -2287,8 +2333,8 @@
      ===================================================== */
   let shopLock = { key: '', until: 0 }, tab = 'mochila', picked = null, friendSel = null, menuClosedT = 0, fiberArm = false;
   let modalT = 0;
-  const MENU_TABS = ['mochila', 'amizades', 'mapa', 'diario', 'personagem', 'config'];
-  const TAB_TITLE = { mochila: 'Inventário', amizades: 'Amizades', mapa: 'Mapa', diario: 'Diário', personagem: 'Personagem', config: 'Configurações', bau: 'Baú', roupa: 'Guarda-roupa e espelho', loja: 'Armazém', ajuste: 'Sua fazenda' };
+  const MENU_TABS = ['mochila', 'amizades', 'mapa', 'diario', 'habilidades', 'personagem', 'config'];
+  const TAB_TITLE = { mochila: 'Inventário', amizades: 'Amizades', mapa: 'Mapa', diario: 'Diário', habilidades: 'Habilidades', personagem: 'Personagem', config: 'Configurações', bau: 'Baú', roupa: 'Guarda-roupa e espelho', loja: 'Armazém', ajuste: 'Sua fazenda' };
   function openModal(t) { if (busy) return; $('modal').hidden = false; modalT = performance.now(); picked = null; renderTab(t); }
   /* Menu principal: só abre com o jogo livre (sem conversa, carta, resumo ou pausa). */
   function openMenu(t = 'mochila') { if (screen !== 'game' || !S || busy || paused || !$('letter').hidden || !$('summary').hidden) return; if (fishing) return tip('Termine a pesca ou recolha a linha (Esc) antes de abrir o menu.'); openModal(t); }
@@ -2313,6 +2359,7 @@
   const heartsNode = n => { const s = el('span', 'hearts'); for (let i = 0; i < 5; i++) s.append(el('i', i < n ? 'on' : '', '♥')); return s; };
   /* Ícones das abas, desenhados em pixel art (16x16). */
   const TAB_ICON = {
+    habilidades: g => { g.fillStyle = '#5a3a14'; [[7, 1, 2, 2], [6, 3, 4, 2], [1, 5, 14, 2], [3, 7, 10, 2], [4, 9, 8, 2], [3, 11, 4, 2], [9, 11, 4, 2], [2, 13, 3, 2], [11, 13, 3, 2]].forEach(r => g.fillRect(...r)); g.fillStyle = '#ffd75e'; [[7, 2, 2, 2], [7, 4, 2, 2], [2, 6, 12, 1], [4, 7, 8, 2], [5, 9, 6, 2], [4, 11, 2, 2], [10, 11, 2, 2], [3, 13, 1, 1], [12, 13, 1, 1]].forEach(r => g.fillRect(...r)); g.fillStyle = '#fff6c0'; g.fillRect(7, 5, 1, 3); },
     mochila: g => { g.fillStyle = '#5a2e14'; g.fillRect(3, 3, 10, 12); g.fillStyle = '#c8483a'; g.fillRect(4, 5, 8, 9); g.fillStyle = '#e8705a'; g.fillRect(4, 5, 8, 2); g.fillStyle = '#5a2e14'; g.fillRect(5, 1, 6, 3); g.fillStyle = '#ffd75e'; g.fillRect(7, 9, 2, 2); },
     amizades: g => { g.fillStyle = '#5a1a1a'; [[3, 4, 4, 2], [9, 4, 4, 2], [2, 6, 12, 3], [3, 9, 10, 2], [5, 11, 6, 2], [7, 13, 2, 1]].forEach(r => g.fillRect(...r)); g.fillStyle = '#e04a5a'; [[4, 5, 3, 1], [9, 5, 3, 1], [3, 6, 10, 3], [4, 9, 8, 1], [6, 11, 4, 1], [7, 12, 2, 1]].forEach(r => g.fillRect(...r)); g.fillStyle = '#ffb0b8'; g.fillRect(4, 6, 2, 1); },
     mapa: g => { g.fillStyle = '#5a3a1a'; g.fillRect(1, 3, 14, 11); g.fillStyle = '#e8d8a8'; g.fillRect(2, 4, 12, 9); g.fillStyle = '#58a83c'; g.fillRect(2, 4, 5, 9); g.fillStyle = '#3f86d8'; g.fillRect(10, 8, 4, 5); g.fillStyle = '#c8483a'; g.fillRect(7, 6, 2, 2); g.fillStyle = '#b4945a'; g.fillRect(2, 9, 12, 1); },
@@ -2445,7 +2492,7 @@
       const fl = el('ul', 'list fish-dex');
       if (!S.fish.rod && !S.fish.pending) fl.append(el('li', 'dim', 'Você ainda não tem vara de pesca.'));
       else {
-        fl.append(el('li', '', `Pesca nível ${S.fish.lvl}${S.fish.lvl >= FISHING.maxLevel ? ' (máximo)' : ` · ${S.fish.xp}/${FISHING.nextLevel(S.fish.lvl)} de experiência`} · capturas perfeitas: ${S.fish.perfect || 0}`));
+        fl.append(el('li', '', `Pesca nível ${fishLevel()} (aba Habilidades) · capturas perfeitas: ${S.fish.perfect || 0}`));
         Object.keys(FISH).forEach(id => {
           const d = S.fish.dex[id], li2 = el('li', 'fish-entry' + (d ? '' : ' dim')); li2.dataset.fish = id;
           const head = el('div', 'shop-item'); if (d) head.append(cloneIcon(id)); head.append(el('b', '', d ? ITEMS[id].name : '???'));
@@ -2501,6 +2548,23 @@
       const leg = el('ul', 'legend'); leg.id = 'map-legend'; mb.append(fr, leg);
       const info = el('p', 'map-info'); info.id = 'map-info';
       body.append(head, mb, info); renderMap();
+    },
+    habilidades(body) {
+      body.append(el('p', 'dim', 'O XP entra na hora; o nível novo e o benefício valem depois de dormir.'));
+      const list = el('div', 'skills');
+      Object.keys(SKILLS).forEach(k => {
+        const I = skillInfo(k), row = el('div', 'skill-row' + (I.pending ? ' pending' : '')); row.dataset.skill = k;
+        const ic = el('canvas', 'pixel skill-ic'); ic.width = 16; ic.height = 16; ic.getContext('2d').drawImage(World.icon(SKILL_ICON[k]), 0, 0);
+        const head = el('div', 'skill-head'); head.append(ic, el('b', 'skill-name', SKILLS[k].name), el('span', 'skill-lvl', I.lvl >= 10 ? 'Nível máximo' : `Nível ${I.lvl}`));
+        const pips = el('div', 'skill-pips'); for (let i = 1; i <= 10; i++) pips.append(el('i', i <= I.lvl ? 'on' : i <= I.byXp ? 'new' : '', ''));
+        const bar = el('div', 'bar skill-bar'), fill = el('i'); fill.style.width = (I.max ? 100 : Math.round(I.cur / I.need * 100)) + '%'; bar.append(fill);
+        const prog = el('span', 'skill-xp', I.max ? `Nível máximo · ${I.xp.toLocaleString('pt-BR')} XP no total` : `${I.cur.toLocaleString('pt-BR')} de ${I.need.toLocaleString('pt-BR')} XP para o nível ${I.byXp + 1} · ${I.xp.toLocaleString('pt-BR')} XP no total`);
+        row.append(head, pips, bar, prog);
+        if (I.pending) row.append(el('span', 'skill-new', `Nível ${I.byXp} a confirmar: vale depois de dormir.`));
+        row.append(el('span', 'skill-perk', 'Benefício: ' + SKILLS[k].perk(I.lvl)), el('span', 'dim skill-how', SKILLS[k].how));
+        list.append(row);
+      });
+      body.append(list);
     },
     personagem(body) {
       const top = el('div', 'sheet-top'), pv = el('div', 'wardrobe-pv big');
@@ -2641,12 +2705,17 @@
   const SPECIAL = ['bau', 'roupa', 'loja', 'ajuste'];
   /* Nível de pesca na aba Personagem: nível, barra e a zona verde que ele dá. */
   function fishSkill() {
-    const L = S.fish.lvl, max = L >= FISHING.maxLevel, need = FISHING.nextLevel(L), box = el('div', 'xp fish-skill');
-    const bar = el('div', 'bar'), fill = el('i'); fill.style.width = (max ? 100 : Math.round(S.fish.xp / need * 100)) + '%'; bar.append(fill);
-    box.append(el('span', '', `🎣 Pesca: nível ${L}${max ? ' (máximo)' : ` · ${S.fish.xp}/${need} XP`}`), bar,
-      el('span', 'dim', `Zona verde ${Math.round(zoneWidth(L) * 100)}% da barra · lançamento até ${Math.round(castMax(L) / 16)} quadrados · ${Object.keys(S.fish.dex).length} de ${Object.keys(FISH).length} espécies · ${S.fish.perfect || 0} perfeitas`));
-    box.dataset.lvl = L; return box;
+    const box = el('div', 'xp fish-skill');
+    box.append(el('span', '', `Habilidades: ${Object.keys(SKILLS).map(k => `${SKILLS[k].name} ${skillLvl(k)}`).join(' · ')} (detalhes na aba Habilidades)`));
+    box.dataset.lvl = skillLvl('pesca'); return box;
   }
+  /* Progresso de uma habilidade: nível confirmado, nível pelo XP e o trecho até o próximo. */
+  function skillInfo(k) {
+    const sk = S.skills[k], byXp = skillLevelFor(sk.xp), max = byXp >= 10;
+    return { lvl: sk.lvl, byXp, max, xp: sk.xp, cur: max ? 0 : sk.xp - SKILL_XP[byXp], need: max ? 0 : SKILL_XP[byXp + 1] - SKILL_XP[byXp], pending: byXp > sk.lvl };
+  }
+  const SKILL_ICON = { cultivo: 'rabanete', pesca: 'sardinha', coleta: 'flor' };
+  function renderTabsBadge() { const b = document.querySelector('#tabs [data-tab="habilidades"]'); if (b && S && S.skills) b.classList.toggle('badge', Object.keys(SKILLS).some(skillPending)); }
   function renderTab(t) {
     const prev = tab;
     tab = TABS[t] ? t : tab;
@@ -2737,6 +2806,7 @@
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
     targetAt: (x, y) => targetAt(x, y, actors()), henMenu, newHen: () => { run(() => newHen('narr')); }, get Pobj() { return P; },
     luckKind, rollCatch, buildSeasonLuck, luckFish, luckEffect,
+    addXp, skillLevelFor, confirmSkills, toolEnergy, skillInfo, skillLvl, processNight,
     get fishing() { return fishing; }, fishCheck, fishValue, pickFish, openTab: t => openModal(t), get fin() { return { ...FIN }; }, zoneWidth, castMax, biteWait, addFishXp,
   };
 
