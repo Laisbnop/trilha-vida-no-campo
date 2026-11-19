@@ -374,21 +374,22 @@ const FISH = {
 };
 /* Configuração central da pesca: mude aqui para equilibrar. Posições do minijogo são
    proporções da pista (0 = esquerda, 1 = direita); velocidades em pistas por segundo. */
+const FISHING_FIBER_LEVEL = 2;                      // pesca nível 2 libera a vara de fibra de vidro
 const FISHING = {
   progress: { start: 30, gain: 10, loss: 8, grace: 750 },          // 0 a 100; pontos por segundo; tolerância inicial (ms)
   zone: { base: 0.22, perLevel: 0.01 },                               // largura da zona verde: 22% no nível 0, +1 ponto por nível
   track: { fishMin: 0.36, fishMax: 0.97 },                           // o peixe nada à direita da zona parada: sem segurar, nunca se pesca
   control: { accel: 4.5, back: 3.6, reverse: 2, maxSpeed: 0.45, settle: 450 },   // segurar acelera para a direita; soltar volta; settle = zona parada no começo (ms)
-  behaviors: {                                                        // como cada tipo de peixe nada
-    tranquilo: { xp: 20, speed: [0.12, 0.2], dist: [0.08, 0.26], accel: 0.6, pause: [0.5, 1.4], pauseChance: 0.55, turn: 0, dash: 0 },
-    ativo: { xp: 30, speed: [0.24, 0.33], dist: [0.12, 0.40], accel: 1.2, pause: [0.2, 0.6], pauseChance: 0.3, turn: 0.3, dash: 0.2 },
-    agil: { xp: 40, speed: [0.48, 0.64], dist: [0.10, 0.24], accel: 3, pause: [0.4, 1.0], pauseChance: 0.7, turn: 0, dash: 1 },
+  behaviors: {                                                        // como cada tipo de peixe nada (o XP vem de SKILL_GAIN.fish)
+    tranquilo: { speed: [0.12, 0.2], dist: [0.08, 0.26], accel: 0.6, pause: [0.5, 1.4], pauseChance: 0.55, turn: 0, dash: 0 },
+    ativo: { speed: [0.24, 0.33], dist: [0.12, 0.40], accel: 1.2, pause: [0.2, 0.6], pauseChance: 0.3, turn: 0.3, dash: 0.2 },
+    agil: { speed: [0.48, 0.64], dist: [0.10, 0.24], accel: 3, pause: [0.4, 1.0], pauseChance: 0.7, turn: 0, dash: 1 },
   },
-  perfectBonus: 0.5,                                                  // +50% de experiência na captura perfeita
-  maxLevel: 10, nextLevel: lvl => 100 + 25 * lvl,                     // experiência para passar do nível lvl ao seguinte
+  maxLevel: 10,                                                       // o nível de pesca vem da habilidade Pesca (SKILLS / SKILL_XP)
+  legacyNextLevel: lvl => 100 + 25 * lvl,                             // sistema antigo de nível de pesca: usado só para converter saves
   bite: { window: 1200, waitMin: 3000, waitMax: 10000, maxCutPerLevel: 200, baitFactor: 0.5 },   // tempos reais (ms)
   cast: { min: 12, max: 72, step: 16, stepLevels: [1, 4, 8], shore: 24, energy: 2 },             // distâncias em pixels do mapa (16 = um quadrado)
-  fiber: { price: 1500, level: 4 }, baitPrice: 20,
+  fiber: { price: 1500, level: FISHING_FIBER_LEVEL }, baitPrice: 20,
 };
 /* Sorte do dia. Cada estação de 29 dias sorteia uma lista embaralhada com exatamente estas
    quantidades (sem ordem fixa: pode haver dias iguais seguidos). A sorte só mexe na pesca:
@@ -407,6 +408,25 @@ const LUCK = {
   afterLimit: { alga: 50, musgo: 25, lixo: 25 },
   limitMsg: 'Os peixes estão difíceis hoje. Talvez seja melhor tentar amanhã.',
 };
+/* Habilidades do jogador (referência: progressão clássica dos jogos de fazenda).
+   SKILL_XP = experiência TOTAL acumulada para chegar a cada nível (0 a 10).
+   O XP é somado na hora; o nível novo e o benefício só valem depois de dormir. */
+const SKILL_XP = [0, 100, 380, 770, 1300, 2150, 3300, 4800, 6900, 10000, 15000];
+const SKILLS = {
+  cultivo: { name: 'Cultivo', how: 'Colha plantações (rabanete 15, tomate 12, morango 18, abóbora 31 por colheita), faça carinho nas galinhas (5, uma vez por dia cada) e recolha ovos do ninho (5 por ovo).',
+    perk: l => (l ? `Enxada e regador gastam ${l * 5}% menos energia.` : 'Enxada e regador com gasto normal de energia.'), tools: ['enxada', 'regador'] },
+  pesca: { name: 'Pesca', how: 'Conclua capturas: sardinha 13, tucunaré 20, alga, musgo ou lixo 3. Captura perfeita de peixe vale 2,4×. Fugas não contam.',
+    perk: l => `Faixa verde com ${22 + l}% da pista${l >= FISHING_FIBER_LEVEL ? '; vara de fibra de vidro liberada no Armazém' : ''}.` },
+  coleta: { name: 'Coleta', how: 'Recolha flores, frutos e cogumelos da natureza (7 por ponto), derrube árvores com o machado (12) e tire os tocos (1).',
+    perk: l => (l ? `Machado gasta ${l * 5}% menos energia.` : 'Machado com gasto normal de energia.'), tools: ['machado'] },
+};
+const SKILL_GAIN = {
+  harvest: { rabanete: 15, tomate: 12, morango: 18, abobora: 31 },
+  henPet: 5, egg: 5,
+  fish: { sardinha: 13, tucunare: 20 }, junk: 3, perfectMult: 2.4,
+  forage: 7, tree: 12, stump: 1,
+  energyCut: 0.05,                                       // por nível, sobre o gasto normal da ferramenta (até 50% no nível 10)
+};
 const FISH_ZONE_NAME = { lago: 'lago', rio: 'rio' };
 const CAST_ENERGY = FISHING.cast.energy;  // energia por lançamento válido
 const ROD_LETTER = {
@@ -423,11 +443,13 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Ruas e caminhos',
+  title: 'Habilidades',
   items: [
-    'Terra batida nova na saída da fazenda e nas ruas mais afastadas: ocre e marrom claro, com terra compactada, pedrinhas e bordas irregulares com grama.',
-    'O centrinho ganhou calçamento de pedras irregulares, num piso contínuo da frente do Armazém CELESTE até a praça da fonte. A praça do coreto usa o mesmo piso.',
-    'Onde a terra chega ao centro, o calçamento termina numa fileira de pedras de meio-fio. Curvas e cruzamentos não têm mais emendas.',
-    'O traçado, as colisões, as árvores e as rotinas são os mesmos. As estações continuam aparecendo no chão, com neve no inverno e folhas no outono.',
+    'Novas habilidades: Cultivo, Pesca e Coleta, cada uma do nível 0 ao 10, com experiência própria (100, 380, 770, 1.300 até 15.000 de XP total).',
+    'Cultivo: colher plantações, fazer carinho nas galinhas e recolher ovos. Cada nível faz a enxada e o regador gastarem 5% menos energia.',
+    'Pesca: capturas concluídas dão XP (sardinha 13, tucunaré 20, alga, musgo e lixo 3; perfeito vale 2,4×). Cada nível aumenta a faixa verde em 1 ponto, e o nível 2 libera a vara de fibra de vidro.',
+    'Coleta: flores, frutos e cogumelos da natureza, árvores derrubadas e tocos. Cada nível faz o machado gastar 5% menos energia.',
+    'O XP entra na hora; o nível novo vale depois de dormir, com um resumo de tudo o que subiu. A nova aba Habilidades (estrela) mostra o progresso.',
+    'A pesca antiga foi convertida em XP de Pesca. Cultivo e Coleta começam do zero.',
   ],
 };

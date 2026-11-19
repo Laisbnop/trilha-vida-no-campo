@@ -565,3 +565,30 @@ body:has(#screen-create:not([hidden])) { background: #2e1c10 repeating-linear-gr
 .hud .xp .cp-luck span { color: inherit; }
 .hud:has(.cp-luck:hover) { z-index: 5; }
 .hud .cp-luck:hover::after { font-size: 15px; width: 280px; }
+
+/* habilidades */
+#tabs button.badge::after { content: '!'; position: absolute; top: 2px; right: 4px; width: 14px; height: 14px; border-radius: 50%; background: #e04a3a; color: #fff; font: 10px/14px var(--px); text-align: center; box-shadow: 0 0 0 2px #5a2e14; }
+.skills { display: flex; flex-direction: column; gap: 10px; }
+.skill-row { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px 10px; background: #f6e4bb; border: 3px solid #a8743e; border-radius: 4px; box-shadow: inset 0 0 0 2px #fff4d8; }
+.skill-row.pending { border-color: #c8683a; }
+.skill-head { display: flex; align-items: center; gap: 8px; }
+.skill-ic { width: 32px; height: 32px; image-rendering: pixelated; }
+.skill-name { font-family: var(--px); font-weight: normal; font-size: 13px; color: #3a2614; }
+.skill-lvl { margin-left: auto; font-family: var(--px); font-size: 11px; color: #7a2a14; background: #fff4d8; border: 2px solid #c8a060; border-radius: 3px; padding: 2px 6px; }
+.skill-pips { display: flex; gap: 3px; }
+.skill-pips i { flex: 1; height: 12px; background: #c89a62; border: 2px solid #7a4a26; border-radius: 2px; box-shadow: inset 0 2px 0 #dcb07a; }
+.skill-pips i:nth-child(5), .skill-pips i:nth-child(10) { flex: 1.6; }
+.skill-pips i.on { background: #ffd75e; box-shadow: inset 0 2px 0 #fff4b0; }
+.skill-pips i.new { background: #f4b070; box-shadow: inset 0 2px 0 #ffd8a8; }
+.skill-bar { width: 100%; flex: none; height: 12px; background: #e8d2a0; border: 2px solid #7a4a26; border-radius: 3px; }
+.skill-xp, .skill-perk { font-size: 15px; color: #3a2614; }
+.skill-new { font-size: 15px; color: #a8401a; font-weight: bold; }
+.skill-how { font-size: 14px; }
+.skill-ups { margin: 8px 0; padding: 8px 10px; border: 3px solid #a8743e; border-radius: 4px; background: #fff4d8; }
+.skill-ups h3 { margin: 0 0 6px; }
+.skill-up { display: grid; grid-template-columns: 32px 1fr; column-gap: 8px; align-items: center; margin: 4px 0; }
+.skill-up canvas { width: 32px; height: 32px; image-rendering: pixelated; grid-row: span 2; }
+.fish-pop.xp { font-size: 10px; color: #c8f0a0; text-shadow: 2px 2px 0 #1a3a10, -1px -1px 0 #1a3a10; }
+.skill-ups, .skill-ups span { color: #3a2614; }
+.skill-ups h3 { color: #7a2a14; }
+.skill-ups b { color: #3a2614; font-family: var(--px); font-weight: normal; font-size: 11px; }

@@ -74,7 +74,7 @@ const FishCore = (() => {
       stepFish(r, s); if (r.armed) stepZone(r, s, r.hold);
       r.inside = r.x >= r.zone && r.x <= r.zone + r.w;
       const grace = r.t <= P.grace;
-      if (!grace && !r.inside) r.perfect = false;                          // a tolerância inicial não conta contra o "perfeito"
+      if (!r.inside) r.perfect = false;                                    // perfeito: o peixe dentro da faixa verde durante todo o minijogo
       r.prog = clamp(r.prog + (r.inside ? P.gain * s : grace ? 0 : -P.loss * s), 0, 100);
       if (r.prog >= 100) { r.done = 'catch'; break; }
       if (r.prog <= 0) { r.done = 'flee'; break; }
