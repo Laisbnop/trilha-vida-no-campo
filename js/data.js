@@ -288,7 +288,7 @@ const IARA = {
    start.items = itens recebidos ao aceitar · after = missão anterior · hearts = corações mínimos com quem pede
    auto = começa sozinha · selfDone = conclui sozinha ao cumprir (as de aprendizado). */
 const QUESTS = {
-  chegada:  { where: ['loja', 128, 100, 'Armazém'], giver: 'celeste', title: 'Boas-vindas à vila', auto: true, desc: 'Siga a estrada para o leste até a vila, entre no Armazém e clique em Dona Celeste para conversar.',
+  chegada:  { where: ['loja', 56, 104, 'Armazém'], giver: 'celeste', title: 'Boas-vindas à vila', auto: true, desc: 'Siga a estrada para o leste até a vila, entre no Armazém e clique em Dona Celeste para conversar.',
     goal: { talk: 1 }, done: ['{g:Seja bem-vindo|Seja bem-vinda|Boas-vindas} à ' + VILA + '! Então você é {g:o neto|a neta|quem herdou o sítio} do seu ' + AVO + '. Ele falava de você com um orgulho...', 'Vi a placa nova no portão: {fazenda}. Combina com você.', 'Leve estas sementes de rabanete: é presente de boas-vindas. Brotam rápido.'],
     reward: { items: { sem_rabanete: 6 }, friend: 20 } },
   plantio:  { where: ['fora', 120, 228, 'Roça da fazenda'], giver: 'celeste', title: 'A primeira plantação', after: 'chegada', auto: true, selfDone: true,
@@ -423,13 +423,13 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Fachadas da vila',
+  title: 'Armazém por dentro',
   items: [
-    'Armazém CELESTE: agora tem dois andares, com o comércio embaixo (vitrines, toldos e porta dupla de vidro), a placa CELESTE e a casa de Dona Celeste em cima. Só o comércio tem entrada.',
-    'Depois do passeio na praça, Dona Celeste sobe para a casa dela, em cima do Armazém, e volta ao balcão às 6h.',
-    'Cada casa tem fachada própria: Seu Honório com bancada de carpinteiro, Bia com varanda e catavento de galo, Iara com sótão-ateliê e cerquinha colorida, Tomé numa cabana de toras.',
-    'A escola ganhou tijolinho, relógio, torre do sino, janelas em arco e mastro.',
-    'Dá para andar atrás dos telhados, que ficam na frente do personagem. As paredes continuam bloqueando, e portas, janelas acesas à noite, fumaça das chaminés e neve no inverno funcionam como antes.',
-    'O mapa (M) passou a mostrar as fachadas e as árvores.',
+    'O Armazém CELESTE virou um mercadinho de verdade: piso de tábuas, papel de parede com lambri, mural de avisos, janelas, prateleira de potes e luz quente.',
+    'O balcão com caixa registradora fica no canto superior esquerdo, com Dona Celeste atrás. No centro e à direita há duas fileiras de gôndolas abastecidas, com corredores entre elas.',
+    'Também há caixas de hortaliças, caixotes de frutas, sacos de sementes e ração, barril, plantas e tapete na entrada. Tudo é decoração: produtos e preços são os mesmos.',
+    'Dá para andar por todos os corredores e passar atrás das gôndolas. Para ser atendido, clique em Dona Celeste ou no balcão.',
+    'A placa CELESTE da fachada ficou mais larga, com o nome centralizado e folga dos dois lados.',
+    'Correção: a dica de pesca não aparece mais dentro de prédios, as dicas somem ao passar por uma porta e avisos longos não passam da tela.',
   ],
 };
