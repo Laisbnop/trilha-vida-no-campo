@@ -760,7 +760,7 @@
   /* O que está sob o ponto (wx, wy) do mundo, do que está mais à frente para o mais ao fundo. */
   function targetAt(wx, wy, list) {
     for (const a of list.slice().sort((p, q) => q.y - p.y)) {
-      const r = [a.x - 10, a.y - 31, 20, 33];
+      const r = [a.x - 10, a.y + Sprites.WORLD.oy(-31), 20, 1 - Sprites.WORLD.oy(-31) + 1];   // área de clique do tamanho do personagem do mundo (largura generosa)
       if (inRect(r, wx, wy)) return { label: 'Falar com ' + a.name, rect: r, reach: a.reach > 30 ? 30 : 16, act: () => talkTo(a.v) };
     }
     const held = equipped();
@@ -1212,7 +1212,7 @@
      ===================================================== */
   const FISH_PAUSE = ['hook', 'game', 'catch', 'show', 'release', 'flee'];
   function fishPaused() { return !!fishing && FISH_PAUSE.includes(fishing.phase); }
-  const HAND = { down: [5, -11], up: [5, -13], left: [-5, -12], right: [5, -12] };
+  const HAND = Object.fromEntries(Object.entries({ down: [5, -11], up: [5, -13], left: [-5, -12], right: [5, -12] }).map(([d, [x, y]]) => [d, [Sprites.WORLD.ox(x), Sprites.WORLD.oy(y)]]));   // mão do personagem do mundo
   const DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
   const POSE = {                                      // ponta da vara em relação à mão
     right: { back: [-8, -15], fwd: [15, -5], hold: [13, -10], hook: [5, -17] },
@@ -1346,7 +1346,7 @@
   }
   /* O que o cenário desenha: mão, vara (que verga), boia, linha, efeitos e avisos. */
   function fishView(now) {
-    const f = fishing, d = f.dir, t = f.t, v = { rod: f.rod, grip: grip(d), tip: null, bob: null, bobMode: 'none', slack: 0, bend: 0, rings: f.rings, charge: null, alert: null, head: [P.x, P.y - 40], lean: 0 };
+    const f = fishing, d = f.dir, t = f.t, v = { rod: f.rod, grip: grip(d), tip: null, bob: null, bobMode: 'none', slack: 0, bend: 0, rings: f.rings, charge: null, alert: null, head: [P.x, P.y + Sprites.WORLD.oy(-40)], lean: 0 };
     const tg = f.target;
     switch (f.phase) {
       case 'charge': v.tip = rodTip(d, 'hold', 'back', t / 150); v.charge = f.charge; v.lean = 1; v.bend = -0.2 - f.charge * 0.3; break;
@@ -1367,7 +1367,7 @@
         v.bend = held ? 0.9 + wob : 0.55 + wob; v.lean = held ? (Math.floor(now / 160) % 2) : 0; break;
       }
       case 'catch': {                                   // o peixe salta da água até as mãos
-        const k = clamp01(t / 560), hx = P.x, hy = P.y - 40;
+        const k = clamp01(t / 560), hx = P.x, hy = P.y + Sprites.WORLD.oy(-40);
         v.tip = rodTip(d, 'hook', 'hold', 0.2); v.bend = 0.4 * (1 - k);
         v.jump = { id: f.fishId, x: lerp(tg[0], hx, k), y: lerp(tg[1], hy, k) - Math.sin(k * Math.PI) * 26, flip: hx < tg[0] };
         v.bob = [v.jump.x, v.jump.y - 6]; v.bobMode = 'reel'; break;
@@ -1387,7 +1387,7 @@
       case 'show': v.hold = f.fishId; break;
       case 'release': {
         const k = clamp01(t / 560);
-        if (k < 1) v.jump = { id: f.fishId, x: lerp(P.x, tg[0], k), y: lerp(P.y - 38, tg[1], k) - Math.sin(k * Math.PI) * 18, flip: tg[0] < P.x };
+        if (k < 1) v.jump = { id: f.fishId, x: lerp(P.x, tg[0], k), y: lerp(P.y + Sprites.WORLD.oy(-38), tg[1], k) - Math.sin(k * Math.PI) * 18, flip: tg[0] < P.x };
         break;
       }
     }
@@ -1415,7 +1415,7 @@
   }
   $('fish-cancel').onclick = () => cancelFishing();
   /* Texto curto que sobe e some ("Fisgou!", "Perfeito!", nível novo). */
-  function fishPop(text, kind = '', wx = P.x, wy = P.y - 48) {
+  function fishPop(text, kind = '', wx = P.x, wy = P.y + Sprites.WORLD.oy(-48)) {
     const e = el('div', 'fish-pop ' + kind, text), at = screenOf(wx, wy);
     e.style.left = at[0] + 'px'; e.style.top = at[1] + 'px'; $('stage').append(e); setTimeout(() => e.remove(), 1300);
   }
@@ -1522,7 +1522,7 @@
     const cv = $('scene'), r = cv.getBoundingClientRect(), k = Math.max(1, Math.round(r.width / cv.width));
     const bw = BAR.w * k, bh = BAR.h * k, el2 = $('fishbar');
     if (el2.dataset.k !== String(k)) { el2.style.width = bw + 'px'; el2.style.height = bh + 'px'; el2.dataset.k = String(k); }
-    const [hx, hy] = screenOf(P.x, P.y - 34), [fx, fy] = screenOf(P.x, P.y + 4), bob = screenOf(f.target[0], f.target[1]), me = screenOf(P.x, P.y - 16);
+    const [hx, hy] = screenOf(P.x, P.y + Sprites.WORLD.oy(-34)), [fx, fy] = screenOf(P.x, P.y + 4), bob = screenOf(f.target[0], f.target[1]), me = screenOf(P.x, P.y + Sprites.WORLD.oy(-16));
     const pad = 6 * k, vw = window.innerWidth, vh = window.innerHeight;
     const cands = [[hx - bw / 2, hy - bh - pad], [fx - bw / 2, fy + pad], [me[0] - bw - 12 * k, me[1] - bh / 2], [me[0] + 12 * k, me[1] - bh / 2]];
     const hits = (x, y, px, py, m) => px > x - m && px < x + bw + m && py > y - m && py < y + bh + m;
