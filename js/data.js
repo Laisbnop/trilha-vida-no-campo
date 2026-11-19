@@ -137,13 +137,13 @@ const FRIEND = { talk: 12, love: 45, like: 25, neutral: 12, dislike: -6, max: 50
 /* Moradores. sched = [minuto do dia, caminho [[x,y],...]] no mapa externo (ou 'loja').
    talk[0|1|2] = falas com 0–1, 2–3 e 4–5 corações. */
 const VILLAGERS = [
-  { id: 'celeste', portrait: 'celeste', name: 'Dona Celeste', place: 'no Armazém, na vila',
+  { id: 'celeste', portrait: 'celeste', name: 'Dona Celeste', place: 'no Armazém, na vila (mora no andar de cima)',
     bio: 'Dona do Armazém. Prática, acolhedora e sabe de tudo o que se planta na região.',
     look: mkLook('s4', 'coque', 'grisalho', 'blusa', '#c8683a', 'saia', '#5a4a6a'),
     love: ['laranja', 'flor', 'morango'], like: ['tomate', 'ovo', 'goiaba', 'narciso'], dislike: ['pedra', 'madeira'],
     giftPts: { morango: 150 },                                  // valor base próprio (substitui o de "adora")
     giftLine: { morango: 'Morango! Você acertou em cheio. Vou separar alguns para uma receita especial. Muito obrigada!' },
-    sched: [[360, 'loja'], [1080, [[510, 160], [590, 186]]]],
+    sched: [[360, 'loja'], [1080, [[510, 160], [590, 186]]], [1290, [[590, 186], [510, 160]]], [1300, 'residencia']],   // 18h: praça; 21h40: sobe para casa, em cima do Armazém
     talk: [['Precisando de semente, é só falar. Rabanete é o mais rápido para começar.', 'O lago da sua fazenda serve para encher o regador. Planta sem água não cresce.', '{fazenda} ficou parado tanto tempo... É bom ver fumaça naquela chaminé de novo.'],
       ['Guardei umas mudas boas para você. Árvore dá trabalho no começo e alegria por anos.', 'Sabe que a vila anda mais animada desde que você chegou?', 'Meu marido plantou a laranjeira da praça. Toda florada eu lembro dele.'],
       ['Você já é de casa. Quando eu me aposentar, quero o Armazém em boas mãos... só pensando alto.', 'Hoje sonhei com {fazenda} todo florido. Acordei e vi que já não é mais sonho.', 'Senta um pouco, toma um café. Freguês eu atendo depois.']],
@@ -423,13 +423,13 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Mundo maior',
+  title: 'Fachadas da vila',
   items: [
-    'A vila cresceu para o sul e para o leste: são cerca de 2,7 vezes mais lugares para andar fora da fazenda, na mesma escala.',
-    'Vila sul: ruelas novas, a praça do coreto, a horta comunitária, jardins e uma mesa de piquenique. A praça da fonte continua no centro.',
-    'Beira-rio: o rio do sul atravessa o mapa, com areia nas margens, pontes e um píer. Dá para pescar da areia, do píer e da margem sul.',
-    'A escola mudou para o leste da vila, de frente para a rua de baixo. Iara faz o caminho novo a pé, sem atrasar.',
-    'Bairro leste: avenida, laguinho com bancos, pomar, poço antigo e dois terrenos reservados, um deles para o futuro museu (ainda só o terreno).',
-    'O mapa (M) mostra a nova organização. Fazenda, plantações, animais e baús continuam como estavam; se a posição salva cair num lugar ocupado, você aparece no ponto livre mais próximo.',
+    'Armazém CELESTE: agora tem dois andares, com o comércio embaixo (vitrines, toldos e porta dupla de vidro), a placa CELESTE e a casa de Dona Celeste em cima. Só o comércio tem entrada.',
+    'Depois do passeio na praça, Dona Celeste sobe para a casa dela, em cima do Armazém, e volta ao balcão às 6h.',
+    'Cada casa tem fachada própria: Seu Honório com bancada de carpinteiro, Bia com varanda e catavento de galo, Iara com sótão-ateliê e cerquinha colorida, Tomé numa cabana de toras.',
+    'A escola ganhou tijolinho, relógio, torre do sino, janelas em arco e mastro.',
+    'Dá para andar atrás dos telhados, que ficam na frente do personagem. As paredes continuam bloqueando, e portas, janelas acesas à noite, fumaça das chaminés e neve no inverno funcionam como antes.',
+    'O mapa (M) passou a mostrar as fachadas e as árvores.',
   ],
 };

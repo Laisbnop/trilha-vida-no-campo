@@ -232,6 +232,42 @@ de noite, e o ovo aparece nos ninhos de manhã.
 do ano 1, Bia traz o seu animal favorito. Aceite e dê um nome; se adiar, ela volta
 na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
+### Construções da vila
+
+Cada prédio da vila tem fachada própria, desenhada por código em pixel art, com
+silhueta, materiais e detalhes diferentes, mas com a mesma linguagem (contorno
+escuro, telhas com fiadas, beirais, peitoris e sombras):
+
+- **Armazém CELESTE**: dois andares. No térreo, o comércio, com paredes de tábua
+  pintada, duas vitrines com mercadorias e toldos listrados, porta dupla de vidro,
+  lampiões, caixotes de frutas e vasos. Entre os andares fica a placa com o nome
+  **CELESTE**, em letras grandes. Em cima fica a casa de Dona Celeste, com tábuas
+  creme, três janelas com floreiras e cortinas e uma empena com janela redonda e
+  chaminé. Só o térreo tem porta: a casa de cima não tem interior, escada nem
+  entrada para o jogador. Dona Celeste atende das 6h às 18h; depois passeia pela
+  praça e, perto das 21h40, sobe para casa e some até a manhã seguinte (não fica
+  presa no balcão).
+- **Casa de Seu Honório** (carpinteiro aposentado): telhado de duas águas em
+  ardósia, empena de tábuas com respiro, paredes de madeira escura sobre pedra,
+  alpendre com esteios, uma bancada com serrote e tábuas encostadas.
+- **Casa de Bia** (que cria galinhas): madeira amarela, telhado verde com
+  água-furtada, catavento de galo, varanda listrada com esteios brancos,
+  floreiras vermelhas, uma galinha de madeira e uma casinha de passarinho.
+- **Casa de Iara** (que pinta): lilás, telhado roxo de duas águas, janela do
+  sótão-ateliê com o cavalete à mostra, porta azul em arco, paleta pendurada,
+  respingos de tinta no degrau e uma cerquinha com cada estaca de uma cor.
+- **Escola**: tijolinho com cantos brancos, frontão com relógio, torre do sino,
+  placa ESCOLA, janelas altas em arco, porta dupla com escadaria e mastro com
+  bandeirola, ao lado do pátio cercado.
+- **Cabana de Tomé**: toras com pontas aparentes, telhado com musgo, chaminé de
+  pedra, lampião, pilha de lenha, balde e vara de pesca encostada.
+
+Os prédios são sprites altos: só a parte de baixo (paredes) bloqueia a passagem,
+e o personagem pode andar atrás do telhado, que aparece na frente dele. Portas
+funcionam por clique e pela tecla Q, as janelas acendem à noite, as chaminés
+soltam fumaça e os telhados ganham neve no inverno. A casa da fazenda e o
+galinheiro mantêm o desenho próprio. O mapa (M) mostra as fachadas e as árvores.
+
 ## Fazenda
 
 - **Ferramentas** (gastam energia a cada uso ou golpe): enxada ara, regador rega
