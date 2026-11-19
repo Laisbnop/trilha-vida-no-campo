@@ -257,6 +257,31 @@ de noite, e o ovo aparece nos ninhos de manhã.
 do ano 1, Bia traz o seu animal favorito. Aceite e dê um nome; se adiar, ela volta
 na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
+### Ruas e caminhos
+
+A área rural e o centrinho têm pisos diferentes:
+
+- **Terra batida** (saída da fazenda, ruas da vila sul, bairro leste, trilhas e
+  serra): tons de ocre e marrom claro, com manchas de terra compactada, pedrinhas
+  ocasionais e pouquíssimos grãos claros. As bordas são levemente irregulares, com
+  a grama entrando em alguns trechos, e a faixa central fica limpa para andar.
+- **Calçamento de pedras** (o centrinho): da frente do Armazém CELESTE, passando
+  pela rua até a casa de Seu Honório, até a praça da fonte, num piso contínuo, e
+  também na praça do coreto. As pedras são pequenas e irregulares, de cantos
+  suaves, em bege, cinza quente e marrom suave, com juntas escuras, luz em cima e
+  sombra embaixo. Onde o calçamento encontra a terra ou a grama, uma fileira de
+  pedras de meio-fio fecha a borda.
+- **Areia** nas margens do rio.
+
+As ruas não são mais pintadas retângulo por retângulo: cada trecho marca uma
+máscara do mapa, e uma passada única pinta tudo pixel a pixel, com texturas que
+dependem só da posição. Assim curvas, cantos e cruzamentos não têm emendas, o
+padrão continua de um trecho para o outro e nada pisca entre os quadros. O
+traçado, a largura, as colisões, as árvores, os pontos de coleta e as rotinas não
+mudaram (o sorteio do cenário é o mesmo). As estações continuam valendo: neve na
+terra e nas pedras no inverno, folhas caídas no outono. O mapa do menu (M) mostra
+os mesmos pisos.
+
 ### Tamanho dos personagens
 
 No mundo (cenários externos e internos), o jogador e os moradores são cerca de
