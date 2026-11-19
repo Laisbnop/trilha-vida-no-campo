@@ -1053,6 +1053,19 @@ const World = (() => {
       [[3, 11], [4, 10], [5, 9], [6, 9], [7, 10], [8, 11], [9, 11], [10, 10], [11, 9], [12, 8], [12, 7]].forEach(([x, y], i) => { R(x, y, 1, 1, i % 3 === 0 ? '#c85a72' : '#f08aa0'); });
       R(12, 6, 1, 1, '#f8b0c0'); R(4, 13, 8, 1, '#7a5230');
     },
+    alga() {                                        // três folhas de alga saindo de um tufo, com nervura clara
+      ['................', '............OO..', '...........OLMO.', '......OO...OLMO.', '.....OLMO..OMLO.', '.O...OMLO.OMLO..', 'OLO..OMLO.OMLO..', 'OMLO.OLMO.OLMO..',
+        '.OMLOOMLOOMLO...', '..OMLOLMOMLO....', '...OMLMLMLO.....', '....OMLMLO......', '....OMMMLO......', '.....OMMO.......', '.....OOOO.......', '................']
+        .forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== '.') R(x, y, 1, 1, { O: '#1a4a2a', M: '#3f9a3a', L: '#b8e060' }[ch]); }));
+    },
+    musgo() {                                       // tufo verde-musgo, fofo, com pontinhos claros
+      blob(8, 10, 7, OUT, 0.6); blob(8, 10, 6, '#4a6a2a', 0.6); blob(6, 9, 3, '#6a8a32'); blob(10, 8, 3, '#7a9a3a'); blob(8, 11, 3, '#5a7a2e');
+      [[5, 8], [9, 7], [11, 10], [7, 11], [4, 11]].forEach(([x, y]) => R(x, y, 1, 1, '#b8d070')); R(3, 13, 10, 1, '#3a5220');
+    },
+    lixo() {                                        // bota velha, furada e pingando
+      box(4, 2, 6, 9, '#6a4a32'); R(5, 3, 4, 1, '#8a6442'); box(4, 10, 10, 4, '#6a4a32'); R(4, 13, 10, 1, '#3a2a1e'); R(11, 11, 2, 1, '#8a6442');
+      R(6, 6, 2, 1, '#2a1a12'); R(6, 8, 2, 1, '#2a1a12'); R(9, 12, 1, 1, '#c8b890'); R(2, 14, 1, 1, '#8ac8e8'); R(14, 9, 1, 2, '#8ac8e8');
+    },
     sardinha() {                                    // corpo prateado e fino, dorso azul
       R(2, 6, 11, 5, OUT); R(1, 7, 1, 3, OUT); R(13, 7, 2, 3, OUT); R(14, 5, 2, 2, OUT); R(14, 10, 2, 2, OUT);
       R(3, 7, 10, 3, '#c8d4e0'); R(3, 7, 10, 1, '#4a78a8'); R(4, 9, 8, 1, '#f0f4f8'); R(13, 8, 1, 1, '#9aa8b8'); R(15, 6, 1, 1, '#4a78a8'); R(15, 10, 1, 1, '#4a78a8');

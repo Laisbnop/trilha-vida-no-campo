@@ -495,6 +495,47 @@ Inventário e use "Carregar minhocas"; a quantidade aparece no ícone da barra. 
 lançamento válido gasta uma, e a espera pela mordida cai pela metade. Sem isca, a
 vara funciona normalmente.
 
+**Sorte do dia.** Cada dia é **neutro**, **de sorte** ou **de má sorte**. No início
+de cada estação, o jogo monta uma lista com exatamente 8 dias de má sorte, 12
+neutros e 9 de sorte e a embaralha: não há ordem fixa nem alternância, e pode haver
+vários dias iguais seguidos. Cada estação e cada partida têm a sua. A lista fica
+salva com a estação e o ano, então recarregar, sair do jogo ou mudar de área não
+sorteia de novo. Os próximos dias não são revelados.
+
+Ao começar o dia aparece uma mensagem curta ("Hoje o dia será neutro.", "Hoje será
+um dia de sorte!" ou "Hoje será um dia de má sorte."), uma vez por manhã, sem
+repetir ao recarregar. O painel do topo mostra um trevo com a condição de hoje; ao
+passar o mouse, aparecem a condição e o efeito na pesca.
+
+A sorte **não mexe na energia**: ferramentas, lançamentos, energia máxima e comida
+são iguais nos três tipos de dia. Ela muda só o que vem na linha a cada lançamento
+(sorteado uma vez, no lançamento; cliques e teclas depois não trocam o resultado):
+
+| Resultado | Dia de sorte | Dia neutro | Dia de má sorte |
+| ---: | ---: | ---: | ---: |
+| Peixe | 90% | 70% | 30% |
+| Alga | 6% | 15% | 30% |
+| Musgo | 2% | 8% | 20% |
+| Lixo | 2% | 7% | 20% |
+
+"Peixe" é uma chance de fisgar: a captura ainda depende do minijogo. Nos dias de
+sorte e neutros não há limite. Nos dias de má sorte, depois de **5 peixes
+capturados** no dia (somando todos os lugares; peixes soltos contam, fugas e
+refugo não), os lançamentos trazem só alga (50%), musgo (25%) ou lixo (25%), e
+aparece uma vez o aviso "Os peixes estão difíceis hoje. Talvez seja melhor tentar
+amanhã." Dá para continuar pescando, e o contador zera na manhã seguinte. A sorte
+não muda a zona verde, a dificuldade das espécies nem a experiência. Os números
+ficam em `LUCK`, no `js/data.js`.
+
+**Alga, musgo e lixo.** Quando vem um deles, "Fisgou!" aparece, a linha traz o
+item até as mãos (sem minijogo, sem experiência e sem "Perfeito!") e o cartão
+mostra o que veio: **Guardar** ou **Descartar**. Com a mochila cheia, o item espera
+enquanto você abre espaço ou o descarta. A **alga** é comestível ("Comer alga?",
+recupera 3 de energia) e pode ser presente. O **musgo** e o **lixo** (uma bota
+velha) não têm utilidade por enquanto: não se comem, não se vendem, não entram em
+missões nem em presentes; podem ser guardados no baú ou jogados fora na mochila
+("Jogar fora", com confirmação).
+
 **Configuração central.** Os números da pesca ficam juntos em `FISHING`, no
 `js/data.js`: progresso (início 30, +10/s dentro, −8/s fora, 0,75 s de tolerância),
 zona verde por nível, controle da zona, jeitos de nadar, espera, alcance, preços e
@@ -503,8 +544,8 @@ tempo decorrido, em passos fixos de 10 ms: a mesma em qualquer taxa de quadros.
 
 Peixes são vendidos no Armazém, um a um ou todos de uma vez. O Diário mostra o
 nível, as espécies descobertas, o maior tamanho de cada uma e as capturas perfeitas.
-Zonas de qualidade, lixo, tesouros, outras iscas, anzóis e encantamentos ficam
-para uma próxima versão.
+Zonas de qualidade, tesouros, outras iscas, anzóis, encantamentos e usos para
+musgo e lixo ficam para uma próxima versão.
 
 ## Missões
 
@@ -599,6 +640,7 @@ Comestíveis (regra do vale, cadastrada item a item em `EDIBLE`, no `js/data.js`
 | Laranja | +15 |
 | Narciso | +10 |
 | Amora silvestre | +8 |
+| Alga | +3 |
 
 Outras flores, cogumelos e colheitas não são comestíveis. A energia nunca passa de 100; o valor de cada alimento
 está na descrição dele. Só escolher o alimento na barra não come nada: é preciso um
@@ -630,7 +672,12 @@ posição). Jogos salvos antes do calendário de 29 dias são convertidos pelo d
 absoluto, sem perder nada. De Lúcio: amizade, conversa do
 dia, presentes do dia e da semana (com a semana de referência), presente de
 aniversário do ano, permissão da tenda, etapas das missões, melhoria da tenda,
-apito encontrado e entregue, cenas vistas e a conversa de Iara. De Iara:
+apito encontrado e entregue, cenas vistas e a conversa de Iara. Da sorte do dia:
+a lista embaralhada da estação (com o ano), a condição de hoje, a mensagem da
+manhã já mostrada, os peixes capturados hoje e o aviso de limite já mostrado.
+Jogos salvos antes ganham a lista na hora, preservando a condição de hoje se ela já
+existir e completando as quantidades da estação; se isso não for possível, o que
+existe é mantido e a próxima estação já vem exata. De Iara:
 presentes do dia e da semana, presente de aniversário do ano, nome da cor,
 etapas dos acontecimentos de 3 e 5 corações, pinturas da fonte por estação e
 ano e o quadro pendurado em casa. Recarregar a

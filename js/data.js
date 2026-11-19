@@ -7,7 +7,7 @@ const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem 
 const MS_PER_GAME_MIN = 900;       // 54 s reais por hora de jogo (9 s a cada 10 min) → 20 horas em 18 minutos ativos
 /* Comestíveis do jogo (regra do vale): só os itens desta lista podem ser comidos, cada um
    com o valor "food" (energia recuperada) definido no item. Outras flores e plantas não. */
-const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango'];
+const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango', 'alga'];
 const MAX_ENERGY = 100;
 const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
@@ -51,6 +51,9 @@ const ITEMS = {
   flor:     { name: 'Flor-do-campo', cat: 'flor', sell: 6, desc: 'Simples e bonita.' },
 
   sardinha: { name: 'Sardinha', kind: 'fish', food: 22, desc: 'Um peixe comum na vila. Aparece no rio e nos lagos em qualquer estação, mais de dia. Comestível: recupera 22 de energia.' },
+  alga:     { name: 'Alga', food: 3, eatAsk: 'Comer alga?', desc: 'Fita verde e escorregadia que veio na linha de pesca. Recupera 3 de energia.' },
+  musgo:    { name: 'Musgo', kind: 'refugo', desc: 'Um tufo de musgo encharcado que veio na linha de pesca. Sem utilidade no momento.' },
+  lixo:     { name: 'Lixo', kind: 'refugo', desc: 'Uma bota velha e furada que veio na linha de pesca. Sem utilidade no momento.' },
   tucunare: { name: 'Tucunaré', kind: 'fish', food: 32, desc: 'Peixe de lago, valente e bonito, com uma mancha escura perto do rabo. Briga mais que a sardinha. Comestível: recupera 32 de energia.' },
 
   chapeu_palha:    { name: 'Chapéu de palha',    kind: 'hat', hat: 'palha',    price: 45, desc: 'Sombra para os dias de roça.' },
@@ -386,6 +389,23 @@ const FISHING = {
   cast: { min: 12, max: 72, step: 16, stepLevels: [1, 4, 8], shore: 24, energy: 2 },             // distâncias em pixels do mapa (16 = um quadrado)
   fiber: { price: 1500, level: 4 }, baitPrice: 5,
 };
+/* Sorte do dia. Cada estação de 29 dias sorteia uma lista embaralhada com exatamente estas
+   quantidades (sem ordem fixa: pode haver dias iguais seguidos). A sorte só mexe na pesca:
+   chance de cada resultado por lançamento (em %), sem tocar em energia, zona verde, espécies
+   ou experiência. Nos dias de má sorte, depois de 5 peixes capturados no dia, só vem refugo. */
+const LUCK = {
+  counts: { ma: 8, neutro: 12, sorte: 9 },
+  name: { sorte: 'Dia de sorte', neutro: 'Dia neutro', ma: 'Dia de má sorte' },
+  morning: { neutro: 'Hoje o dia será neutro.', sorte: 'Hoje será um dia de sorte!', ma: 'Hoje será um dia de má sorte.' },
+  fishing: {
+    sorte: { peixe: 90, alga: 6, musgo: 2, lixo: 2 },
+    neutro: { peixe: 70, alga: 15, musgo: 8, lixo: 7 },
+    ma: { peixe: 30, alga: 30, musgo: 20, lixo: 20 },
+  },
+  badLimit: 5,                                          // peixes capturados por dia de má sorte (soltos contam; fugas não)
+  afterLimit: { alga: 50, musgo: 25, lixo: 25 },
+  limitMsg: 'Os peixes estão difíceis hoje. Talvez seja melhor tentar amanhã.',
+};
 const FISH_ZONE_NAME = { lago: 'lago', rio: 'rio' };
 const CAST_ENERGY = FISHING.cast.energy;  // energia por lançamento válido
 const ROD_LETTER = {
@@ -402,15 +422,13 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Iara',
+  title: 'Sorte do dia',
   items: [
-    'Iara agora tem 13 anos e está na sexta série: é distraída, pinta paisagens, dá nomes às cores que mistura e toma chá de maçã com canela toda manhã. Aparência nova, com jardineira lilás manchada de tinta, e roupa de inverno com gorro e casaco.',
-    'Retratos novos com cinco expressões (neutra, contente, concentrada, triste e surpresa) e animações discretas no mapa: pintando no cavalete, desenhando, lendo e tomando chá.',
-    'A vila ganhou uma escola, e a casa de Iara pode ser visitada: tem um cantinho de pintura e uma mesinha de chá.',
-    'Rotina: escola de segunda a sexta (7h30 às 12h30), tarde na fonte e na praça, e em casa depois das 18h. No fim de semana, praça de manhã e fonte à tarde. Ela anda pelos caminhos, sem sumir de um lugar para outro.',
-    'Todo dia 10 de cada estação, das 14h às 18h, Iara pinta a fonte, sem interromper o seu passeio. Depois de pronta, a pintura pode ser vista na conversa ("Ver a pintura"). A rotina já está preparada para a chuva, quando o clima chegar ao jogo.',
-    'Presentes: 1 por dia e 2 por semana, com um presente extra no aniversário (4 do Verão), que vale 8 vezes mais. Ela adora pincel, bolo de morango, flores aquáticas e conchas raras; gosta de flores e pães; não gosta de rabanete, espinafre nem de leite.',
-    'Acontecimentos de amizade: dar nome a uma cor nova (1 coração), achar um detalhe escondido na praça (3 corações) e ver as quatro versões da fonte, com um quadro de presente para pendurar em casa (5 corações).',
-    'Jogos salvos continuam com a amizade, os presentes e as missões de Iara.',
+    'Cada dia agora é neutro, de sorte ou de má sorte. Toda estação tem 8 dias de má sorte, 12 neutros e 9 de sorte, em ordem embaralhada e salva: recarregar não muda nada.',
+    'Uma mensagem curta anuncia a sorte ao começar o dia. O trevo no painel do topo mostra a condição de hoje; passe o mouse para ver o efeito na pesca.',
+    'A energia é a mesma nos três tipos de dia: ferramentas, lançamentos, energia máxima e comida não mudam.',
+    'Pesca: peixe 90% nos dias de sorte, 70% nos neutros e 30% nos de má sorte; o resto vem como alga, musgo ou lixo. O peixe ainda precisa ser vencido no minijogo.',
+    'Nos dias de má sorte, depois de 5 peixes capturados (soltos contam, fugas não), só vem alga, musgo ou lixo até a manhã seguinte.',
+    'Novos itens: alga (comestível, recupera 3 de energia), musgo e lixo (sem utilidade por enquanto; dá para guardar no baú ou jogar fora na mochila).',
   ],
 };
