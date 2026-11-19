@@ -176,7 +176,7 @@ const VILLAGERS = [
     bio: 'Vive numa cabana no bosque. Fala pouco, observa muito e conhece cada trilha.',
     look: mkLook('s3', 'medio', 'castanho', 'camisa', '#5a7a5a', 'calca', '#5a4a3a'),
     love: ['amora', 'cogumelo'], like: ['laranja', 'ovo', 'azevinho'], dislike: ['tomate'],
-    sched: [[360, [[1056, 322]]], [780, [[1000, 180], [900, 166], [668, 180]]], [1080, [[900, 166], [1010, 150]]]],
+    sched: [[360, [[1012, 300], [1056, 322]]], [780, [[1012, 300], [1000, 180], [900, 174], [668, 180]]], [1080, [[900, 174], [1010, 150]]]],   // contorna a lagoa
     talk: [['...Bom dia.', 'O bosque dá amora e cogumelo. Cada dia num canto diferente.', 'Árvore cortada volta. Demora uns dias, mas volta.'],
       ['O rio estava claro hoje. Sinal de tempo firme.', 'Você pisa leve no bosque. Os bichos nem se assustam.', 'Quase ninguém vem até a cabana. Pode vir.'],
       ['Eu não sou de falar. Mas com você é fácil.', 'Achei um ninho de sabiá perto da sua cerca. Deixei quieto.', 'Quando chover forte, se abrigue na cabana. A porta não tem tranca.']],
@@ -423,13 +423,13 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Preços e cultivos',
+  title: 'Mundo maior',
   items: [
-    'Sementes (por unidade): rabanete 12, tomate 20, abóbora 42 e morango 150 moedas. Venda (por unidade colhida): rabanete 20, tomate 60, abóbora 88 e morango 320.',
-    'Rabanete fica pronto em 3 dias regados e tomate em 4, com colheita única: a planta sai e a terra continua preparada. Abóbora: 13 dias e depois a cada 6; morango: 5 dias e depois a cada 4, contando a partir da colheita.',
-    'Armazém: ração 10, chapéu de palha 200, minhoca 20 e galinha 130 moedas.',
-    'Peixes têm preço fixo: sardinha 50 e tucunaré 60, de qualquer tamanho. O tamanho continua aparecendo e valendo como recorde. Ovo vende por 8 e alga por 2.',
-    'Antes de confirmar, o Armazém mostra quantidade, preço por unidade e total. Cliques rápidos fazem uma transação só.',
-    'Partidas salvas mantêm mochila, moedas, animais e plantações; rabanetes que já estavam maduros continuam maduros.',
+    'A vila cresceu para o sul e para o leste: são cerca de 2,7 vezes mais lugares para andar fora da fazenda, na mesma escala.',
+    'Vila sul: ruelas novas, a praça do coreto, a horta comunitária, jardins e uma mesa de piquenique. A praça da fonte continua no centro.',
+    'Beira-rio: o rio do sul atravessa o mapa, com areia nas margens, pontes e um píer. Dá para pescar da areia, do píer e da margem sul.',
+    'A escola mudou para o leste da vila, de frente para a rua de baixo. Iara faz o caminho novo a pé, sem atrasar.',
+    'Bairro leste: avenida, laguinho com bancos, pomar, poço antigo e dois terrenos reservados, um deles para o futuro museu (ainda só o terreno).',
+    'O mapa (M) mostra a nova organização. Fazenda, plantações, animais e baús continuam como estavam; se a posição salva cair num lugar ocupado, você aparece no ponto livre mais próximo.',
   ],
 };
