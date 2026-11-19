@@ -184,7 +184,7 @@ const Sprites = (() => {
           case 'juba': tex = HAIR.wavy; sideCrown(0.9); addRect(12, 9, 17, 15); [[19, 12], [19, 15], [13, 18], [16, 18], [7, 8], [8, 9], [10, 2], [16, 3]].forEach(([x, y]) => add(x, y)); break;
         }
       }
-      if (hat) cut((x, y) => y < 5 || (y < 6 && x > 5 && x < 18));          // o chapéu assenta sobre o cabelo
+      if (hat) cut((x, y) => y < (hat === 'gorro' ? 7 : 5) || (y < (hat === 'gorro' ? 8 : 6) && x > 5 && x < 18));          // o chapéu assenta sobre o cabelo
     }
     hairShape();
     /* cacheados e crespos: borda com volume (pequenos tufos), sem invadir o rosto */
@@ -404,6 +404,11 @@ const Sprites = (() => {
       const c = '#8a9a6a', cd = '#64744a', cl = '#a8b886';
       if (side) { box(7, 2, 15, 5, c); row(2, 8, 14, cl); row(6, 4, 16, cd); row(7, 3, 9, cd); }
       else { box(7, 2, 16, 5, c); row(2, 8, 15, cl); row(5, 7, 16, cd); row(6, 5, 18, c); row(7, 4, 19, cd); }
+    } else if (hat === 'gorro') {                       // gorro de tricô com barra dobrada e pompom
+      const c = look.hatColor || '#5a58b8', cd = shade(c, 0.72), cl = mix(c, '#ffffff', 0.3), pom = '#eef0fa';
+      box(7, 2, 16, 5, c); row(2, 9, 14, cl); for (let x = 8; x <= 15; x += 2) p(x, 4, cd);
+      if (side) { box(6, 6, 16, 7, cl); row(7, 6, 16, cd); box(10, -1, 12, 1, pom); p(11, -1, '#ffffff'); }
+      else { box(6, 6, 17, 7, cl); for (let x = 6; x <= 17; x += 2) p(x, 7, cd); box(10, 0, 13, 1, pom); p(11, 0, '#ffffff'); }
     } else if (hat === 'chef') {
       box(7, 0, 16, 4, '#f8f8f8'); row(0, 8, 15, '#ffffff'); box(16, 1, 16, 4, '#d8d8e4'); row(5, 6, 17, '#e8e8f0');
     }
@@ -436,6 +441,18 @@ const Sprites = (() => {
       } else { p(6, 15, BB); p(17, 15, BD); p(6, 16, BB); p(17, 16, BD); p(6, 17, BD); p(17, 17, BD); }
     }
     if (look.beard === true) { for (let y = 12; y <= 18; y++) row(y, y < 16 ? 7 : 9 + (y - 16), y < 16 ? 16 : 14 - (y - 16), y % 2 ? '#eeeef4' : '#d8d8e4'); p(11, 14, '#b8b8c8'); p(12, 14, '#b8b8c8'); }
+
+    /* ---------- manchas de tinta na roupa (Iara) ---------- */
+    if (look.paint) {
+      const dots = down ? [[9, 20, '#e0a23a'], [14, 22, '#3f86d0'], [12, 19, '#58b858'], [10, 26, '#e04a5a']] : up ? [[10, 21, '#e0a23a'], [15, 19, '#3f86d0']] : [[11, 20, '#e0a23a'], [13, 22, '#3f86d0'], [12, 26, '#58b858']];
+      dots.forEach(([x, y, c]) => { if (get(x, y) && get(x, y) !== S && get(x, y) !== Sd) p(x, y, c); });
+    }
+    /* ---------- criança: cabeça do mesmo tamanho, tronco, braços e pernas mais curtos ---------- */
+    if (look.kid) {
+      const drop = new Set([20, 22, 27]), rows = grid.filter((r, y) => !drop.has(y));
+      while (rows.length < H) rows.unshift(Array(W).fill(null));
+      for (let y = 0; y < H; y++) grid[y] = rows[y];
+    }
 
     /* ---------- contorno ---------- */
     const filled = grid.map(r => r.map(Boolean));

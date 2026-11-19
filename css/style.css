@@ -544,3 +544,13 @@ body:has(#screen-create:not([hidden])) { background: #2e1c10 repeating-linear-gr
   #screen-create .views canvas { width: 72px; height: 88px; }
   #screen-create .create-step { max-height: none; }
 }
+
+/* pinturas de Iara */
+.painting-win { max-width: 640px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 20px; }
+.painting-win h3 { margin: 0; }
+.painting-body { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.painting-body .pf { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 300px; }
+.painting-body .pf canvas { width: 288px; height: 216px; border: 6px solid #8a5a2a; outline: 2px solid #3a2414; background: #f8f4ea; }
+.painting-body .pf.small { width: 252px; max-width: 252px; }
+.painting-body .pf.small canvas { width: 240px; height: 180px; border-width: 5px; }
+.painting-body figcaption { font-size: 13px; line-height: 1.35; text-align: center; color: #f6ecd2; }

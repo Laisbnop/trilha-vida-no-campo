@@ -42,13 +42,13 @@ const ITEMS = {
   racao:   { name: 'Ração',   price: 5, desc: 'Coloque no comedouro do galinheiro.' },
   ovo:     { name: 'Ovo',     sell: 14, food: 20, desc: 'Fresquinho. Comestível: recupera 20 de energia.' },
   amora:    { name: 'Amora silvestre', sell: 7, food: 8, desc: 'Colhida no bosque, na serra e, no outono, pela vila. Comestível: recupera 8 de energia.' },
-  narciso:        { name: 'Narciso',          sell: 30, food: 10, desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila. Comestível (só aqui no vale, não na vida real!): recupera 10 de energia.' },
-  ervilha_cheiro: { name: 'Ervilha-de-cheiro', sell: 45, desc: 'Flor perfumada do verão, em tons de rosa e lilás.' },
-  acafrao:        { name: 'Flor de açafrão',  sell: 55,  desc: 'Flor roxa que fura a neve no inverno.' },
+  narciso:        { name: 'Narciso', cat: 'flor', sell: 30, food: 10, desc: 'Flor amarela da primavera. Nasce na beira dos caminhos da vila. Comestível (só aqui no vale, não na vida real!): recupera 10 de energia.' },
+  ervilha_cheiro: { name: 'Ervilha-de-cheiro', cat: 'flor', sell: 45, desc: 'Flor perfumada do verão, em tons de rosa e lilás.' },
+  acafrao:        { name: 'Flor de açafrão', cat: 'flor', sell: 55,  desc: 'Flor roxa que fura a neve no inverno.' },
   azevinho:       { name: 'Azevinho',         sell: 70,  desc: 'Ramo de folhas pontudas com bagas vermelhas. Enfeite de inverno.' },
   fruta_cristal:  { name: 'Fruta de cristal', sell: 130, food: 40, desc: 'Rara. Fria e translúcida, aparece só no inverno. Comestível: recupera 40 de energia.' },
   cogumelo: { name: 'Cogumelo',        sell: 9, desc: 'Encontrado à sombra das árvores.' },
-  flor:     { name: 'Flor-do-campo',   sell: 6, desc: 'Simples e bonita.' },
+  flor:     { name: 'Flor-do-campo', cat: 'flor', sell: 6, desc: 'Simples e bonita.' },
 
   sardinha: { name: 'Sardinha', kind: 'fish', food: 22, desc: 'Um peixe comum na vila. Aparece no rio e nos lagos em qualquer estação, mais de dia. Comestível: recupera 22 de energia.' },
   tucunare: { name: 'Tucunaré', kind: 'fish', food: 32, desc: 'Peixe de lago, valente e bonito, com uma mancha escura perto do rabo. Briga mais que a sardinha. Comestível: recupera 32 de energia.' },
@@ -56,7 +56,8 @@ const ITEMS = {
   chapeu_palha:    { name: 'Chapéu de palha',    kind: 'hat', hat: 'palha',    price: 45, desc: 'Sombra para os dias de roça.' },
   boina:           { name: 'Boina',              kind: 'hat', hat: 'boina',    desc: 'Presente de Iara.' },
   chapeu_pescador: { name: 'Chapéu de pescador', kind: 'hat', hat: 'pescador', desc: 'Feito por Tomé.' },
-  encomenda:   { name: 'Encomenda de tintas', kind: 'quest', desc: 'Para entregar a Iara.' },
+  encomenda:   { name: 'Encomenda de tintas', kind: 'quest', desc: 'Estojo de tintas da Iara, para a aula de artes. Entregue a ela.' },
+  quadro_fonte: { name: 'Quadro da fonte', kind: 'decor', desc: 'Cópia de uma pintura da fonte feita por Iara. Pode ser pendurado na parede da sua casa (escolha o quadro no Inventário).' },
   chapeu_tome: { name: 'Chapéu velho de Tomé', kind: 'quest', desc: 'Encontrado no bosque.' },
   apito: { name: 'Apito de madeira', kind: 'quest', desc: 'Pequeno, gasto de tanto uso, com um entalhe de passarinho. É de Lúcio.' },
 };
@@ -179,17 +180,50 @@ const VILLAGERS = [
     again: '...Já falamos hoje.',
     gift: { love: 'Isso é... do que eu mais gosto. Obrigado.', like: 'Bom. Obrigado.', neutral: 'Obrigado.', dislike: 'Hum. Não sou muito de tomate.' },
     scene: { lines: ['Fiz isto nas noites de chuva.', 'Protege do sol na beira do rio. É seu.'], item: 'chapeu_pescador' } },
-  { id: 'iara', portrait: 'iara', name: 'Iara', place: 'em casa de manhã, junto à fonte à tarde',
-    bio: 'Pinta paisagens da vila. Distraída, gentil e sempre com tinta nos dedos.',
-    look: mkLook('s6', 'longoCacheado', 'preto', 'blusa', '#8a5ad9', 'saia', '#e0a23a'),
-    love: ['flor', 'goiaba', 'narciso', 'ervilha_cheiro', 'acafrao'], like: ['amora', 'laranja', 'abobora'], dislike: ['madeira', 'racao'],
-    sched: [[360, [[725, 312]]], [660, [[632, 312], [632, 224], [656, 204]]], [1140, [[632, 224], [632, 312], [725, 312]]]],
-    talk: [['Ah, oi! Desculpa, eu estava olhando a luz na fonte. Você é de {fazenda}?', 'Estou sempre sem tinta. E sem flor para pintar.', 'A vila tem umas cores que só aparecem de manhã cedinho.'],
-      ['Pintei {fazenda} visto de longe. Ainda falta o telhado.', 'Sabia que a cor da goiaba madura não existe em nenhum tubo de tinta?', 'Você repara nas coisas. Pouca gente repara.'],
-      ['Guardei um quadro para você. Não está pronto. Nunca está pronto.', 'Quando eu fico sem ideia, vou ver você trabalhar. Sempre volto com uma.', 'A vila ficou mais colorida. E não é por causa das minhas tintas.']],
-    again: 'Já conversamos hoje, não foi? Perdão, eu me distraio.',
-    gift: { love: 'Que cor! Que perfume! Vou pintar isto antes que mude.', like: 'Que delicadeza. Obrigada!', neutral: 'Obrigada, que gentil.', dislike: 'Ah... obrigada. Vou... achar um lugar para isso.' },
-    scene: { lines: ['Terminei! Quer dizer, quase. Mas isto aqui é para você.', 'Todo artista precisa de uma boina. E todo amigo de artista também.'], item: 'boina' } },
+  /* Iara: 13 anos, sexta série. Pinta paisagens da vila e inventa nomes para as cores que mistura.
+     Rotina, falas, presentes e acontecimentos próprios (ver IARA e game.js). Sem romance. */
+  { id: 'iara', portrait: 'iara', name: 'Iara', routine: 'iara',
+    place: 'na escola de manhã nos dias úteis; à tarde, pintando junto à fonte ou desenhando na praça; à noite, em casa',
+    bio: 'Tem 13 anos e está na sexta série. Gentil e distraída, pinta paisagens da vila e inventa nomes para as cores que mistura. Toma chá de maçã com canela toda manhã e sempre tem um pinguinho de tinta nos dedos.',
+    look: mkLook('s6', 'longoCacheado', 'preto', 'jardineira', '#9a74d8', 'short', '#8a64c8', { gender: 'f', body: 'f', kid: true, paint: true, shoeColor: '#f4f4f4', accessory: 'laco', accColor: '#f2c84a' }),
+    lookWinter: mkLook('s6', 'longoCacheado', 'preto', 'moletom', '#8a64d0', 'calca', '#4a3a7a', { gender: 'f', body: 'f', kid: true, paint: true, shoeColor: '#5a3a24', hat: 'gorro', hatColor: '#5a58b8', accessory: 'cachecol', accColor: '#e0a23a' }),
+    birthday: { season: 1, day: 4 },                                        // 4 do Verão
+    /* preferências: itens individuais têm prioridade sobre as categorias (cat dos itens) */
+    prefs: {
+      love: { ids: ['pincel', 'bolo_morango'], cats: ['flor_aquatica', 'concha_rara'] },
+      like: { ids: ['narciso'], cats: ['flor', 'pao'] },
+      neutral: { ids: ['coco'], cats: ['peixe'] },
+      dislike: { ids: ['rabanete', 'espinafre'], cats: ['leite'] },
+    },
+    love: [], like: ['narciso', 'flor', 'ervilha_cheiro', 'acafrao'], dislike: ['rabanete'],
+    sched: [[360, [[725, 312]]]],                                           // a rotina de verdade vem de iaraSchedule (game.js)
+    talk: [
+      ['Oi! Você é de {fazenda}, né? Eu sou a Iara. Desculpa a mão suja de tinta.', 'Estou fazendo um desenho da vila inteira. Ainda faltam umas oitenta casas... brincadeira, são menos.', 'Você sabia que a fonte muda de cor conforme a hora? Quase ninguém repara.', 'Eu pinto os mesmos lugares em épocas diferentes, para ver como eles mudam.'],
+      ['Hoje misturei um verde e chamei de "verde de folha depois da chuva". Gostou do nome?', 'Meu projeto é pintar a fonte nas quatro estações. Já pensou ver tudo junto?', 'O Leo diz que eu desenho devagar. Eu digo que eu desenho com atenção.', 'Você pode usar meus pincéis, se quiser. Só não esqueça de limpar depois.'],
+      ['Quer ver meu caderno? Ainda tem desenhos tortos, mas esses também ficam.', 'Quando eu fico sem ideia, venho ver você trabalhar na roça. Sempre volto com uma.', 'Inventei um amarelo chamado "manhã preguiçosa". É o da sua janela quando você acorda tarde.', 'O Leo e eu combinamos de desenhar a serra um dia. Ele só quer ir por causa do lanche.'],
+      ['Você virou alguém que eu conto as coisas antes de contar para os outros. É estranho falar isso em voz alta.', 'Guardei um cantinho do caderno só para desenhos da sua fazenda.', 'Se um dia eu tiver uma exposição na escola, você vai ser a primeira pessoa a ver. Prometido.', 'Obrigada por olhar as coisas comigo. Quase ninguém tem paciência.'],
+    ],
+    /* falas por lugar, hora, estação e situação (game.js escolhe sem repetir a anterior) */
+    ctx: {
+      escola: ['Eu estava prestando atenção... só desenhei a janela porque a luz ficou bonita.', 'A professora pediu um desenho do bairro. Eu fiz a fonte. De novo.', 'No intervalo eu fico no cantinho dos desenhos. É o lugar mais quieto da escola.'],
+      fonte: ['A água não é só azul. Olha ali: tem um pedacinho de verde e outro quase dourado.', 'Eu chamo essa cor de "azul de fonte gelada". Combina, né?', 'Se você ficar parado um pouco, a fonte faz um barulho que parece conversa.'],
+      praca: ['Daqui dá para ver a vila inteira mudando de cor no fim da tarde.', 'Estou desenhando as pessoas passando. Você entrou no desenho agora, tá?', 'O banco da praça é o melhor lugar para esperar o pôr do sol.'],
+      casaManha: ['Maçã com canela tem cheiro de começar o dia sem pressa.', 'Estou arrumando o estojo para a aula. Lápis, pincel, borracha... e mais um pincel, por garantia.', 'Bom dia! Ainda estou acordando. O chá ajuda.'],
+      casa: ['Aqui é o meu cantinho de pintura. É pequeno, mas cabe muita coisa.', 'Estou terminando um desenho antes de dormir. Ou tentando.', 'Quer um pouco de chá? Ah, já acabou. Amanhã eu faço mais.'],
+      chuva: ['Hoje inventei uma cor chamada "cinza que dá vontade de ficar em casa".', 'Dia de chuva é dia de pintar de memória. A memória erra um pouco, mas é bonito.', 'A chuva deixa tudo mais escuro e mais brilhante ao mesmo tempo. Como pode?'],
+      pintando: ['Hoje é dia de pintar a fonte para a minha coleção! Não repara na bagunça.', 'Não posso parar agora, a luz está perfeita. Volta mais tarde para ver?', 'Estou registrando como a fonte está nesta estação. Cada uma fica de um jeito.'],
+      pintandoChuva: ['Choveu no meu dia de pintar a fonte! Tudo bem: estou pintando aqui em casa, olhando meus esboços.'],
+      pronta: ['Terminei a pintura da fonte desta estação! Quer ver?', 'A pintura da fonte ficou pronta. Ainda estou achando que o céu ficou bonito demais.'],
+      estacao: [['Na primavera a fonte fica cheia de pétalas boiando. Parece de mentira.', 'Primavera é a estação das cores que ninguém consegue nomear.'],
+        ['No verão a luz fica tão forte que eu tenho que apertar os olhos para pintar.', 'Meu aniversário é no verão! Dia 4. Não que eu esteja lembrando você, né.'],
+        ['No outono as folhas caem na fonte e viram barquinhos.', 'Outono tem um laranja que eu ainda não consegui fazer igual.'],
+        ['No inverno meu gorro é o maior companheiro de pintura.', 'A água da fonte fica com um brilho de vidro no inverno. Quase dá para ouvir o frio.']],
+      cor: ['Lembra do "{cor}"? Usei na pintura de ontem e ficou lindo!', 'Toda vez que uso o "{cor}" eu lembro da flor que você trouxe.'],
+    },
+    again: ['Já conversamos hoje, não foi? Desculpa, eu me distraio.', 'Ah, oi de novo! Eu estava contando quantos tons de verde tem nessa árvore.', 'Ainda por aqui? Pode sentar, se quiser. Eu não falo muito quando estou desenhando.'],
+    gift: { love: 'Nossa! É para mim? Já tive uma ideia do que fazer com isso!', like: 'Eu gostei! Obrigada por lembrar de mim.', neutral: 'Obrigada! Vou guardar.', dislike: 'Ah… eu não gosto disso. Mas obrigada por lembrar de mim.' },
+    bdayGift: { good: 'Você lembrou do meu aniversário! Que presente lindo!', neutral: 'Um presente de aniversário? Obrigada por lembrar!', bad: 'Você lembrou… mas eu não gosto muito disso.' },
+    limit: { day: 'Você já me deu um presente hoje! Guarda esse para outro dia, tá?', week: 'Essa semana você já me deu presentes demais. Assim eu fico sem graça!' } },
 
   /* Lúcio vive na serra. As falas começam com [expressão] do retrato: neutro, desconfiado, contente, emocionado.
      talk tem quatro faixas: 0 coração, 1–2, 3–4 e 5. Presentes e aniversário têm regras próprias (ver game.js). */
@@ -226,17 +260,23 @@ const VILLAGERS = [
     limit: { day: '[neutro]Hoje você já me trouxe uma coisa. Guarde isso aí, que um por dia está de bom tamanho.', week: '[neutro]Essa semana você já me trouxe bastante. Guarde pra outra hora, que eu não fujo daqui.' } },
 ];
 /* Aniversários: Lúcio faz aniversário no dia 9 do Inverno. */
-const GIFT_RULES = { lucio: { perDay: 1, perWeek: 2, birthdayMult: 8 } };
+const GIFT_RULES = { lucio: { perDay: 1, perWeek: 2, birthdayMult: 8 }, iara: { perDay: 1, perWeek: 2, birthdayMult: 8 } };
 /* Conversa de Iara sobre Lúcio: disponível depois que o jogador conhece Lúcio (uma vez). */
 const IARA_LUCIO = {
-  lines: ['Você conhece o Lúcio, das montanhas? Às vezes a gente se acostuma tanto a não chamar alguém que esquece de perguntar se essa pessoa queria vir.',
-    'Eu pinto a serra quase toda semana e nunca subi para dar um oi. Fico olhando as coisas de longe, e depois acho que conheço.',
-    'Não estou dizendo que a culpa é só da vila. É minha também. Como ele é, de perto?'],
+  lines: ['Você conhece o Lúcio, lá da serra? O pessoal fala dele como se fosse uma história de assombração, mas eu acho que ele só gosta de silêncio.',
+    'Eu desenho a serra quase toda semana e nunca vi ele de perto. Fico imaginando a cara dele pela tenda.',
+    'Você já foi lá, né? Como ele é?'],
   choices: ['Reservado, mas sabe tudo de plantas.', 'Acho melhor você conhecer por conta própria.'],
-  answers: ['Plantas! Então eu já tenho assunto. Quem sabe eu levo umas tintas lá pra cima e peço para ele me ensinar o nome das cores do mato.',
-    'É, tem razão. Ninguém conhece ninguém por recado. Vou subir num dia de sol. Com licença, se ele quiser dar.'],
+  answers: ['Plantas! Então eu já tenho assunto. Quero perguntar o nome das cores do mato. Vou pedir para alguém subir comigo num dia de sol.',
+    'Faz sentido. Ninguém conhece ninguém por recado. Um dia eu subo, com alguém da vila junto.'],
 };
 const villagerById = id => VILLAGERS.find(v => v.id === id);
+/* Iara: nomes para a cor do acontecimento de 1 coração e textos das pinturas da fonte. */
+const IARA = {
+  colorNames: ['Amarelo de manhã preguiçosa', 'Laranja de pétala sonolenta', 'Dourado de abelha distraída'],
+  seasonSketch: ['pétalas boiando e as árvores em flor', 'sol forte e a água brilhando', 'folhas caindo na água como barquinhos', 'neve na borda e a água parada como vidro'],
+  detail: { x: 650, y: 226, label: 'Uma florzinha entre as pedras' },          // acontecimento de 3 corações (praça)
+};
 
 /* Missões.
    goal.count  = ações a realizar (till, plant, water, harvest, feed, clear)
@@ -273,14 +313,15 @@ const QUESTS = {
     offer: ['Perdi meu chapéu no bosque. O vento levou para os lados do sul.', 'Se encontrar... eu agradeço.'],
     desc: 'Procure o chapéu de Tomé no bosque, ao sul do rio, e devolva a ele.',
     goal: { deliver: { chapeu_tome: 1 } }, done: ['É ele. Velho assim e ainda me serve.', 'Obrigado por procurar.'], reward: { coins: 30, friend: 100, items: { amora: 3 } } },
-  flores: { where: ['fora', 950, 330, 'Bosque'], giver: 'iara', title: 'Flores para a tela', hearts: 1,
-    offer: ['Quero pintar um buquê, mas não consigo sair de perto da tela.', 'Você me traria 3 flores-do-campo? Elas nascem no bosque.'],
-    desc: 'Colha 3 flores-do-campo no bosque e entregue a Iara.',
-    goal: { deliver: { flor: 3 } }, done: ['Perfeitas! Olha esse amarelo. Vou começar agora mesmo.'], reward: { coins: 35, friend: 100 } },
+  /* 1 coração de Iara: "Uma cor sem nome" (mesmo id da missão antiga, para não perder saves) */
+  flores: { where: ['fora', 950, 330, 'Bosque'], giver: 'iara', title: 'Uma cor sem nome', hearts: 1,
+    offer: ['Posso pedir uma coisa? Quero estudar as cores de uma flor de perto, pétala por pétala.', 'Você me traz uma flor-do-campo? Elas nascem no bosque, a leste da vila.'],
+    desc: 'Colha uma flor-do-campo no bosque e entregue a Iara, para ela estudar as cores.',
+    goal: { deliver: { flor: 1 } }, done: ['Olha só quantas cores numa flor tão pequena! Tem amarelo, tem quase laranja, tem um verde no meio...', 'Misturei tudo na paleta e saiu uma cor nova. Ela ainda não tem nome. Me ajuda a escolher?'], reward: { coins: 35, friend: 100 }, after: null },
   encomenda: { giver: 'celeste', title: 'Encomenda de tintas', hearts: 1, to: 'iara',
-    offer: ['Chegaram as tintas da Iara, e eu não posso largar o balcão.', 'Você leva para mim? Ela fica perto da fonte à tarde.'],
-    desc: 'Leve a encomenda de tintas até Iara.', start: { items: { encomenda: 1 } },
-    goal: { deliver: { encomenda: 1 } }, done: ['Minhas tintas! Eu já estava misturando café para fazer marrom.', 'Diga à Dona Celeste que ela salvou um quadro.'], reward: { coins: 25, friend: 100, friendTo: 20, items: { sem_tomate: 4 } } },
+    offer: ['Chegou o estojo de tintas que a Iara encomendou para a aula de artes, e eu não posso largar o balcão.', 'Você leva para ela? À tarde ela costuma pintar perto da fonte.'],
+    desc: 'Leve o estojo de tintas até Iara (à tarde ela costuma pintar perto da fonte).', start: { items: { encomenda: 1 } },
+    goal: { deliver: { encomenda: 1 } }, done: ['Meu estojo novo! Eu já estava misturando café com água para fazer marrom.', 'Agradece a Dona Celeste por mim? Amanhã eu levo para a escola.'], reward: { coins: 25, friend: 100, friendTo: 20, items: { sem_tomate: 4 } } },
   omelete: { where: ['galinheiro', 196, 70, 'Ninhos do galinheiro'], giver: 'bia', title: 'Ovos para a festa', hearts: 2, after: 'primeiro_ovo',
     offer: ['Vou fazer um bolo enorme para a vila e minhas galinhas entraram em greve!', 'Você consegue 3 ovos para mim?'],
     desc: 'Entregue 3 ovos a Bia.', goal: { deliver: { ovo: 3 } }, done: ['Salvou o bolo! Vou guardar o maior pedaço para você.'], reward: { coins: 80, friend: 100 } },
@@ -361,14 +402,15 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Criação de personagem',
+  title: 'Iara',
   items: [
-    'Masculino, Feminino e Não binário agora mudam a aparência na hora: cada escolha traz uma base visual (rosto e silhueta) e um ponto de partida de cabelo e roupa. Tudo continua livre para qualquer gênero.',
-    'Masculino: ombros mais largos e maxilar quadrado. Feminino: cintura marcada, queixo mais fino, cílios e boca rosada. Não binário: a base neutra.',
-    'Voltar à etapa de gênero (ou clicar no mesmo gênero) não apaga a personalização; só escolher outro gênero aplica o novo ponto de partida, mantendo a pele.',
-    'A base aparece no mapa, andando, nas ferramentas, na pesca e na ficha do personagem. Personagens de jogos salvos continuam como eram.',
-    'Nova moldura de madeira, fundo bege, painéis cor de areia e destaques em âmbar em todas as etapas da criação; prévia com céu, cerca e grama, em escala inteira.',
-    'Cabelos com texturas próprias (liso, ondulado, cacheado e crespo) e mais volume nos cacheados e crespos; roupas com mangas, bolsos, babados, cinto e barras.',
-    'Armazém: a quantidade escolhida para vender ou comprar aparece em preto.',
+    'Iara agora tem 13 anos e está na sexta série: é distraída, pinta paisagens, dá nomes às cores que mistura e toma chá de maçã com canela toda manhã. Aparência nova, com jardineira lilás manchada de tinta, e roupa de inverno com gorro e casaco.',
+    'Retratos novos com cinco expressões (neutra, contente, concentrada, triste e surpresa) e animações discretas no mapa: pintando no cavalete, desenhando, lendo e tomando chá.',
+    'A vila ganhou uma escola, e a casa de Iara pode ser visitada: tem um cantinho de pintura e uma mesinha de chá.',
+    'Rotina: escola de segunda a sexta (7h30 às 12h30), tarde na fonte e na praça, e em casa depois das 18h. No fim de semana, praça de manhã e fonte à tarde. Ela anda pelos caminhos, sem sumir de um lugar para outro.',
+    'Todo dia 10 de cada estação, das 14h às 18h, Iara pinta a fonte, sem interromper o seu passeio. Depois de pronta, a pintura pode ser vista na conversa ("Ver a pintura"). A rotina já está preparada para a chuva, quando o clima chegar ao jogo.',
+    'Presentes: 1 por dia e 2 por semana, com um presente extra no aniversário (4 do Verão), que vale 8 vezes mais. Ela adora pincel, bolo de morango, flores aquáticas e conchas raras; gosta de flores e pães; não gosta de rabanete, espinafre nem de leite.',
+    'Acontecimentos de amizade: dar nome a uma cor nova (1 coração), achar um detalhe escondido na praça (3 corações) e ver as quatro versões da fonte, com um quadro de presente para pendurar em casa (5 corações).',
+    'Jogos salvos continuam com a amizade, os presentes e as missões de Iara.',
   ],
 };
