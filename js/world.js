@@ -49,7 +49,7 @@ const World = (() => {
     '#2a8046': '#2f7a36', '#58b860': '#62ac48', '#2f8a40': '#408c2e', '#2f7028': '#2e6a22',
     '#0f3020': '#1a3414', '#1f6a34': '#357a26', '#2a7e40': '#4c962e', '#3f9a52': '#6cb440', '#175428': '#24561c',
     '#3f86d8': '#3aa6c8', '#3478cc': '#2c90b6', '#bfe4ff': '#c8f2ec', '#86764c': '#9a7844',
-    '#dcc48c': '#e2ba68', '#b4945a': '#a8783a', '#c8ac70': '#cc9a4e', '#f0e0b0': '#f4d48e',
+    '#dcc48c': '#c9a473', '#b4945a': '#94704a', '#c8ac70': '#b8935f', '#f0e0b0': '#dcbf92',          // terra ocre, menos amarela
     '#cdbfa4': '#ccb690', '#8e8068': '#7a6450', '#b4a68a': '#ab966e', '#e6dcc6': '#ecdcbc',
     '#b88448': '#b8763a', '#d8a868': '#dca05a',
   };
@@ -800,14 +800,113 @@ const World = (() => {
     }
     return true;
   };
-  function road(kind, x, y, w, h) { ground(kind, x, y, w, h); keep(x - 4, y - 4, w + 8, h + 8); }
+  /* ================= pavimento: terra batida, calçamento de pedras e areia =================
+     As ruas não são pintadas retângulo por retângulo: cada uma marca uma máscara do mapa
+     (1 terra, 2 pedra, 3 areia) e paveFlush() pinta tudo de uma vez, pixel a pixel, com
+     texturas que dependem só da posição no mundo. Assim os trechos ligados continuam o mesmo
+     padrão, cruzamentos e curvas não têm emendas e nada muda de um quadro para o outro. */
+  const PAVE = { terra: 1, pedra: 2, areia: 3 };
+  let dummyG = null;
+  /* Mantém o sorteio do cenário igual ao de antes (árvores e arbustos nos mesmos lugares). */
+  function spendRand(fn) { if (!dummyG) { const c = document.createElement('canvas'); c.width = c.height = 1; dummyG = c.getContext('2d'); } const prev = g; g = dummyG; try { fn(); } finally { g = prev; } }
+  function paveBox(x0, y0, x1, y1) { const b = cur.paveBox || (cur.paveBox = [1e9, 1e9, -1e9, -1e9]); b[0] = Math.min(b[0], x0); b[1] = Math.min(b[1], y0); b[2] = Math.max(b[2], x1); b[3] = Math.max(b[3], y1); }
+  function paveRect(kind, x, y, w, h) {
+    if (!cur.pave) cur.pave = new Uint8Array(W * H);
+    const k = PAVE[kind] || 1, x0 = Math.max(0, Math.round(x)), y0 = Math.max(0, Math.round(y)), x1 = Math.min(W, Math.round(x + w)), y1 = Math.min(H, Math.round(y + h));
+    for (let yy = y0; yy < y1; yy++) cur.pave.fill(k, yy * W + x0, yy * W + x1);
+    paveBox(x0, y0, x1, y1);
+  }
+  function paveDisc(kind, cx, cy, r) { for (let dy = -r; dy <= r; dy++) { const w = Math.round(Math.sqrt(r * r - dy * dy)); paveRect(kind, Math.round(cx) - w, Math.round(cy) + dy, w * 2 + 1, 1); } }
+  const hash = (x, y, s = 0) => { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+  const vnoise = (x, y, s, seed) => {                                  // ruído suave (manchas grandes, estáveis)
+    const gx = Math.floor(x / s), gy = Math.floor(y / s), fx = x / s - gx, fy = y / s - gy, sm = t => t * t * (3 - 2 * t);
+    const a = hash(gx, gy, seed), b = hash(gx + 1, gy, seed), c = hash(gx, gy + 1, seed), d = hash(gx + 1, gy + 1, seed), u = sm(fx), v = sm(fy);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  };
+  const rgb = hex => { const n = parseInt(SC(hex).slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+  /* Pedras do calçamento: grade com sorteio estável e peças irregulares (a mais próxima de cada ponto). */
+  function cobbleAt(x, y) {
+    const cw = 7, ch = 6, ry = Math.floor(y / ch);
+    let d1 = 1e9, d2 = 1e9, id = 0, sy = 0;
+    for (let j = ry - 1; j <= ry + 1; j++) {
+      const off = (j & 1) ? cw / 2 : 0, rx = Math.floor((x - off) / cw);
+      for (let i = rx - 1; i <= rx + 1; i++) {
+        const px = i * cw + off + 1.5 + hash(i, j, 3) * (cw - 3), py = j * ch + 1.2 + hash(i, j, 4) * (ch - 2.4);
+        const d = Math.hypot((x + 0.5 - px) * 0.95, (y + 0.5 - py) * 1.12);
+        if (d < d1) { d2 = d1; d1 = d; id = hash(i, j, 5); sy = py; } else if (d < d2) d2 = d;
+      }
+    }
+    return { gap: d2 - d1, id, up: y + 0.5 - sy };
+  }
+  function paveFlush() {
+    const b = cur.paveBox; if (!b || !cur.pave) return; cur.paveBox = null;
+    const M = cur.pave, x0 = Math.max(0, b[0] - 4), y0 = Math.max(0, b[1] - 4), x1 = Math.min(W, b[2] + 4), y1 = Math.min(H, b[3] + 4), w = x1 - x0, h = y1 - y0;
+    if (w <= 0 || h <= 0) return;
+    const img = g.getImageData(x0, y0, w, h), D = img.data, S = paintSeason;
+    const T = { base: rgb('#dcc48c'), dark: rgb('#c8ac70'), edge: rgb('#b4945a'), light: rgb('#f0e0b0') };
+    const peb = [[150, 140, 128], [184, 176, 164], [118, 104, 88]];
+    const STONE = [[204, 190, 164], [186, 176, 158], [196, 172, 140], [214, 202, 178], [178, 160, 138]], JOINT = [118, 102, 82], CURB = [[150, 138, 118], [170, 158, 136], [104, 90, 72]];
+    const SAND = { base: [236, 212, 154], edge: [200, 168, 104], s1: [244, 226, 180], s2: [255, 240, 200] };
+    const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? 0 : M[y * W + x]);
+    const put = (i, c) => { D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2]; D[i + 3] = 255; };
+    const shadeC = (c, k) => c.map(v => Math.max(0, Math.min(255, Math.round(v * k))));
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const k = M[y * W + x]; if (!k) continue;
+      const i = ((y - y0) * w + (x - x0)) * 4;
+      // distância até a grama (0 = pavimento algum) e até outro tipo de piso, em até 3 px
+      let dG = 9, dO = 9;
+      for (let oy = -3; oy <= 3; oy++) for (let ox = -3; ox <= 3; ox++) {
+        const d = Math.max(Math.abs(ox), Math.abs(oy)); if (!d || (d >= dG && d >= dO)) continue;
+        const m = at(x + ox, y + oy); if (!m) { if (d < dG) dG = d; } else if (m !== k && d < dO) dO = d;
+      }
+      const n = vnoise(x, y, 5, 7), hh = hash(x, y, 11);
+      if (k === 1) {                                                   // ---------- terra batida ----------
+        if (dG === 1 && n < 0.32) continue;                            // a grama entra na borda, aqui e ali
+        if (dG === 2 && n < 0.13) continue;
+        if (dG === 1 || (dG === 2 && n < 0.3)) { put(i, T.edge); continue; }
+        let c = T.base;
+        if (vnoise(x, y, 9, 21) > 0.6) c = T.dark;                     // terra compactada, em manchas
+        else if (vnoise(x, y, 13, 31) < 0.22) c = shadeC(T.base, 1.04);
+        if (hh < 0.004) c = T.light;                                   // pouquíssimos grãos claros
+        else if (hh < 0.03 && hh > 0.026) c = shadeC(T.dark, 0.94);
+        // pedrinhas ocasionais (2×1 com sombra embaixo)
+        if (hash(x, y, 13) < 0.0035) c = peb[0]; else if (hash(x - 1, y, 13) < 0.0035) c = peb[1]; else if (hash(x, y - 1, 13) < 0.0035 || hash(x - 1, y - 1, 13) < 0.0035) c = peb[2];
+        if (S === 2 && hash(x, y, 17) < 0.006) c = hash(x, y, 18) < 0.5 ? [200, 88, 30] : [138, 58, 24];
+        put(i, c);
+      } else if (k === 2) {                                            // ---------- calçamento de pedras ----------
+        if (dG <= 2 || dO <= 1) {                                       // meio-fio: pedras de contorno, alongadas
+          const along = (dG <= 2 && (at(x, y - dG) === 0 || at(x, y + dG) === 0)) || (dO <= 1 && (at(x, y - 1) !== 2 || at(x, y + 1) !== 2)) ? x : y;
+          const ring = Math.min(dG, dO + 1), seg = Math.floor((along + (ring === 1 ? 0 : 3)) / 6);
+          if (ring === 1) { put(i, (along % 6 === 5) ? CURB[2] : shadeC(CURB[hash(seg, 1, 41) < 0.5 ? 0 : 1], 0.92)); continue; }
+          put(i, (along + 3) % 6 === 5 ? CURB[2] : CURB[hash(seg, 2, 41) < 0.5 ? 1 : 0]); continue;
+        }
+        const s = cobbleAt(x, y);
+        if (s.gap < 1.05) { put(i, hh < 0.5 ? JOINT : shadeC(JOINT, 1.08)); continue; }
+        let c = STONE[Math.floor(s.id * STONE.length)];
+        if (s.gap < 2.2 && s.up < -0.6) c = shadeC(c, 1.12);             // luz em cima
+        else if (s.gap < 2.2 && s.up > 0.9) c = shadeC(c, 0.84);         // sombra embaixo
+        else if (hh < 0.06) c = shadeC(c, 0.95);
+        if (S === 3 && s.up < 0.2 && hash(x, y, 19) < 0.45) c = [240, 244, 250];
+        if (S === 2 && hash(x, y, 17) < 0.004) c = [200, 88, 30];
+        put(i, c);
+      } else {                                                         // ---------- areia ----------
+        if (dG === 1 && n < 0.2) continue;
+        if (dG === 1) { put(i, SAND.edge); continue; }
+        let c = SAND.base; if (hh < 0.05) c = SAND.s1; else if (hh < 0.06) c = SAND.s2; else if (hh > 0.995) c = SAND.edge;
+        if (S === 3 && hash(x, y, 19) < 0.3) c = [240, 244, 250];
+        put(i, c);
+      }
+    }
+    g.putImageData(img, x0, y0);
+  }
+  function road(kind, x, y, w, h) { spendRand(() => ground(kind, x, y, w, h)); paveRect(kind, x, y, w, h); keep(x - 4, y - 4, w + 8, h + 8); }
   /* Trilha de terra em curva (pontos [x, y]), com borda e pedrinhas. */
   function trail(pts, r = 9) {
     const L = [];
     for (let i = 0; i < pts.length - 1; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2); for (let k = 0; k <= n; k++) L.push([x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n]); }
     const disc = (x, y, rr, c) => { for (let dy = -rr; dy <= rr; dy++) { const w = Math.round(Math.sqrt(rr * rr - dy * dy)); R(Math.round(x) - w, Math.round(y) + dy, w * 2 + 1, 1, c); } };
-    L.forEach(([x, y]) => disc(x, y, r + 1, '#b4945a')); L.forEach(([x, y]) => disc(x, y, r, '#dcc48c'));
-    L.forEach(([x, y], i) => { if (i % 3 === 0) R(x - r + 2 + rand2() * (r * 2 - 4), y - r + 2 + rand2() * (r * 2 - 4), 2, 1, rand2() < 0.5 ? '#f0e0b0' : '#c8ac70'); keep(x - r - 4, y - r - 4, r * 2 + 8, r * 2 + 8); });
+    L.forEach(([x, y]) => paveDisc('terra', x, y, r));
+    L.forEach(([x, y], i) => { if (i % 3 === 0) spendRand(() => R(x - r + 2 + rand2() * (r * 2 - 4), y - r + 2 + rand2() * (r * 2 - 4), 2, 1, rand2() < 0.5 ? '#f0e0b0' : '#c8ac70')); keep(x - r - 4, y - r - 4, r * 2 + 8, r * 2 + 8); });
   }
   const obj = o => { cur.objs.push(Object.assign({ r: 18 }, o)); };
 
@@ -907,6 +1006,9 @@ const World = (() => {
     trail([[710, 500], [736, 508], [756, 520], [772, 536]], 8);                     // atalho do coreto à ruela de Iara
     trail([[1110, 608], [1130, 640], [1166, 668], [1180, 700], [1168, 740], [1150, 770]], 8);   // trilha do poço à beira-rio
     trail([[1560, 608], [1530, 640], [1500, 690], [1470, 730], [1440, 770]], 8);     // trilha do pomar leste ao rio
+    // centrinho calçado: frente do Armazém CELESTE, a rua até a casa de Seu Honório e a praça da fonte, num piso só
+    paveRect('pedra', 446, 148, 360, 30); paveRect('pedra', 560, 110, 140, 122);
+    paveFlush();
     // ---------- fazenda ----------
     keep(GRID.x0 - 6, GRID.y0 - 6, GRID.cols * GRID.s + 12, GRID.rows * GRID.s + 12);
     {
@@ -981,7 +1083,7 @@ const World = (() => {
     R(846, 150, 14, 10, OUT); R(847, 151, 12, 8, '#f0e6cc'); R(852, 160, 2, 8, '#6a4426'); solid(848, 162, 10, 5);
     obj({ id: 'placa2', kind: 'text', x: 853, y: 176, r: 12, hit: [844, 148, 18, 22], label: 'Placa', text: 'BOSQUE — madeira, pedra e o que a mata oferecer. Corte com juízo: o que se tira hoje volta em alguns dias.' });
     // ---------- trilha da serra: sobe ao norte, entre a vila e o bosque ----------
-    road('terra', 812, 18, 18, 136);
+    road('terra', 812, 18, 18, 136); paveFlush();
     R(836, 34, 22, 12, OUT); R(837, 35, 20, 10, '#c89a62'); R(840, 39, 9, 1, '#6a4426'); R(848, 37, 1, 5, '#6a4426'); R(847, 38, 3, 1, '#6a4426'); R(846, 46, 2, 10, '#6a4426'); solid(844, 48, 8, 8);
     // ---------- vila sul: praça do coreto, horta comunitária e jardins da beira-rio ----------
     coreto(635, 486); solid(608, 464, 56, 34);
@@ -1383,6 +1485,7 @@ const World = (() => {
     road('terra', 332, 252, 140, 16);                 // ramal leste, até a nascente
     road('terra', 472, 252, 124, 14); road('terra', 580, 140, 16, 126);   // trilha do rochedo
     road('terra', 168, 182, 160, 30);                 // terreiro da tenda
+    paveFlush();
     // nascente
     water(500, 300, 44, 22, 'rio');
     obj({ id: 'water', kind: 'water', x: 500, y: 276, r: 22, hit: [458, 280, 86, 40], label: 'Nascente' });

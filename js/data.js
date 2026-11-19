@@ -423,12 +423,11 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Letreiro e personagens',
+  title: 'Ruas e caminhos',
   items: [
-    'O letreiro CELESTE agora é uma faixa contínua de uma ponta à outra da fachada, separando o armazém do térreo da casa de Dona Celeste em cima.',
-    'As letras de CELESTE foram redesenhadas numa fonte maior e mais legível, centralizadas e com espaçamento constante.',
-    'Jogador e moradores ficaram cerca de 12% menores nos cenários, em proporção melhor com portas, casas e móveis. O pixel art continua nítido, e os pés ficam no mesmo lugar.',
-    'Sombras, ferramentas, vara de pesca, comida, peixe erguido e objetos dos moradores acompanham o tamanho novo. Velocidade, alcance e interações são os mesmos.',
-    'Retratos, prévias da criação de personagem, ícones e menus continuam no tamanho de antes.',
+    'Terra batida nova na saída da fazenda e nas ruas mais afastadas: ocre e marrom claro, com terra compactada, pedrinhas e bordas irregulares com grama.',
+    'O centrinho ganhou calçamento de pedras irregulares, num piso contínuo da frente do Armazém CELESTE até a praça da fonte. A praça do coreto usa o mesmo piso.',
+    'Onde a terra chega ao centro, o calçamento termina numa fileira de pedras de meio-fio. Curvas e cruzamentos não têm mais emendas.',
+    'O traçado, as colisões, as árvores e as rotinas são os mesmos. As estações continuam aparecendo no chão, com neve no inverno e folhas no outono.',
   ],
 };
