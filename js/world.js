@@ -141,7 +141,7 @@ const World = (() => {
   }
 
   /* Letreiro em fonte de pixel 3x5 (só as letras usadas nas placas). */
-  const GLYPH = { R: '110101110101101', A: '010101111101101', C: '011100100100011', O: '010101101101010', N: '110101101101101', I: '111010010010111', H: '101101111101101', S: '011100010001110' };
+  const GLYPH = { E: '111100110100111', L: '100100100100111', R: '110101110101101', A: '010101111101101', C: '011100100100011', O: '010101101101010', N: '110101101101101', I: '111010010010111', H: '101101111101101', S: '011100010001110' };
   function pixelText(x, y, str, c) {
     [...str].forEach((ch, i) => {
       const base = { 'Ç': 'C', 'Ã': 'A' }[ch] || ch, gl = GLYPH[base]; if (!gl) return;
@@ -604,7 +604,11 @@ const World = (() => {
     box(502, 108, 16, 9, '#f0e6cc'); R(505, 111, 10, 3, '#c8683a');
     building('honorio', 'Casa de Seu Honório', { x: 720, y: 70, w: 70, h: 78, roof: '#6a5a4a', wall: '#e0d4bc', windows: [[6, 8], [54, 8]], chimney: 50, door: '#5a3a22' }, false);
     building('bia', 'Casa de Bia', { x: 480, y: 228, w: 70, h: 72, roof: '#4a8a5a', wall: '#f0e2c0', windows: [[6, 8], [54, 8]], flowerBox: true, door: '#c8683a' }, false);
-    building('iara', 'Casa de Iara', { x: 690, y: 228, w: 70, h: 72, roof: '#8a5ad9', wall: '#f4eef8', timber: false, windows: [[6, 8], [54, 8]], shutters: '#e0a23a', door: '#3f86d0' }, false);
+    building('iara', 'Casa de Iara', { x: 690, y: 228, w: 70, h: 72, roof: '#8a5ad9', wall: '#f4eef8', timber: false, windows: [[6, 8], [54, 8]], shutters: '#e0a23a', door: '#3f86d0' }, true);
+    // escola da vila: prédio simples a leste da casa de Iara, com placa e sino
+    building('escola', 'Escola da vila', { x: 768, y: 212, w: 70, h: 72, roof: '#4a7a4a', wall: '#f2e8d2', timber: false, windows: [[6, 10], [54, 10]], shutters: '#c8683a', door: '#8a4a2a' }, true);
+    R(784, 236, 38, 9, OUT); R(785, 237, 36, 7, '#f8f0dc'); pixelText(791, 238, 'ESCOLA', '#3a5a2a');
+    R(801, 204, 4, 8, OUT); R(802, 205, 2, 6, '#e8c060'); R(800, 210, 6, 2, '#8a5e36');
     fountain(630, 136); solid(616, 126, 28, 16);
     [[566, 226], [694, 226], [566, 116], [694, 116]].forEach(([x, y]) => addLamp(x, y));
     keep(SPOT.bench[0] - 18, SPOT.bench[1] - 14, 36, 22); solid(SPOT.bench[0] - 13, SPOT.bench[1] - 8, 26, 8);
@@ -672,7 +676,8 @@ const World = (() => {
     { id: 'praca', label: 'Praça', x: 630, y: 170, icon: 'praca' },
     { id: 'honorio', label: 'Seu Honório', x: 755, y: 112, icon: 'morador' },
     { id: 'bia', label: 'Bia', x: 515, y: 266, icon: 'morador' },
-    { id: 'iara', label: 'Iara', x: 725, y: 266, icon: 'morador' },
+    { id: 'iara', label: 'Casa de Iara', x: 725, y: 266, icon: 'morador' },
+    { id: 'escola', label: 'Escola', x: 803, y: 250, icon: 'casa' },
     { id: 'tome', label: 'Tomé', x: 1010, y: 106, icon: 'morador' },
     { id: 'bosque', label: 'Bosque', x: 950, y: 330, icon: 'bosque' },
     { id: 'rio', label: 'Lagoa do bosque', x: 1104, y: 258, icon: 'agua' },
@@ -749,6 +754,34 @@ const World = (() => {
       [[8, 140], [8, 124], [26, 140]].forEach(([x, y]) => { box(x, y, 18, 12, '#d8b858'); R(x, y, 18, 3, '#f0d878'); R(x + 5, y, 1, 12, '#a88a40'); R(x + 12, y, 1, 12, '#a88a40'); });
       solid(6, 122, 40, 32);
       box(214, 132, 20, 8, '#8a9aa8'); R(216, 134, 16, 4, '#6aacf0'); solid(212, 130, 24, 12);
+    } else if (id === 'iara') {
+      /* casa de Iara: lar de uma estudante — mesa do chá, cantinho de pintura, estante e poltrona */
+      roomBase('#efe4f2', '#c8a878', '#a88a5a', true);
+      box(40, 14, 30, 22, '#f4f0e4'); R(42, 16, 26, 18, '#8fd0f0'); R(54, 16, 2, 18, '#f4f0e4'); R(42, 24, 26, 2, '#f4f0e4');   // janela
+      [[86, 20, '#f8e8a0'], [102, 24, '#bfe4ff'], [118, 18, '#f8c8d8'], [134, 26, '#c8f0b8']].forEach(([x, y, c], i) => { box(x, y, 12, 10, c); R(x + 2, y + 3, 6, 1, ['#e0a23a', '#3f86d0', '#e04a5a', '#58a838'][i]); R(x + 5, y - 2, 2, 2, '#c8483a'); });   // desenhos presos na parede
+      // cantinho de pintura: cavalete, banquinho e potes de tinta
+      R(16, 112, 2, 18, '#6a4426'); R(32, 112, 2, 18, '#6a4426'); R(24, 96, 2, 34, '#5a3a22'); box(14, 92, 22, 18, '#f8f4ea'); R(17, 96, 8, 6, '#9ac8e8'); R(22, 100, 10, 5, '#78b04c'); R(18, 103, 6, 3, '#e0a23a');
+      box(4, 128, 22, 6, '#8a5e36'); [['#e04a5a', 6], ['#3f86d0', 12], ['#f2d24a', 18]].forEach(([c, x]) => box(x, 122, 4, 5, c)); solid(2, 90, 40, 46);
+      obj({ id: 'canto-pintura', kind: 'text', x: 26, y: 140, r: 18, hit: [2, 88, 40, 48], label: 'Cantinho de pintura', text: 'Um cavalete pequeno, potes de tinta com nomes escritos à mão ("azul de fonte gelada", "verde de folha depois da chuva") e um pano todo manchado.' });
+      // mesa do chá
+      FLOOR.table(150, 124, 34); box(158, 106, 8, 6, '#f0e8f4'); R(160, 104, 4, 2, '#f0e8f4'); R(166, 108, 2, 2, '#f0e8f4'); box(172, 108, 4, 4, '#f8f0e0'); box(178, 108, 4, 4, '#f8f0e0');
+      obj({ id: 'mesa-cha', kind: 'text', x: 167, y: 140, r: 18, hit: [148, 100, 38, 26], label: 'Mesa do chá', text: 'Um bule lilás e duas xícaras. Cheira a maçã com canela.' });
+      FLOOR.rug(86, 110, 52, 30, '#9a74d8');
+      ST.shelf(206, 40); solid(206, 72, 40, 20);
+      obj({ id: 'estante-iara', kind: 'text', x: 226, y: 100, r: 18, hit: [204, 40, 44, 52], label: 'Estante', text: 'Livros da escola, cadernos de desenho numerados e um livro de capa gasta: "Cores do mundo".' });
+      box(222, 118, 22, 18, '#8a5ad9'); R(222, 118, 22, 5, '#a888e0'); R(224, 134, 3, 4, '#5a3a22'); R(239, 134, 3, 4, '#5a3a22'); solid(222, 116, 22, 22);   // poltrona de leitura
+      FLOOR.plant(110, 150);
+    } else if (id === 'escola') {
+      /* sala de aula: quadro-negro, mesa da professora, carteiras, livros e o mural de desenhos */
+      roomBase('#f4ead0', '#c8b088', '#b09868');
+      box(70, 12, 116, 36, '#2f5a3a'); R(72, 14, 112, 2, '#3f7a4a'); R(80, 22, 30, 1, '#e8f0e0'); R(80, 28, 44, 1, '#e8f0e0'); R(80, 34, 22, 1, '#e8f0e0'); R(140, 24, 12, 8, '#e8f0e0'); R(70, 48, 116, 3, '#8a5e36');
+      obj({ id: 'quadro-negro', kind: 'text', x: 128, y: 100, r: 20, hit: [68, 10, 120, 42], label: 'Quadro-negro', text: 'No quadro, com letra caprichada: "Tarefa: desenhar um lugar da vila em duas estações diferentes."' });
+      FLOOR.table(108, 92, 40); box(114, 74, 8, 6, '#c8483a'); box(124, 75, 8, 5, '#3f86d0');
+      ST.shelf(8, 36); solid(8, 72, 36, 20);
+      obj({ id: 'livros-escola', kind: 'text', x: 26, y: 100, r: 18, hit: [6, 40, 40, 52], label: 'Livros', text: 'Livros de português, de ciências e uma prateleira inteira de livros de arte, com as lombadas gastas.' });
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) { const x = 200 + c * 12, y = 14 + r * 16; box(x, y, 10, 12, ['#f8e8a0', '#bfe4ff', '#f8c8d8', '#c8f0b8', '#f0d8f8'][(r * 4 + c) % 5]); R(x + 2, y + 4, 5, 2, ['#e0a23a', '#3f86d0', '#e04a5a', '#58a838', '#8a5ad9'][(r + c) % 5]); }
+      obj({ id: 'mural', kind: 'text', x: 222, y: 100, r: 18, hit: [196, 10, 54, 54], label: 'Mural de desenhos', text: 'O mural da turma. No canto, um desenho da fonte assinado com letra redonda: "Iara, 6ª série".' });
+      [[30, 120], [74, 120], [160, 120], [204, 120], [30, 146], [74, 146], [160, 146], [204, 146]].forEach(([x, y]) => { FLOOR.table(x, y, 22); box(x + 7, y + 4, 8, 4, '#8a5e36'); });
     } else {
       roomBase('#f8e8c8', '#c8b088', '#b09868');
       ST.shelf(10, 40); solid(10, 72, 40, 20); ST.shelf(206, 40); solid(206, 72, 40, 20);
@@ -1173,6 +1206,14 @@ const World = (() => {
       const ph = Math.floor(t / 280);
       map.waters.forEach(w => { for (let i = 0; i < 5; i++) { const y = w.cy - w.ry + 4 + (i * 7 + ph) % (w.ry * 2 - 8), hw = w.rx * Math.sqrt(1 - ((y - w.cy) ** 2) / (w.ry * w.ry)) - 8; if (hw > 4) R(w.cx - hw + (i * 13 + ph * 2) % (hw * 2), y, 3, 1, '#bfe4ff'); } });
     }
+    if (map.id === 'fora' && S.iara && S.iara.ev3 === 'seek') {           // florzinha entre as pedras (acontecimento de 3 corações)
+      const [fx, fy] = [IARA.detail.x, IARA.detail.y]; ctx.fillStyle = '#2f7a36'; ctx.fillRect(fx, fy - 4, 1, 4);
+      ctx.fillStyle = '#b48af0'; [[-1, -6], [1, -6], [0, -7], [0, -5]].forEach(([dx, dy]) => ctx.fillRect(fx + dx, fy + dy, 1, 1)); ctx.fillStyle = '#f2c84a'; ctx.fillRect(fx, fy - 6, 1, 1);
+      if (Math.floor(t / 700) % 4 === 0) { ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(fx + 2, fy - 8, 1, 1); }
+    }
+    if (map.id === 'casa' && S.house && S.house.quadro) {                 // quadro da fonte pendurado
+      ctx.fillStyle = OUT; ctx.fillRect(157, 15, 28, 22); ctx.fillStyle = '#b8783c'; ctx.fillRect(158, 16, 26, 20); ctx.drawImage(painting('fonte', S.house.quadro.si || 0), 0, 0, 48, 36, 160, 18, 22, 16);
+    }
     if (map.id === 'galinheiro') {
       // ração no cocho (até 6 porções aparecem) e ovos nos ninhos
       const f = Math.min(6, S.coop.feed || 0);
@@ -1195,6 +1236,7 @@ const World = (() => {
       Sprites.drawAt(ctx, a.look, ax, ay + (a.hop || 0) + (using && tk > 0.4 ? 1 : 0) + (a.fish ? a.fish.lean || 0 : 0), a.moving ? Sprites.walk(t) : (using ? 1 : 0), a.dir || 'down');
       if (using && a.dir !== 'up') toolSwing(ctx, a, ax, ay, tk);
       if (a.fish) fishRod(ctx, a);
+      if (a.act) actFx(ctx, a, t);
       if (a.fish && a.fish.hold) liftFish(ctx, a, t);
       if (a.eat) eating(ctx, a, t);
     });
@@ -1297,6 +1339,56 @@ const World = (() => {
     for (let i = 0; i < bites * 2; i++) { const s2 = (i * 37) % 7, fy = y - 14 + ((k * 900 + i * 53) % 12); ctx.fillStyle = i % 2 ? '#f4e8c8' : '#d8b878'; ctx.fillRect(x - 4 + s2 + (i % 3), Math.round(fy), 1, 1); }
     if (k > 0.85) { ctx.fillStyle = '#8fe88f'; ctx.fillRect(x + 8, y - 34, 1, 3); ctx.fillRect(x + 7, y - 33, 3, 1); }
   }
+  /* O que um morador está fazendo: cavalete pintando (mão mexe o pincel devagar), caderno de
+     desenho, xícara de chá com vapor ou livro. Discreto: não muda a câmera nem abre nada. */
+  function actFx(ctx, a, t) {
+    const x = Math.round(a.x), y = Math.round(a.y), P = (px, py, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(px, py, w, h); }, slow = Math.floor(t / 450) % 2;
+    if (a.act === 'paint') {
+      const s = a.dir === 'right' ? 1 : -1, ex = x + s * 13;
+      P(ex - 5, y - 6, 1, 7, '#5a3a22'); P(ex + 4, y - 6, 1, 7, '#5a3a22'); P(ex, y - 20, 1, 21, '#6a4426');
+      P(ex - 7, y - 23, 15, 13, OUT); P(ex - 6, y - 22, 13, 11, '#f8f4ea'); P(ex - 5, y - 21, 6, 4, '#9ac8e8'); P(ex - 1, y - 18, 7, 4, '#78b04c'); P(ex - 4, y - 16, 4, 3, '#a8a8b8'); P(ex + 2, y - 21, 3, 2, '#f2d24a');
+      const hx = x + s * (5 + slow), hy = y - 15 + slow;                 // mão com o pincel, indo e voltando
+      P(hx, hy, 1, 1, '#8a5a2a'); P(hx + s, hy - 1, 1, 1, '#8a5a2a'); P(hx + s * 2, hy - 2, 1, 1, ['#e04a5a', '#3f86d0'][Math.floor(t / 2400) % 2]);
+    } else if (a.act === 'brush') {                                   // em casa, pintando pelos esboços: só o pincel na mão
+      const s = a.dir === 'right' ? 1 : -1, hx = x + s * (5 + slow), hy = y - 15 + slow;
+      P(hx, hy, 1, 1, '#8a5a2a'); P(hx + s, hy - 1, 1, 1, '#8a5a2a'); P(hx + s * 2, hy - 2, 1, 1, '#3f86d0');
+    } else if (a.act === 'draw') {
+      P(x - 4, y - 16, 8, 6, OUT); P(x - 3, y - 15, 6, 4, '#f8f4ea'); P(x - 2, y - 14, 3, 1, '#a8a8b8'); P(x + (slow ? 1 : -1), y - 13, 1, 1, '#5a5a6a'); P(x + 3, y - 15 + slow, 1, 3, '#e0a23a');
+    } else if (a.act === 'tea') {
+      P(x - 2, y - 15, 5, 4, OUT); P(x - 1, y - 14, 3, 2, '#f0e8f4'); P(x + 2, y - 14, 1, 1, '#f0e8f4');
+      ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(x - (slow ? 0 : 1), y - 18, 1, 2); ctx.fillRect(x + (slow ? 1 : 0), y - 20, 1, 2);
+    } else if (a.act === 'read' || a.act === 'study') {
+      P(x - 4, y - 15, 8, 5, OUT); P(x - 3, y - 14, 3, 3, a.act === 'study' ? '#3f86d0' : '#c8483a'); P(x + 1, y - 14, 3, 3, a.act === 'study' ? '#3f86d0' : '#c8483a'); P(x, y - 14, 1, 3, '#f8f4ea');
+    }
+  }
+  /* Pinturas da fonte feitas por Iara (48x36), uma por estação, e o esboço do detalhe da praça. */
+  const PAINT_SKY = [['#f0d8e8', '#c8e4f4'], ['#8ad0f0', '#bfe8f8'], ['#f0c890', '#f4dcb0'], ['#d8e2ee', '#eef2f6']];
+  const paintCache = {};
+  function painting(kind, si = 0) {
+    const key = kind + si; if (paintCache[key]) return paintCache[key];
+    const c = document.createElement('canvas'); c.width = 48; c.height = 36; const g2 = c.getContext('2d');
+    const P = (x, y, w, h, col) => { g2.fillStyle = col; g2.fillRect(x, y, w, h); };
+    if (kind === 'esboco') {                                          // esboço a lápis: florzinha entre as pedras
+      P(0, 0, 48, 36, '#f4eedc'); for (let y = 6; y < 36; y += 6) P(0, y, 48, 1, '#e4dcc4');
+      [[8, 22, 9, 6], [30, 24, 10, 6], [18, 28, 12, 5], [2, 30, 8, 5], [38, 30, 9, 5]].forEach(([x, y, w, h]) => { P(x, y, w, 1, '#6a6a72'); P(x, y + h, w, 1, '#6a6a72'); P(x - 1, y + 1, 1, h - 1, '#6a6a72'); P(x + w, y + 1, 1, h - 1, '#6a6a72'); for (let i = 1; i < w; i += 2) P(x + i, y + h - 1, 1, 1, '#a8a8b0'); });
+      P(23, 14, 1, 13, '#6a6a72'); P(21, 18, 2, 1, '#6a6a72'); P(24, 20, 2, 1, '#6a6a72');
+      [[22, 10], [25, 10], [23, 8], [23, 12]].forEach(([x, y]) => P(x, y, 2, 2, '#b48af0')); P(23, 10, 2, 2, '#f2c84a');
+      return (paintCache[key] = c);
+    }
+    const [s1, s2] = PAINT_SKY[si];
+    for (let y = 0; y < 16; y++) P(0, y, 48, 1, y < 8 ? s1 : s2);
+    for (let i = 0; i < 40; i++) P((i * 13) % 48, (i * 7) % 15, 2, 1, i % 2 ? s2 : s1);      // pinceladas no céu
+    const TREE = [['#f4b8d0', '#58a838'], ['#2f8a40', '#3f9a52'], ['#e07a2a', '#c8483a'], ['#8a8a96', '#f4f8fc']][si];
+    [[6, 13], [15, 11], [36, 12], [44, 14]].forEach(([x, y], i) => { P(x - 1, y, 2, 6, '#6a4426'); P(x - 5, y - 5, 10, 6, TREE[i % 2]); P(x - 3, y - 7, 6, 3, TREE[(i + 1) % 2]); });
+    P(0, 18, 48, 18, si === 3 ? '#eef2f6' : '#d8c8a0'); for (let i = 0; i < 30; i++) P((i * 11) % 48, 19 + (i * 5) % 16, 3, 1, si === 3 ? '#d4dce8' : '#c0ae84');   // pedras da praça
+    P(12, 22, 24, 9, '#7a7a88'); P(13, 23, 22, 7, '#a8a8b8'); P(15, 24, 18, 4, si === 3 ? '#cfe8f4' : '#4a9ad8'); P(16, 24, 16, 1, si === 3 ? '#f4fbff' : '#8fd0f0');   // bacia e água
+    P(23, 12, 3, 12, '#8a8a98'); P(21, 11, 7, 2, '#a8a8b8'); if (si !== 3) { P(20, 13, 1, 9, '#bfe4ff'); P(28, 13, 1, 9, '#bfe4ff'); }
+    if (si === 0) [[18, 25], [27, 26], [30, 24]].forEach(([x, y]) => P(x, y, 2, 1, '#f8c8d8'));
+    if (si === 1) { P(40, 3, 5, 5, '#f8e070'); [[19, 25], [29, 26]].forEach(([x, y]) => P(x, y, 1, 1, '#ffffff')); }
+    if (si === 2) [[18, 26], [26, 25], [31, 27], [9, 30], [38, 33]].forEach(([x, y]) => P(x, y, 2, 1, '#e0902a'));
+    if (si === 3) for (let i = 0; i < 18; i++) P((i * 17) % 48, (i * 9) % 30, 1, 1, '#ffffff');
+    return (paintCache[key] = c);
+  }
   function liftFish(ctx, a, t) {                   // personagem de frente, com o peixe erguido acima da cabeça
     const x = Math.round(a.x), y = Math.round(a.y), [sk, sd] = skinOf(a.look), bob = Math.floor(t / 300) % 2;
     [[-9, -27], [8, -27]].forEach(([dx, dy]) => { ctx.fillStyle = OUT; ctx.fillRect(x + dx - 1, y + dy - 8, 4, 10); ctx.fillStyle = sk; ctx.fillRect(x + dx, y + dy - 7, 2, 8); ctx.fillStyle = sd; ctx.fillRect(x + dx + 1, y + dy - 7, 1, 8); });
@@ -1388,6 +1480,6 @@ const World = (() => {
 
   return {
     get VW() { return VW; }, get VH() { return VH; }, RW, RH, setView, setSeason, get SEASON() { return SEASON; }, SERRA, MPLACES,
-    get, free, camera, render, icon, tileAt, tilePos, petCanvas, waterZone, solidAt, GRID, YARD, SPOT, NTREES, NROCKS, FORAGE, PLACES, FORA,
+    get, free, camera, render, icon, tileAt, tilePos, petCanvas, waterZone, solidAt, painting, GRID, YARD, SPOT, NTREES, NROCKS, FORAGE, PLACES, FORA,
   };
 })();

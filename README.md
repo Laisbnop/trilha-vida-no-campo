@@ -313,7 +313,7 @@ Seis moradores, cada um com rotina, personalidade e gostos: Dona Celeste
 (Armazém), Seu Honório, Bia, Tomé, Iara e Lúcio (na serra). A amizade vai de 0 a 5 corações:
 
 - clique no morador para conversar; a primeira conversa do dia dá pontos; as seguintes continuam disponíveis, sem pontos;
-- cada morador aceita um presente por dia (com um produto na mão, a conversa oferece a opção), e os preferidos rendem mais; Lúcio tem regras próprias (acima);
+- cada morador aceita um presente por dia (com um produto na mão, a conversa oferece a opção), e os preferidos rendem mais; Lúcio e Iara têm regras próprias (acima e abaixo);
 - com 1 coração surge o pedido pessoal de cada um; com 3, uma pequena cena e um presente;
 - as falas mudam conforme a amizade. Não há romance.
 
@@ -327,7 +327,10 @@ neutra e contente (só olhos, sobrancelhas e boca mudam):
 - **Seu Honório:** careca, sobrancelhas grisalhas grossas e franzidas, camisa marrom de gola;
 - **Bia:** ruiva de rabo de cavalo com fita vermelha, sardas e jardineira verde;
 - **Tomé:** cabelo castanho na altura do queixo, franja e camisa verde-musgo;
-- **Iara:** cachos pretos até os ombros, blusa lilás e tinta na bochecha.
+- **Iara:** 13 anos, cachos pretos volumosos com presilha amarela, jardineira lilás
+  sobre camiseta creme, pincel no bolso e tinta na bochecha. Tem cinco expressões
+  (neutra, contente, concentrada, triste e surpresa) e versão de inverno com gorro,
+  cachecol e casaco.
 
 O retrato aparece na caixa de diálogo em escala inteira (2× no computador, 1×
 no celular), sem suavização, e é o mesmo do painel de Amizades. Se faltar um
@@ -336,6 +339,81 @@ retrato, aparece uma silhueta neutra, nunca o rosto de outro morador.
 Cada conversa fixa o interlocutor ao começar e limpa nome, retrato, texto e
 opções ao abrir e ao fechar. Escolhas que abrem a conversa (loja, presente)
 mostram a fala e o rosto de quem pergunta. Narração aparece sem nome nem retrato.
+
+### Iara
+
+Iara tem 13 anos, está na sexta série e mora na Vila Acapulco com a família. É
+gentil e distraída, pinta paisagens, anda com os dedos e a roupa manchados de
+tinta e dá nomes às cores que mistura ("Verde de folha depois da chuva", "Azul
+de fonte gelada"). Toma chá de maçã com canela toda manhã. O projeto dela é
+pintar a mesma fonte nas quatro estações. Leo, o melhor amigo, aparece só nas
+falas, por enquanto.
+
+**Casa e escola.** A casa dela pode ser visitada: tem um cantinho de pintura
+(cavalete e potes de tinta), uma mesinha de chá, estante, poltrona e desenhos
+presos na parede. A escola fica ao sul da praça, com quadro-negro, carteiras,
+estante de livros e um mural de desenhos.
+
+**Rotina.** No mapa, Iara tem 4 direções, caminhada e animações discretas
+(pintando no cavalete, pincel na mão, desenhando, lendo e tomando chá). Ela anda
+pelos caminhos da vila, sem atravessar obstáculos nem sumir de um lugar para outro.
+
+| Quando | Dias úteis | Fim de semana |
+| --- | --- | --- |
+| 6h–7h | Chá e materiais, em casa | Chá e desenho, em casa |
+| 7h30–12h30 | Escola | Em casa até as 10h; depois, desenhando na praça |
+| 13h–14h | Almoço em casa | Almoço em casa |
+| 14h–18h | Fonte (até 16h30) e praça | Alterna a fonte e pontos da praça |
+| Depois das 18h | Em casa | Em casa |
+
+**Chuva.** O jogo ainda não sorteia o clima: a rotina lê um único estado da
+partida (`S.weather === 'chuva'`), pronto para quando a chuva existir. Com chuva,
+as aulas continuam e o resto do dia é em casa (pintura, leitura e chá). Ao
+carregar o jogo, Iara aparece onde a rotina manda naquele horário. Prioridade:
+cena da história, depois chuva, depois o dia de pintura e, por fim, a rotina.
+
+**Dia 10 de cada estação.** Das 14h às 18h, Iara pinta a fonte no cavalete, sem
+janela, sem mexer na câmera e sem interromper o jogador. Se chover, pinta em casa,
+pelos esboços. Às 18h (ou durante a noite, se você dormir antes) a pintura fica
+pronta e entra na coleção dela: uma por estação e ano, mesmo que você não esteja
+por perto, sem duplicar ao recarregar. Depois de pronta, a conversa oferece
+**Ver a pintura**; nunca mostra uma pintura ainda inacabada.
+
+**Falas.** Mudam com o lugar, a hora, a estação, a chuva, o dia de pintura e a
+amizade (pelo menos três por faixa: 0, 1–2, 3–4 e 5 corações), sem repetir a
+fala anterior. Não há romance.
+
+**Presentes.** 1 por dia e 2 por semana, mais um presente extra no aniversário
+(4 do Verão), mesmo com os limites atingidos, que vale 8 vezes mais (inclusive
+para baixo). Entregas de missão não contam como presente.
+
+| Reação | Itens |
+| --- | --- |
+| Adora | pincel, bolo de morango, flores aquáticas, conchas raras |
+| Gosta | flores comuns (incluindo narciso), pães |
+| Neutro | peixes, coco e o resto |
+| Não gosta | rabanete, espinafre, qualquer leite |
+
+Os gostos usam categorias de item (`cat`); as exceções de Iara valem antes das
+categorias. Itens que ainda não existem no jogo (pincel, bolo, conchas, leite,
+espinafre) já têm a reação preparada. O espinafre não foi ligado a nenhum
+festival, porque o jogo ainda não tem festival de troca de presentes.
+
+**Acontecimentos de amizade** (cada um dá a recompensa uma única vez e pode ser
+retomado depois):
+
+- **1 coração, "Uma cor sem nome":** ela pede uma flor-do-campo e, ao receber,
+  você escolhe o nome da cor nova; o nome é salvo e aparece em falas depois. Em
+  jogos salvos em que a missão já tinha sido feita, ela pede o nome na próxima conversa;
+- **3 corações, "A paisagem que ninguém olha":** ela pede que você ache um
+  detalhe escondido na praça (uma florzinha entre as pedras, perto da fonte).
+  Ao clicar nele e voltar a falar com ela, Iara mostra o esboço que fez e dá a
+  boina de pintor (só se você ainda não a tinha recebido);
+- **5 corações, "As quatro versões da fonte":** quando ela tiver pintado a fonte
+  nas quatro estações, mostra a galeria com as quatro e dá uma cópia de uma
+  pintura, o **Quadro da fonte**. No Inventário, use "Pendurar na parede de casa";
+  clique no quadro na parede para tirá-lo. Antes disso, ela explica o que falta,
+  sem bloquear nada. O painel de Amizades mostra as estações já pintadas.
 
 ## Pesca
 
@@ -432,7 +510,7 @@ para uma próxima versão.
 
 As primeiras ensinam jogando: chegar à vila, a primeira plantação, a primeira
 colheita, o galinheiro e o primeiro ovo. Depois vêm os pedidos pessoais (o banco
-da praça, o chapéu perdido, flores para a tela, a encomenda de tintas, ovos para
+da praça, o chapéu perdido, uma cor sem nome, a encomenda de tintas, ovos para
 a festa). O **Diário** mostra quem pediu, objetivo, progresso e recompensa.
 Toda missão depende de ações no mundo; itens entregues saem da mochila e a
 recompensa é dada uma única vez.
@@ -495,11 +573,11 @@ descartado. O que não for colhido fica até o fim da estação; na virada, some
 chão (o que já está na mochila ou no baú continua). Com a mochila cheia, a planta
 fica onde está e o jogo avisa. Nada é gerado ao entrar na vila, abrir menus ou
 recarregar a página. Os itens podem ser guardados, vendidos e dados de presente
-(Iara adora flores; Tomé gosta de azevinho; Bia, de fruta de cristal).
+(Iara gosta de flores; Tomé gosta de azevinho; Bia, de fruta de cristal).
 
 **Modo de desenvolvimento:** abra o jogo com `?dev=1` no fim do endereço para ver
 os pontos de surgimento em vermelho e usar `window.__trilha.dev` (avançar horas,
-noites e dias). Nada disso aparece na versão normal.
+noites e dias; `setRain(true)` liga a chuva para testar a rotina de Iara). Nada disso aparece na versão normal.
 
 ### Energia e comida
 
@@ -552,7 +630,10 @@ posição). Jogos salvos antes do calendário de 29 dias são convertidos pelo d
 absoluto, sem perder nada. De Lúcio: amizade, conversa do
 dia, presentes do dia e da semana (com a semana de referência), presente de
 aniversário do ano, permissão da tenda, etapas das missões, melhoria da tenda,
-apito encontrado e entregue, cenas vistas e a conversa de Iara. Recarregar a
+apito encontrado e entregue, cenas vistas e a conversa de Iara. De Iara:
+presentes do dia e da semana, presente de aniversário do ano, nome da cor,
+etapas dos acontecimentos de 3 e 5 corações, pinturas da fonte por estação e
+ano e o quadro pendurado em casa. Recarregar a
 página não reinicia limites nem repete eventos. Use o mesmo navegador e
 aparelho para continuar. Jogos salvos antes de Lúcio ganham esses campos
 zerados, sem perder nada.
@@ -595,6 +676,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `js/data.js` | Itens, cultivos, árvores, moradores, missões, loja e configuração da pesca |
 | `js/sprites.js` | Personagens em pixel art (cabelos, roupas, chapéus, 4 direções) |
 | `js/portraits.js` | Retratos 64×64 dos moradores |
+| `js/iara-portrait.js` | Retratos de Iara (5 expressões, roupa normal e de inverno) |
 | `js/fishcore.js` | Física do minijogo de pesca (peixe, zona verde e progresso) |
 | `js/world.js` | Mapa, interiores, colisão, câmera, ícones e desenho do mundo |
 | `js/game.js` | Salvamento, criação, ferramentas, fazenda, moradores, missões e painéis |

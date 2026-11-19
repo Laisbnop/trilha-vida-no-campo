@@ -361,7 +361,56 @@
   const dateText = (d = S.day) => { const c = calendar(d); return `${WEEKDAYS_SHORT[c.wd]}, ${c.day} de ${c.season} · Ano ${c.year}`; };
 
   /* Onde cada morador está agora: segue a rotina do dia, andando pelos caminhos. */
+  /* Clima: a rotina lê o estado único da partida (S.weather === 'chuva'). O jogo ainda não
+     sorteia chuva; quando o clima existir, basta preencher S.weather. */
+  const isRaining = () => !!S && S.weather === 'chuva';
+  const lookOf = v => (v.lookWinter && S && calendar().si === 3 ? v.lookWinter : v.look);
+  /* Rotina de Iara para o dia: [minuto, caminho, mapa, atividade, direção].
+     Prioridade: cena em andamento (o jogo para) > chuva > pintura do dia 10 > dia útil/fim de semana. */
+  function iaraSchedule(day = S.day, rain = isRaining()) {
+    const fora = World.get('fora'), HD = [fora.doors.iara.x, fora.doors.iara.y], SD = [fora.doors.escola.x, fora.doors.escola.y];
+    const c = calendar(day), weekday = c.wd <= 4, day10 = c.day === 10;
+    const EXIT = [128, 148], TEA = [167, 138], CORNER = [54, 124], READ = [206, 140], SHELF = [196, 118], DESK = [85, 132];
+    const F = [664, 150], PR1 = [596, 182], PR2 = [684, 198];
+    const toSchool = [HD, [SD[0], 312], SD], fromSchool = [SD, [SD[0], 312], HD];
+    const toFonte = [HD, [632, 312], [632, 224], [656, 204], [664, 172], F], fonteToPr1 = [F, [630, 168], PR1], pr1ToHome = [PR1, [632, 224], [632, 312], HD];
+    const fonteToHome = [F, [664, 172], [656, 204], [632, 224], [632, 312], HD], fonteToPr2 = [F, [672, 176], PR2], pr2ToFonte = [PR2, [672, 176], F];
+    const E = [[360, [TEA], 'iara', 'tea', 'up'], [400, [SHELF], 'iara', 'draw', 'up']];
+    const school = () => E.push([418, [EXIT], 'iara'], [424, toSchool, 'fora', null, 'up'], [450, [EXIT, DESK], 'escola', 'study', 'up'], [750, [EXIT], 'escola'], [754, fromSchool, 'fora'], [762, [EXIT, TEA], 'iara', 'tea', 'up']);
+    if (rain) {                                              // chuva: aulas mantidas; lazer e pintura dentro de casa
+      if (weekday) school(); else E.push([480, [CORNER], 'iara', 'brush', 'left'], [600, [READ], 'iara', 'read', 'up'], [720, [TEA], 'iara', 'tea', 'up']);
+      E.push([800, [CORNER], 'iara', 'brush', 'left']);
+      if (day10) E.push([840, [CORNER], 'iara', 'brush', 'left']);             // dia 10 com chuva: pinta a fonte em casa, pelos esboços (14h–18h)
+      else E.push([960, [TEA], 'iara', 'tea', 'up']);
+      E.push([1080, [CORNER], 'iara', 'brush', 'left'], [1140, [READ], 'iara', 'read', 'up']);
+      return E.sort((a, b) => a[0] - b[0]);
+    }
+    if (weekday) { school(); E.push([800, [CORNER], 'iara', 'draw', 'left']); }
+    else E.push([420, [CORNER], 'iara', 'draw', 'left'], [596, [EXIT], 'iara'], [600, [HD, [632, 312], [632, 224], PR1], 'fora', 'draw', 'down'], [750, pr1ToHome, 'fora'], [766, [EXIT, TEA], 'iara', 'tea', 'up']);
+    E.push([838, [EXIT], 'iara'], [842, toFonte, 'fora', day10 ? 'paint' : 'draw', 'left']);
+    if (day10) E.push([1080, fonteToHome, 'fora']);                       // dia 10: pinta a fonte das 14h às 18h
+    else if (weekday) E.push([990, fonteToPr1, 'fora', 'draw', 'down'], [1080, pr1ToHome, 'fora']);
+    else E.push([900, fonteToPr2, 'fora', 'draw', 'down'], [960, pr2ToFonte, 'fora', 'draw', 'left'], [1020, fonteToPr1, 'fora', 'draw', 'down'], [1080, pr1ToHome, 'fora']);
+    E.push([1096, [EXIT, READ], 'iara', 'read', 'up']);
+    return E;
+  }
+  /* Onde a rotina põe o morador no minuto tm: anda pelos caminhos (18 px por minuto do jogo);
+     ao trocar de mapa, aparece na porta do mapa novo e segue dali. */
+  function routineAt(E, tm) {
+    let idx = 0; E.forEach((e, i) => { if (tm >= e[0]) idx = i; });
+    const [t0, path, mp, act, dir] = E[idx], prev = E[idx - 1];
+    const start = prev && prev[2] === mp ? prev[1][prev[1].length - 1] : path[0];
+    const pts = [start, ...path]; let d = Math.max(0, tm - t0) * 18;
+    for (let i = 1; i < pts.length; i++) {
+      const dx = pts[i][0] - pts[i - 1][0], dy = pts[i][1] - pts[i - 1][1], len = Math.hypot(dx, dy);
+      if (d < len) return { where: mp, x: pts[i - 1][0] + dx * d / len, y: pts[i - 1][1] + dy * d / len, moving: true, dir: Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up') };
+      d -= len;
+    }
+    const last = pts[pts.length - 1]; return { where: mp, x: last[0], y: last[1], dir: dir || 'down', act: act || null };
+  }
+  const schedCache = { key: '', E: null };
   function villagerAt(v, tm) {
+    if (v.routine === 'iara' && S) { const k = S.day + ':' + isRaining(); if (schedCache.key !== k) { schedCache.key = k; schedCache.E = iaraSchedule(); } return routineAt(schedCache.E, tm); }
     let idx = -1; v.sched.forEach((e, i) => { if (tm >= e[0]) idx = i; });
     const n = v.sched.length, wrap = idx < 0; if (wrap) idx = n - 1;
     const e = v.sched[idx];
@@ -377,13 +426,13 @@
   }
   /* Lúcio só tem o nome conhecido depois da primeira conversa. */
   const shownName = v => (v.id === 'lucio' && !(S.lucio && S.lucio.met) ? 'homem da serra' : v.name);
-  const speaker = v => ({ name: v.id === 'lucio' && !S.lucio.met ? 'Homem da serra' : v.name, look: v.look, portrait: v.portrait });
+  const speaker = v => ({ name: v.id === 'lucio' && !S.lucio.met ? 'Homem da serra' : v.name, look: lookOf(v), portrait: v.portrait });
   function actors() {
     const tm = S.time, list = [];
     VILLAGERS.forEach(v => {
       const p = villagerAt(v, tm);
       if (p.where !== map.id) return;
-      list.push({ id: v.id, v, name: shownName(v), look: v.look, x: p.x, y: p.y, dir: p.dir, moving: p.moving, reach: p.where === 'loja' ? 40 : 22, bubble: questMark(v) ? '!' : null });
+      list.push({ id: v.id, v, name: shownName(v), look: lookOf(v), x: p.x, y: p.y, dir: p.dir, moving: p.moving, act: p.act || null, reach: p.where === 'loja' ? 40 : 22, bubble: questMark(v) ? '!' : null });
     });
     return list;
   }
@@ -426,6 +475,10 @@
     /* plantações (versão dos cultivos com rebrota): abóboras antigas maduras continuam maduras;
        as que cresciam mantêm as noites já regadas (agora precisam de 13) */
     if (!s.cropV) { for (const key in s.farm.tiles) { const o = s.farm.tiles[key]; if (o.k === 'soil' && o.crop === 'abobora' && (o.g || 0) >= 6) o.g = CROPS.abobora.days; } s.cropV = 2; }
+    /* Iara: acontecimentos, cor nomeada, pinturas da fonte (por estação e ano) e presentes */
+    s.iara = Object.assign({ lastLine: '', again: 0, colorName: null, ev3: 0, ev5: false, paintings: {}, gifts: { week: -1, n: 0 }, bday: 0, missingTold: 0 }, s.iara);
+    s.house = Object.assign({ quadro: null }, s.house);
+    s.seasonal = (s.seasonal || []).filter(o => !(o.x > 756 && o.x < 848 && o.y > 200 && o.y < 304));   // nada fica dentro da escola nova
     if (!s.nature.mforage) refreshMountain(s);
     s.nature.cleared = s.nature.cleared || {};
     if (!s.stumps) {                                    // alguns tocos em grama livre, longe da casa
@@ -574,6 +627,7 @@
       S.time = Math.min(DAY_END, S.time + dt / MS_PER_GAME_MIN);
       if (Math.floor(S.time / 10) !== before) renderHud();
       if (S.time >= DAY_END) { if (fishing) { endFishing(); toast('São 2h: você recolhe a linha.'); } passOut(); }
+      if (S.time >= 1080) iaraFinishPainting(S.day);
     }
     // carta de Tomé com a vara de pesca (uma vez só)
     if (free && !fishing && !passingOut && S.intro && !needsSetup() && !S.fish.letter && S.day >= S.fish.letterDay) rodLetter();
@@ -694,6 +748,18 @@
         const id = S.nature.mforage[n], [x, y] = World.SERRA.forage[n], r = [x - 8, y - 12, 16, 14];
         if (id && inRect(r, wx, wy)) return { label: 'Colher ' + ITEMS[id].name.toLowerCase(), rect: r, act: () => { if (gain(id)) { delete S.nature.mforage[n]; bang(x, y - 6, 'leaf'); save(); } } };
       }
+    }
+    if (map.id === 'fora' && S.iara.ev3 === 'seek') {           // 3 corações: o detalhe que quase ninguém olha
+      const { x, y, label } = IARA.detail, r = [x - 7, y - 9, 14, 12];
+      if (inRect(r, wx, wy)) return { label, rect: r, act: () => run(async () => { S.iara.ev3 = 'found'; save(); await say('narr', 'Entre duas pedras da praça, uma florzinha miúda cresceu sozinha. Iara vai querer saber que você achou!'); }) };
+    }
+    if (map.id === 'casa' && S.house.quadro) {
+      const r = [157, 15, 28, 22];
+      if (inRect(r, wx, wy)) return { label: 'Quadro da fonte', rect: r, near: [150, 70, 42, 20], act: () => run(async () => {
+        if (await ask('O quadro da fonte que Iara pintou para você. Tirar da parede?', ['Deixar na parede', 'Tirar e guardar']) !== 1) return;
+        if (!canAdd('quadro_fonte')) return say('narr', 'Sua mochila está cheia. Abra espaço para guardar o quadro.');
+        gain('quadro_fonte'); S.house.quadro = null; save();
+      }) };
     }
     for (const o of map.objs) {
       const r = o.hit || [o.x - 10, o.y - 20, 20, 22];
@@ -842,6 +908,7 @@
     if (screen !== 'game' || !S) return;
     const k = e.key, low = k.length === 1 ? k.toLowerCase() : k;
     // 1) carta aberta: E ou Esc só fecham a carta
+    if (!$('painting').hidden) { if (['Escape', 'Enter', ' '].includes(k) || low === 'e') { e.preventDefault(); if (!e.repeat) $('painting-ok').click(); } return; }
     if (!$('letter').hidden) { if ((k === 'Escape' || low === 'e') && !e.repeat) { e.preventDefault(); $('letter-ok').click(); } return; }
     if (typing(e)) return;
     // 2) resumo do dia: só o botão (Enter no botão em foco)
@@ -994,7 +1061,7 @@
     $('dlg-text').classList.toggle('narr', who === 'narr');
   }
   /* "[contente]Texto" → expressão + texto. */
-  const splitExpr = t => { const m = /^\[(neutro|desconfiado|contente|emocionado)\]/.exec(t); return m ? [m[1], t.slice(m[0].length)] : [null, t]; };
+  const splitExpr = t => { const m = /^\[(neutro|desconfiado|contente|emocionado|concentrada|triste|surpresa)\]/.exec(t); return m ? [m[1], t.slice(m[0].length)] : [null, t]; };
   function say(who, text) {
     return new Promise(resolve => {
       const [expr, rest] = splitExpr(String(text)); text = fmt(rest); setSpeaker(who, expr);
@@ -1627,8 +1694,10 @@
         await sayAll(who, (q.done || ['Agradeço muito!']).map(l => (/^\[/.test(l) ? l : '[contente]' + l)));
         if (q.reward && q.reward.hen) await newHen(who);
         completeQuest(turn);
+        if (turn === 'flores' && !S.iara.colorName) await iaraNameColor(who, false);
         return;
       }
+      if (v.id === 'iara' && await iaraEvents(v, who)) return;
       // 2) missão nova
       const offer = Object.keys(QUESTS).find(id => QUESTS[id].giver === v.id && !QUESTS[id].auto && qUnlocked(id));
       if (offer) {
@@ -1648,15 +1717,17 @@
       // 4) presente, se há um produto na mão
       const it = equipped();
       const giftPrompt = () => ({ who, text: v.id === 'lucio' ? '[neutro]Hum? Diga.' : '[neutro]Oi, {nome}! O que manda?' });
-      if (GIFT_RULES[v.id]) { if (it && !ITEMS[it.id].kind && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`], -1, giftPrompt()) === 1) return giftRuled(v, who, it.id); }
-      else if (it && !ITEMS[it.id].kind && !S.daily.gift[v.id] && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`], -1, giftPrompt()) === 1) return give(v, who, it.id);
+      if (v.id === 'iara') { if (await iaraMenu(v, who, it)) return; }
+      else if (GIFT_RULES[v.id]) { if (giftable(it) && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`], -1, giftPrompt()) === 1) return giftRuled(v, who, it.id); }
+      else if (giftable(it) && !S.daily.gift[v.id] && await choose(['Conversar', `Dar ${ITEMS[it.id].name}`], -1, giftPrompt()) === 1) return give(v, who, it.id);
       // 5) conversa: a primeira do dia aumenta a amizade
       const pending = qActive().find(id => (QUESTS[id].to || QUESTS[id].giver) === v.id && !QUESTS[id].selfDone);
       if (!S.daily.talk[v.id]) {
         S.daily.talk[v.id] = true; addFriend(v.id, FRIEND.talk);
-        if (v.talk.length === 4) await say(who, bandLine(v));
+        if (v.id === 'iara') await say(who, iaraLine(v));
+        else if (v.talk.length === 4) await say(who, bandLine(v));
         else { const tier = Math.min(2, Math.floor(hearts(v.id) / 2)); await say(who, v.talk[tier][S.day % v.talk[tier].length]); }
-      } else if (Array.isArray(v.again)) { const L = S.lucio; L.again = (L.again + 1) % v.again.length; await say(who, v.again[L.again]); }
+      } else if (Array.isArray(v.again)) { const L = v.id === 'iara' ? S.iara : S.lucio; L.again = (L.again + 1) % v.again.length; await say(who, v.again[L.again]); }
       else await say(who, v.again);
       if (v.id === 'iara' && S.lucio.met && !S.lucio.iara) await iaraOnLucio(who);
       if (pending) await say('narr', `Missão em andamento com ${v.name}: ${QUESTS[pending].desc} (${qProgress(pending) || 'em andamento'})`);
@@ -1686,25 +1757,138 @@
   /* Semana: dias 1–7, 8–14, 15–21 e 22–28 de cada estação (a semana vira nos dias 1, 8, 15 e 22). */
   const weekOf = d => Math.floor((d - 1) / 7);
   const isBirthday = v => { const c = calendar(); return v.birthday && SEASONS.indexOf(c.season) === v.birthday.season && c.day === v.birthday.day; };
-  const giftKind = (v, id) => (v.love.includes(id) ? 'love' : v.like.includes(id) ? 'like' : v.dislike.includes(id) ? 'dislike' : 'neutral');
+  /* Gosto do morador pelo item. Com prefs (Iara): primeiro os itens citados um a um, depois as
+     categorias do item (cat, ou "peixe" para peixes); o resto é neutro. */
+  const itemCats = id => { const it = ITEMS[id] || {}; return [it.cat, it.kind === 'fish' ? 'peixe' : null].filter(Boolean); };
+  const PREF_ORDER = ['love', 'like', 'neutral', 'dislike'];
+  function giftKind(v, id) {
+    if (v.prefs) {
+      for (const k of PREF_ORDER) if (v.prefs[k].ids.includes(id)) return k;
+      const cats = itemCats(id); for (const k of PREF_ORDER) if (v.prefs[k].cats.some(c => cats.includes(c))) return k;
+      return 'neutral';
+    }
+    return v.love.includes(id) ? 'love' : v.like.includes(id) ? 'like' : v.dislike.includes(id) ? 'dislike' : 'neutral';
+  }
+  const giftState = v => (v.id === 'lucio' ? S.lucio : v.id === 'iara' ? S.iara : null);       // limites de dia, semana e aniversário
+  const giftable = it => !!it && !!ITEMS[it.id] && (!ITEMS[it.id].kind || ITEMS[it.id].kind === 'fish');
+  const withExpr = (line, kind) => (/^\[/.test(line) ? line : (kind === 'love' || kind === 'like' ? '[contente]' : kind === 'dislike' ? '[triste]' : '') + line);
   /* Presentes com limites próprios (Lúcio): 1 por dia, 2 por semana e um extra no aniversário, com pontos x8. */
   async function giftRuled(v, who, id) {
-    const R = GIFT_RULES[v.id], L = S.lucio, name = ITEMS[id].name, c = calendar();
+    const R = GIFT_RULES[v.id], L = giftState(v), name = ITEMS[id].name, c = calendar();
     if (await ask(`Presentear ${v.name} com ${name}?`, ['Sim, presentear', 'Não']) !== 0) return say('narr', `Você guarda ${name.toLowerCase()} na mochila.`);
     if (L.gifts.week !== weekOf(S.day)) L.gifts = { week: weekOf(S.day), n: 0 };
     const kind = giftKind(v, id);
     if (isBirthday(v) && L.bday !== c.year) {
       const pts = FRIEND[kind] * R.birthdayMult;
       removeItem(id, 1); L.bday = c.year; S.known[v.id][id] = kind; addFriend(v.id, pts); save();
-      await say(who, v.bdayGift[kind === 'dislike' ? 'bad' : kind === 'neutral' ? 'neutral' : 'good']);
+      await say(who, withExpr(v.bdayGift[kind === 'dislike' ? 'bad' : kind === 'neutral' ? 'neutral' : 'good'], kind));
       toast(`Presente de aniversário: amizade ${pts > 0 ? '+' : ''}${pts}`);
       return;
     }
     if (S.daily.gift[v.id]) return say(who, v.limit.day);
     if (L.gifts.n >= R.perWeek) return say(who, v.limit.week);
     removeItem(id, 1); S.daily.gift[v.id] = true; L.gifts.n++; S.known[v.id][id] = kind; addFriend(v.id, FRIEND[kind]); save();
-    await say(who, v.gift[kind]);
+    await say(who, withExpr(v.gift[kind], kind));
     if (kind === 'love') toast(`${v.name} adorou!`);
+  }
+  /* =====================================================
+     IARA: pinturas da fonte, falas e acontecimentos de amizade
+     ===================================================== */
+  const iaraKey = (y, si) => `${y}-${si}`;
+  /* Dia 10 de cada estação: a pintura da fonte fica pronta às 18h (ou na noite, se o jogador
+     dormiu antes). Uma por estação e ano; recarregar não duplica. */
+  function iaraFinishPainting(day) {
+    if (!S || !S.iara) return; const c = calendar(day); if (c.day !== 10) return;
+    const k = iaraKey(c.year, c.si); if (S.iara.paintings[k]) return;
+    S.iara.paintings[k] = { y: c.year, si: c.si, rain: isRaining() }; save();
+  }
+  const iaraPaintings = () => Object.values(S.iara.paintings).sort((a, b) => a.y - b.y || a.si - b.si);
+  const iaraSeasonsDone = () => [0, 1, 2, 3].filter(si => iaraPaintings().some(p => p.si === si));
+  const paintCaption = p => `A fonte ${['na Primavera', 'no Verão', 'no Outono', 'no Inverno'][p.si]}, ano ${p.y}${p.rain ? ' · pintada em casa, pelos esboços (choveu)' : ''}`;
+  /* Painel simples com uma ou mais pinturas prontas. */
+  function showPaintings(items, title) {
+    return new Promise(res => {
+      const box = $('painting'), body = $('painting-body'); body.replaceChildren(); $('painting-title').textContent = title;
+      items.forEach(it => { const f = el('figure', items.length > 1 ? 'pf small' : 'pf'), c = el('canvas', 'pixel'); c.width = 48; c.height = 36; c.getContext('2d').drawImage(it.canvas, 0, 0); f.append(c, el('figcaption', '', it.caption)); body.append(f); });
+      box.hidden = false; $('painting-ok').focus();
+      $('painting-ok').onclick = () => { box.hidden = true; res(); };
+    });
+  }
+  /* Fala de Iara conforme lugar, hora, estação, chuva, dia de pintura e amizade, sem repetir a anterior. */
+  function iaraLine(v) {
+    const I = v.ctx, c = calendar(), p = villagerAt(v, S.time), h = hearts('iara'), band = h === 0 ? 0 : h <= 2 ? 1 : h <= 4 ? 2 : 3;
+    const painting10 = c.day === 10 && S.time >= 840 && S.time < 1080, doneNow = c.day === 10 && !!S.iara.paintings[iaraKey(c.year, c.si)];
+    let ctx;
+    if (painting10) ctx = (isRaining() ? I.pintandoChuva : I.pintando).map(l => '[concentrada]' + l);
+    else if (doneNow) ctx = I.pronta.map(l => '[contente]' + l);
+    else if (isRaining()) ctx = I.chuva;
+    else if (p.where === 'escola') ctx = I.escola;
+    else if (p.where === 'iara') ctx = S.time < 720 ? I.casaManha : I.casa;
+    else ctx = Math.hypot(p.x - 664, p.y - 150) < 40 ? I.fonte : I.praca;
+    let pool = painting10 || doneNow ? ctx : [...ctx, ...ctx, ...I.estacao[c.si], ...v.talk[band], ...v.talk[band]];
+    if (!painting10 && S.iara.colorName) pool = pool.concat(I.cor.map(l => l.replace('{cor}', S.iara.colorName)));
+    const opts = pool.filter(l => l !== S.iara.lastLine), from = opts.length ? opts : pool, line = from[Math.floor(Math.random() * from.length)];
+    S.iara.lastLine = line; return line;
+  }
+  /* 1 coração: escolher o nome da cor nova (e lembrar dele depois). */
+  async function iaraNameColor(who, retro) {
+    if (retro) await say(who, '[contente]Lembra da flor-do-campo que você me trouxe? Misturei as cores dela e saiu uma cor nova... que ainda não tem nome!');
+    const c = await choose(IARA.colorNames, -1, { who, text: '[contente]Qual nome a gente dá para essa cor?' });
+    S.iara.colorName = IARA.colorNames[c]; save();
+    await say(who, `[contente]"${S.iara.colorName}"! Perfeito. Vou escrever no pote, com letra caprichada.`);
+  }
+  /* Acontecimentos de amizade (3 e 5 corações) e o nome da cor para saves antigos. Devolve true se a conversa terminou nele. */
+  async function iaraEvents(v, who) {
+    const I = S.iara, h = hearts('iara');
+    if (qDone('flores') && !I.colorName) { await iaraNameColor(who, true); return true; }
+    if (h >= 3 && I.ev3 === 0) {
+      await sayAll(who, ['[contente]Ei! Quer ver uma coisa que quase ninguém repara?', 'Na praça, embaixo da fonte, onde as pedras encontram a grama, tem um detalhe escondido. Procura e clica nele quando achar!', '[concentrada]Não vou dizer o que é. Olhar com calma faz parte.']);
+      I.ev3 = 'seek'; save(); return true;
+    }
+    if (I.ev3 === 'found') {
+      await sayAll(who, ['[surpresa]Você achou! A florzinha entre as pedras!', '[contente]Eu fiz um esboço dela. Olha só:']);
+      await showPaintings([{ canvas: World.painting('esboco'), caption: 'Esboço: a florzinha entre as pedras da praça' }], 'O caderno de Iara');
+      await say(who, '[contente]Quase ninguém olha para baixo na praça. Agora você é uma das pessoas que olham.');
+      if (!S.scenes.iara) {
+        if (!canAdd('boina')) { await say('narr', 'Iara quer te dar um presente, mas sua mochila está cheia. Abra espaço e fale com ela de novo.'); return true; }
+        gain('boina'); S.scenes.iara = true; await say(who, '[contente]E isto é para você: uma boina de pintor de verdade. Fica melhor em você do que na minha gaveta.');
+      }
+      I.ev3 = 'done'; save(); return true;
+    }
+    if (h >= 5 && !I.ev5) {
+      const done = iaraSeasonsDone();
+      if (done.length === 4) {
+        await say(who, '[contente]Terminei! A fonte nas quatro estações. Vem ver todas juntas?');
+        await showPaintings([0, 1, 2, 3].map(si => { const p = iaraPaintings().filter(q => q.si === si).pop(); return { canvas: World.painting('fonte', si), caption: paintCaption(p) }; }), 'As quatro versões da fonte');
+        await sayAll(who, ['É o mesmo lugar, sabia? A mesma fonte, a mesma praça. Mas olha como muda tudo.', '[concentrada]Eu achava que precisava ir longe para pintar coisas diferentes. Não precisa. Precisa só voltar com calma.']);
+        if (!canAdd('quadro_fonte')) { await say('narr', 'Iara fez uma cópia de uma das pinturas para você, mas sua mochila está cheia. Abra espaço e fale com ela de novo.'); return true; }
+        I.copySi = calendar().si; gain('quadro_fonte'); I.ev5 = true; save();
+        await say(who, '[contente]Fiz uma cópia para você. Pode pendurar na sua casa! Escolha o quadro no Inventário.');
+        return true;
+      }
+      if (I.missingTold !== S.day) {                                // avisa o que falta, sem travar a conversa nem a amizade
+        I.missingTold = S.day; save();
+        const miss = [0, 1, 2, 3].filter(si => !done.includes(si)).map(si => SEASONS[si]);
+        await say(who, `Quando eu tiver a fonte pintada nas quatro estações, quero te mostrar todas juntas. Eu pinto todo dia 10! Ainda faltam: ${miss.join(', ')}.`);
+      }
+    }
+    return false;
+  }
+  /* Menu de Iara: conversar, ver a pintura pronta mais recente e dar presente. */
+  async function iaraMenu(v, who, it) {
+    const opts = ['Conversar'], pics = iaraPaintings();
+    if (pics.length) opts.push('Ver a pintura');
+    if (giftable(it)) opts.push(`Dar ${ITEMS[it.id].name}`);
+    if (opts.length === 1) return false;
+    const o = opts[await choose(opts, -1, { who, text: '[neutro]Oi, {nome}! O que foi?' })];
+    if (o === 'Ver a pintura') {
+      const p = pics[pics.length - 1];
+      await say(who, '[contente]Esta é a pintura da fonte mais nova. Pode olhar com calma!');
+      await showPaintings([{ canvas: World.painting('fonte', p.si), caption: paintCaption(p) }], 'Pintura de Iara');
+      return true;
+    }
+    if (o.startsWith('Dar')) { await giftRuled(v, who, it.id); return true; }
+    return false;
   }
   async function iaraOnLucio(who) {
     await sayAll(who, IARA_LUCIO.lines);
@@ -1920,6 +2104,7 @@
       if (o.k === 'tree') { const T = TREES[o.sp]; o.age++; if (o.age >= T.grow && !o.fruit) { o.cool = (o.cool || 0) + 1; if (o.cool >= T.every) { o.fruit = true; o.cool = 0; fruits++; } } }
     }
     S.coop.hens.forEach(h => { if (S.coop.feed > 0) { S.coop.feed--; h.well = Math.min(100, h.well + 6); if (S.coop.eggs < S.coop.hens.length * 3) { S.coop.eggs++; eggs++; } } else { h.well = Math.max(0, h.well - 12); hungry++; } });
+    iaraFinishPainting(S.day);                                      // pintura do dia 10, mesmo sem o jogador por perto
     const finished = S.day;
     S.day++; S.time = DAY_START; S.energy = 100; S.daily = { talk: {}, gift: {} };
     Object.keys(S.nature.trees).forEach(k => { if (S.day >= S.nature.trees[k]) { delete S.nature.trees[k]; delete S.nature.cleared[k]; delete S.dmg['s' + k]; } });
@@ -2078,6 +2263,10 @@
             if (S.fish.bait) { const ub = btn('btn', 'Tirar a isca', () => { unloadBait(); renderTab('mochila'); }); ub.id = 'btn-unload-bait'; info.append(ub); }
           }
           if (s2.id === 'minhoca') info.append(el('span', 'dim', ownsFiber() ? 'Escolha a vara de fibra de vidro e use "Carregar minhocas".' : 'Só a vara de fibra de vidro aceita isca.'));
+          if (it.kind === 'decor') {
+            const hb = btn('btn', S.house.quadro ? 'Já tem um quadro na parede de casa' : 'Pendurar na parede de casa', () => { if (S.house.quadro || !count('quadro_fonte')) return; removeItem('quadro_fonte', 1); S.house.quadro = { si: S.iara.copySi != null ? S.iara.copySi : 0 }; toast('Quadro pendurado na parede de casa'); save(); renderTab('mochila'); });
+            hb.id = 'btn-hang'; hb.disabled = !!S.house.quadro; info.append(hb);
+          }
           if (it.kind === 'hat') info.append(btn('btn', S.look.hat === it.hat ? 'Tirar o chapéu' : 'Usar o chapéu', () => { S.look.hat = S.look.hat === it.hat ? null : it.hat; save(); renderTab('mochila'); }));
         }
       };
@@ -2186,9 +2375,15 @@
       det.append(el('h3', '', v.name), heartsNode(hearts(v.id)), el('span', 'dim', `${pts} pontos de amizade · ${hearts(v.id)} de 5 corações`), el('p', '', v.bio), el('span', 'dim', `Costuma ficar ${v.place}.`));
       if (v.birthday) det.append(el('span', '', `🎂 Aniversário: ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' — é hoje!' : ''}`));
       if (GIFT_RULES[v.id]) {
-        const R = GIFT_RULES[v.id], L = S.lucio, n = L.gifts.week === weekOf(S.day) ? L.gifts.n : 0;
+        const R = GIFT_RULES[v.id], L = giftState(v), n = L.gifts.week === weekOf(S.day) ? L.gifts.n : 0;
         det.append(el('span', 'gift-week', `Presentes nesta semana: ${n}/${R.perWeek} · hoje: ${S.daily.gift[v.id] ? '1' : '0'}/${R.perDay}${isBirthday(v) ? ` · presente de aniversário: ${L.bday === calendar().year ? 'entregue' : 'disponível (amizade x8)'}` : ''}. A semana vira toda segunda-feira.`));
         det.append(el('span', '', `Hoje: conversa ${S.daily.talk[v.id] ? '✔' : '—'}`));
+        if (v.id === 'iara') {
+          const done = iaraSeasonsDone();
+          det.append(el('span', 'iara-paint', `Pinturas da fonte (todo dia 10, das 14h às 18h): ${done.length ? done.map(si => SEASONS[si]).join(', ') : 'nenhuma ainda'} · ${done.length}/4 estações.`));
+          det.append(el('span', 'dim', S.iara.ev5 ? 'As quatro versões da fonte: visto ✔' : 'Com 5 corações e a fonte pintada nas quatro estações, Iara quer mostrar algo especial.'));
+          if (S.iara.colorName) det.append(el('span', 'dim', `Cor batizada por você: "${S.iara.colorName}"`));
+        }
       } else det.append(el('span', 'gift-week', `Presentes: 1 por dia · hoje: ${S.daily.gift[v.id] ? '1/1 ✔' : '0/1'} · conversa hoje: ${S.daily.talk[v.id] ? '✔' : '—'}`));
       const kn = Object.keys(S.known[v.id] || {});
       det.append(el('h3', '', 'Gostos descobertos'));
@@ -2425,7 +2620,7 @@
   window.__trilha = {
     get S() { return S; }, get P() { return P; }, get map() { return map; }, get hover() { return hover; }, get near() { return hover && hover.ok ? hover : null; }, get busy() { return blocked(); }, get hens() { return hens; }, save,
     cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), openMap, fit, petEvent, cleanName, textWidth,
-    villagerAt: id => villagerAt(villagerById(id), S.time), tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
+    villagerAt: id => villagerAt(villagerById(id), S.time), iaraSchedule, iaraLine: () => iaraLine(villagerById('iara')), giftKind: (vid, id) => giftKind(villagerById(vid), id), iaraFinishPainting, tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
     targetAt: (x, y) => targetAt(x, y, actors()), henMenu, newHen: () => { run(() => newHen('narr')); }, get Pobj() { return P; },
     get fishing() { return fishing; }, fishCheck, fishValue, pickFish, openTab: t => openModal(t), get fin() { return { ...FIN }; }, zoneWidth, castMax, biteWait, addFishXp,
@@ -2443,6 +2638,7 @@
       setDay: d => { S.day = d; S.lastNight = d - 1; World.setSeason(calendar().si); enterMap(map.id === 'fora' || map.id === 'montanha' ? map.id : map.id, P.x, P.y, P.dir); renderHud(); },
       spawn: rnd => { S.spawnDay = 0; return spawnSeasonal(rnd); },
       lightAt, calendar, dateText, clock,
+      setRain: on => { S.weather = on ? 'chuva' : null; save(); },
       set markers(v) { DEV.markers = v; },
     };
   }
