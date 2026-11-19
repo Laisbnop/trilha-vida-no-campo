@@ -212,10 +212,15 @@ na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
 
 | Cultivo | Estações de plantio | Primeira colheita | Nova colheita | Semente | Venda |
 | --- | --- | --- | --- | --- | --- |
-| Rabanete | qualquer | 2 dias regados | — (a planta sai) | 8 | 18 |
-| Tomate | qualquer | 4 dias regados | — (a planta sai) | 15 | 40 |
-| Morango | Primavera, Outono e Inverno | 5 dias regados (5 estágios de 1 dia) | a cada 4 dias regados | 150 | 360 |
-| Abóbora | Primavera e Outono | 13 dias regados (estágios de 1, 2, 3, 4 e 3 dias) | a cada 6 dias regados | 25 | 75 |
+| Rabanete | qualquer | 3 dias regados | — (colheita única) | 12 | 20 |
+| Tomate | qualquer | 4 dias regados | — (colheita única) | 20 | 60 |
+| Morango | Primavera, Outono e Inverno | 5 dias regados (5 estágios de 1 dia) | a cada 4 dias regados | 150 | 320 |
+| Abóbora | Primavera e Outono | 13 dias regados (estágios de 1, 2, 3, 4 e 3 dias) | a cada 6 dias regados | 42 | 88 |
+
+  Semente: preço de compra por unidade. Venda: preço de cada unidade colhida.
+  **Rabanete e tomate** dão uma única colheita: ao colher, a planta sai e o
+  canteiro continua com a terra preparada para uma nova semente. A aparência de
+  planta madura só aparece quando ela já pode ser colhida.
 
   **Morango e abóbora** dão 1 fruto por colheita e o pé continua plantado,
   voltando ao estado sem frutos (sem precisar de semente nova). Os estágios
@@ -232,14 +237,12 @@ na manhã seguinte. O bicho passeia perto da casa e gosta de carinho (clique).
   energia) e plante de novo quando a estação permitir. O morango é comestível
   (+30 de energia) e é o presente favorito da Dona Celeste: vale 150 pontos de
   amizade, com resposta própria. Para os outros moradores, é um presente neutro.
-  O preço da semente de morango (150) foi escolhido para a economia do jogo: uma
-  colheita paga mais que duas sementes, e um pé plantado no começo da estação rende
-  até 6 colheitas.
+  A contagem da próxima produção de morango e abóbora começa depois da colheita.
 - **Árvores frutíferas**: laranjeira e goiabeira. A muda precisa de grama livre,
   sem outra árvore encostada. Ficam adultas em 5 ou 6 dias e dão 2 frutos a cada
   3 dias. Não precisam de rega.
 - **Galinhas**: a primeira vem de uma missão; outras são vendidas no Armazém
-  (até 4). Cada porção de ração no comedouro alimenta uma galinha por noite, e
+  por 130 moedas cada, depois da missão do galinheiro (até 4). Cada porção de ração no comedouro alimenta uma galinha por noite, e
   galinha alimentada bota um ovo, que aparece no ninho na manhã seguinte. Dá
   para dar nome, fazer carinho (uma vez por dia) e ver o bem-estar.
 - **Bosque**: a árvore cortada deixa um toco, que também pode ser removido;
@@ -432,10 +435,12 @@ Vara de bambu.
 
 | Peixe | Onde | Mais comum | Tamanho | Venda | Jeito de nadar | XP |
 | --- | --- | --- | --- | --- | --- | --- |
-| Sardinha | rio e lago (a mais comum no lago da fazenda) | 6h–19h | 5 a 90 cm | 30 a 130 moedas | tranquilo | 20 |
-| Tucunaré | só no lago | 6h–18h | 20 a 80 cm | 60 a 200 moedas | ativo | 30 |
+| Sardinha | rio e lago (a mais comum no lago da fazenda) | 6h–19h | 5 a 90 cm | 50 moedas | tranquilo | 20 |
+| Tucunaré | só no lago | 6h–18h | 20 a 80 cm | 60 moedas | ativo | 30 |
 
-O preço cresce com o tamanho. Há três jeitos de nadar: **tranquilo** (devagar,
+O preço é fixo por espécie: não muda com o tamanho, a sorte do dia, o nível de
+pesca nem a captura perfeita. O tamanho aparece como informação e conta para o
+recorde pessoal. Há três jeitos de nadar: **tranquilo** (devagar,
 com pausas e curvas suaves), **ativo** (mais rápido, muda de direção com mais
 frequência e dá pequenas arrancadas) e **ágil** (arrancadas curtas alternadas com
 pausas; 40 XP). O ágil já está pronto para a próxima espécie que entrar no jogo.
@@ -490,7 +495,7 @@ Nível, progresso e zona aparecem na aba Personagem; subir de nível mostra um a
 1.500 moedas. A compra pede confirmação, confere tudo antes de cobrar e não deixa
 comprar duas. A vara nova toma o lugar da de bambu na barra; a de bambu continua
 na mochila (ou vai para o baú, se a mochila estiver cheia). Ela não aumenta a zona
-verde: aceita **isca de minhoca** (5 moedas no Armazém). Escolha a vara no
+verde: aceita **isca de minhoca** (20 moedas cada no Armazém). Escolha a vara no
 Inventário e use "Carregar minhocas"; a quantidade aparece no ícone da barra. Cada
 lançamento válido gasta uma, e a espera pela mordida cai pela metade. Sem isca, a
 vara funciona normalmente.
@@ -531,7 +536,7 @@ ficam em `LUCK`, no `js/data.js`.
 item até as mãos (sem minijogo, sem experiência e sem "Perfeito!") e o cartão
 mostra o que veio: **Guardar** ou **Descartar**. Com a mochila cheia, o item espera
 enquanto você abre espaço ou o descarta. A **alga** é comestível ("Comer alga?",
-recupera 3 de energia) e pode ser presente. O **musgo** e o **lixo** (uma bota
+recupera 3 de energia) e pode ser vendida (2 moedas) ou dada de presente. O **musgo** e o **lixo** (uma bota
 velha) não têm utilidade por enquanto: não se comem, não se vendem, não entram em
 missões nem em presentes; podem ser guardados no baú ou jogados fora na mochila
 ("Jogar fora", com confirmação).
@@ -652,8 +657,32 @@ unidade só. Ao acabar a pilha, o espaço fica vazio. Dormir recupera tudo e mos
 noite.
 
 O Armazém (Dona Celeste atende das 6h às 18h; a quantidade escolhida aparece em preto) vende sementes, mudas, ração,
-galinhas e um chapéu, e compra colheitas, ovos, frutos, madeira, pedra e itens
-do bosque. Preço, quantidade e total aparecem antes de confirmar.
+galinhas e um chapéu, e compra colheitas, ovos, frutos, peixes, alga, madeira,
+pedra e itens do bosque. Antes de confirmar aparecem a quantidade, o preço por
+unidade e o total (por exemplo, "Comprar 3 × 12 = 36 moedas"). Ao confirmar, o
+jogo confere moedas, quantidade e espaço na mochila, entrega ou retira a
+quantidade certa, atualiza as moedas e salva. Cliques rápidos ou duplos fazem uma
+única transação. "Vender todos os peixes" mostra a conta por espécie e o total.
+
+| Compra no Armazém | Preço |
+| --- | --- |
+| Ração | 10 |
+| Chapéu de palha | 200 |
+| Minhoca (isca) | 20 |
+| Galinha | 130 |
+
+| Venda no Armazém | Preço |
+| --- | --- |
+| Ovo | 8 |
+| Alga | 2 |
+| Sardinha | 50 |
+| Tucunaré | 60 |
+
+Musgo e lixo não são vendidos. Os preços novos valem para as próximas compras e
+vendas, inclusive de itens já guardados; nada é cobrado ou devolvido de antes.
+Plantações em crescimento mantêm o progresso: rabanetes que já estavam maduros
+(com o prazo antigo de 2 dias) continuam maduros, e os outros seguem do ponto em
+que estavam.
 
 ## Itens
 

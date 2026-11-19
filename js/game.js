@@ -33,7 +33,7 @@
       farm: { tiles: {} }, coop: { feed: 0, eggs: 0, hens: [] },
       nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
       friends: {}, daily: { talk: {}, gift: {} }, known: {}, scenes: {},
-      quests: {}, world: { banco: false }, dummy: 0, intro: false, seed, cropV: 2,
+      quests: {}, world: { banco: false }, dummy: 0, intro: false, seed, cropV: 3,
       fish: newFishState(2),
     };
     ['enxada', 'regador', 'machado', 'picareta', 'foice', 'espada'].forEach((id, i) => { s.inv[i] = { id, n: 1 }; });
@@ -516,6 +516,9 @@
     /* plantações (versão dos cultivos com rebrota): abóboras antigas maduras continuam maduras;
        as que cresciam mantêm as noites já regadas (agora precisam de 13) */
     if (!s.cropV) { for (const key in s.farm.tiles) { const o = s.farm.tiles[key]; if (o.k === 'soil' && o.crop === 'abobora' && (o.g || 0) >= 6) o.g = CROPS.abobora.days; } s.cropV = 2; }
+    /* Rabanete passou de 2 para 3 dias regados: o que já estava maduro (2 dias) continua maduro;
+       o resto mantém o progresso. Tomate (4), abóbora e morango não mudaram de prazo. */
+    if (s.cropV < 3) { for (const key in s.farm.tiles) { const o = s.farm.tiles[key]; if (o.k === 'soil' && o.crop === 'rabanete' && !o.dead && (o.g || 0) >= 2) o.g = CROPS.rabanete.days; } s.cropV = 3; }
     /* Iara: acontecimentos, cor nomeada, pinturas da fonte (por estação e ano) e presentes */
     s.iara = Object.assign({ lastLine: '', again: 0, colorName: null, ev3: 0, ev5: false, paintings: {}, gifts: { week: -1, n: 0 }, bday: 0, missingTold: 0 }, s.iara);
     s.house = Object.assign({ quadro: null }, s.house);
@@ -1211,7 +1214,7 @@
   const lerp = (a, b, k) => a + (b - a) * clamp01(k);
   const grip = d => [P.x + HAND[d][0], P.y + HAND[d][1]];
   function rodTip(d, from, to, k) { const a = POSE[d][from], b = POSE[d][to], [gx, gy] = grip(d); return [gx + lerp(a[0], b[0], k), gy + lerp(a[1], b[1], k)]; }
-  const fishValue = (id, cm) => { const F = FISH[id]; return Math.round(F.value[0] + (F.value[1] - F.value[0]) * (cm - F.cm[0]) / (F.cm[1] - F.cm[0])); };
+  const fishValue = id => FISH[id].price;                   // preço fixo por espécie (o tamanho é só informação e recorde)
   const isRod = it => !!(it && ITEMS[it.id] && ITEMS[it.id].rod);
   const fishLevel = () => S.fish.lvl || 0;
   const zoneWidth = (lvl = fishLevel()) => FISHING.zone.base + FISHING.zone.perLevel * Math.min(FISHING.maxLevel, lvl);
@@ -1604,7 +1607,7 @@
 
   /* ---------- isca e vara aprimorada ---------- */
   function loadBait() {
-    const n = count('minhoca'); if (!n) return toast('Você não tem minhocas. O Armazém vende por 5 moedas.');
+    const n = count('minhoca'); if (!n) return toast(`Você não tem minhocas. O Armazém vende por ${ITEMS.minhoca.price} moedas cada.`);
     removeItem('minhoca', n); S.fish.bait += n; save(); toast(`${n} minhoca(s) na vara · total ${S.fish.bait}`);
   }
   function unloadBait() {
@@ -2270,7 +2273,7 @@
   /* =====================================================
      PAINÉIS
      ===================================================== */
-  let tab = 'mochila', picked = null, friendSel = null, menuClosedT = 0, fiberArm = false;
+  let shopLock = { key: '', until: 0 }, tab = 'mochila', picked = null, friendSel = null, menuClosedT = 0, fiberArm = false;
   let modalT = 0;
   const MENU_TABS = ['mochila', 'amizades', 'mapa', 'diario', 'personagem', 'config'];
   const TAB_TITLE = { mochila: 'Inventário', amizades: 'Amizades', mapa: 'Mapa', diario: 'Diário', personagem: 'Personagem', config: 'Configurações', bau: 'Baú', roupa: 'Guarda-roupa e espelho', loja: 'Armazém', ajuste: 'Sua fazenda' };
@@ -2559,11 +2562,13 @@
       body.append(petBox, ok);
     },
     loja(body) {
+      /* Uma transação por vez: cliques rápidos (ou duplo clique) não cobram nem entregam duas vezes. */
+      const tx = (key, fn) => (...a) => { const now = performance.now(); if (shopLock.key === key && now < shopLock.until) return; shopLock = { key, until: now + 450 }; fn(...a); };
       body.append(el('h3', '', 'Armazém da Dona Celeste'), el('p', '', `Suas moedas: ${S.coins}`));
       const row = (id, name, unit, max, label, go, extra) => {
         const li = el('li'), meta = el('div', 'meta'), qty = el('b', 'qty', '1'), tot = el('span', '', '');
-        let n = 1; const upd = () => { qty.textContent = n; tot.textContent = `${label} ${n} por ${n * unit} moedas`; ok.disabled = !max || (label === 'Comprar' && n * unit > S.coins); };
-        const ok = btn('btn primary', 'Confirmar', () => go(n)); ok.dataset.item = id;
+        let n = 1; const upd = () => { qty.textContent = n; tot.textContent = `${label} ${n} × ${unit} = ${n * unit} moedas`; ok.disabled = !max || (label === 'Comprar' && n * unit > S.coins); };
+        const ok = btn('btn primary', 'Confirmar', tx(label + id, () => go(n))); ok.dataset.item = id;
         const left = el('div', 'shop-item'); left.append(cloneIcon(extra || id), el('span', '', `${name} — ${unit} moedas cada`));
         meta.append(btn('btn', '−', () => { n = Math.max(1, n - 1); upd(); }), qty, btn('btn', '+', () => { n = Math.min(Math.max(1, max), n + 1); upd(); }), tot, ok);
         li.append(left, meta); upd(); return li;
@@ -2595,6 +2600,7 @@
       }
       if (qDone('galinheiro') && S.coop.hens.length < MAX_HENS) buy.append(row('galinha', 'Galinha', HEN_PRICE, 1, 'Comprar', () => {
         if (S.coins < HEN_PRICE) return toast('Moedas insuficientes');
+        if (S.coop.hens.length >= MAX_HENS) return toast('O galinheiro está cheio');
         S.coins -= HEN_PRICE; save(); closeModal(); run(() => newHen('narr'));
       }, 'ovo'));
       body.append(buy, el('h3', '', 'Vender'));
@@ -2602,17 +2608,18 @@
       const fishIdx = S.inv.map((x, i) => (x && x.cm ? i : -1)).filter(i => i >= 0);
       if (!ids.length && !fishIdx.length) sell.append(el('li', 'dim', 'Você não tem nada para vender agora. Colheitas, ovos, frutos, peixes e o que achar no bosque têm preço.'));
       fishIdx.forEach(i => {
-        const f = S.inv[i], v = fishValue(f.id, f.cm), li = el('li', 'fish-row'), left = el('div', 'shop-item');
-        left.append(cloneIcon(f.id), el('span', '', `${ITEMS[f.id].name} · ${f.cm} cm — ${v} moedas`));
-        const b = btn('btn primary', 'Vender', () => { if (S.inv[i] !== f) return; S.inv[i] = null; S.coins += v; toast(`+${v} moedas`); save(); renderTab('loja'); }); b.dataset.fish = i;
+        const f = S.inv[i], v = fishValue(f.id), li = el('li', 'fish-row'), left = el('div', 'shop-item');
+        left.append(cloneIcon(f.id), el('span', '', `${ITEMS[f.id].name} · ${f.cm} cm — 1 × ${v} = ${v} moedas`));
+        const b = btn('btn primary', 'Vender', tx('peixe' + i, () => { if (S.inv[i] !== f) return; S.inv[i] = null; S.coins += v; toast(`+${v} moedas`); save(); renderTab('loja'); })); b.dataset.fish = i;
         li.append(left, b); sell.append(li);
       });
       if (fishIdx.length > 1) {
-        const tot = fishIdx.reduce((a, i) => a + fishValue(S.inv[i].id, S.inv[i].cm), 0), li = el('li', 'fish-row');
-        const b = btn('btn', `Vender todos os peixes (${tot} moedas)`, () => { let got = 0; fishIdx.forEach(i => { const f = S.inv[i]; if (f && f.cm) { got += fishValue(f.id, f.cm); S.inv[i] = null; } }); S.coins += got; toast(`+${got} moedas`); save(); renderTab('loja'); }); b.id = 'sell-all-fish';
+        const tot = fishIdx.reduce((a, i) => a + fishValue(S.inv[i].id), 0), li = el('li', 'fish-row');
+        const parts = Object.keys(FISH).map(id => { const n = fishIdx.filter(i => S.inv[i].id === id).length; return n ? `${ITEMS[id].name} ${n} × ${FISH[id].price}` : ''; }).filter(Boolean).join(' + ');
+        const b = btn('btn', `Vender todos os peixes (${parts} = ${tot} moedas)`, tx('peixes', () => { let got = 0; fishIdx.forEach(i => { const f = S.inv[i]; if (f && f.cm && FISH[f.id]) { got += fishValue(f.id); S.inv[i] = null; } }); if (!got) return; S.coins += got; toast(`+${got} moedas`); save(); renderTab('loja'); })); b.id = 'sell-all-fish';
         li.append(b); sell.append(li);
       }
-      ids.forEach(id => sell.append(row(id, `${ITEMS[id].name} (você tem ${count(id)})`, ITEMS[id].sell, count(id), 'Vender', n => {
+      ids.filter(id => !FISH[id]).forEach(id => sell.append(row(id, `${ITEMS[id].name} (você tem ${count(id)})`, ITEMS[id].sell, count(id), 'Vender', n => {
         n = Math.min(n, count(id)); if (!n) return;
         removeItem(id, n); S.coins += n * ITEMS[id].sell; toast(`+${n * ITEMS[id].sell} moedas`); save(); renderTab('loja');
       })));
