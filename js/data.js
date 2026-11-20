@@ -467,12 +467,13 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Calçamento do centrinho',
+  title: 'Visual da fazenda',
   items: [
-    'Novo calçamento na frente do Armazém CELESTE e na praça da fonte: pedras pequenas, arredondadas e de cantos gastos, em fileiras desencontradas, nos tons de bege, cinza quente e marrom suave.',
-    'Juntas estreitas e pouco escuras, luz discreta em cima das pedras e sombra suave embaixo, para o piso ficar de fundo sem competir com personagens e construções.',
-    'Frente do Armazém e praça formam uma superfície contínua, sem emendas.',
-    'Bordas com pedras de contorno: junto à grama, pequenas falhas e tufos; junto ao caminho de terra, as pedras terminam encaixadas e a terra chega até elas.',
-    'Fonte, bancos, postes, entrada do Armazém, caminhos e colisões continuam iguais.',
+    'Caminho de terra em frente à casa com variações suaves, bordas em curva, tufinhos e encontro com o degrau da varanda.',
+    'Chão da fazenda com clareiras de terra natural perto da plantação, manchas de grama variadas e mais vegetação nas bordas.',
+    'Canteiros de terra revolvida, ligados entre si, com o solo molhado bem mais escuro.',
+    'Pinheiros em camadas e árvores com pequenas diferenças entre si.',
+    'Novos desenhos de pedras, galhos, tocos e matinhos, com variações que não mudam ao salvar ou mover a câmera.',
+    'Lago com margem natural, faixa rasa, água mais funda no meio e taboas.',
   ],
 };

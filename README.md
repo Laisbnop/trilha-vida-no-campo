@@ -309,9 +309,11 @@ da diferença entre os dois.
 A área rural e o centrinho têm pisos diferentes:
 
 - **Terra batida** (saída da fazenda, ruas da vila sul, bairro leste, trilhas e
-  serra): tons de ocre e marrom claro, com manchas de terra compactada, pedrinhas
-  ocasionais e pouquíssimos grãos claros. As bordas são levemente irregulares, com
-  a grama entrando em alguns trechos, e a faixa central fica limpa para andar.
+  serra): terra compactada em tons de ocre e marrom claro, com variações pequenas
+  e suaves (sem manchas grandes), pedrinhas ocasionais e pouquíssimos grãos
+  claros. As bordas fazem curvas discretas, com a grama entrando em ondas largas e
+  alguns tufinhos, sem contorno escuro; a faixa central fica livre para andar. Em
+  frente à casa, a terra se abre um pouco e chega até o degrau da varanda.
 - **Calçamento antigo do centrinho**: da frente do Armazém CELESTE, passando
   pela rua até a casa de Seu Honório, até a praça da fonte, num piso contínuo.
   São pedras pequenas, arredondadas ou levemente retangulares e de cantos gastos,
@@ -486,6 +488,38 @@ galinheiro mantêm o desenho próprio. O mapa (M) mostra as fachadas e as árvor
   para dar nome, fazer carinho (uma vez por dia) e ver o bem-estar.
 - **Bosque**: a árvore cortada deixa um toco, que também pode ser removido;
   ela volta em 4 dias e as rochas em 3. Os itens de coleta mudam de lugar todo dia.
+
+### Visual da fazenda
+
+- **Chão**: clareiras de terra natural em volta da área de plantio, manchas de
+  grama de tamanhos e contornos variados, mais tufos de capim nas bordas
+  (perto dos pinheiros, da cerca e da mata) e quase nenhum no meio, deixando
+  áreas abertas para trabalhar. Pequenos grupos de florzinhas (ou folhas secas
+  no outono) ficam espaçados. A terra natural é clara e ocre; a terra preparada
+  é marrom e revolvida. Nada disso aparece sobre caminhos, construções ou
+  objetos, e a grade de plantio continua existindo sem ser desenhada no chão.
+- **Canteiros**: terra revolvida com sulcos curtos e desencontrados, torrões e
+  leves diferenças de tom. Canteiros vizinhos se ligam, sem moldura em cada
+  célula; os lados livres terminam numa borda de terra irregular. Molhado fica
+  bem mais escuro. Plantas, estágios, rega e seleção não mudaram.
+- **Pinheiros**: ramos em camadas que caem umas sobre as outras, com pontas
+  recortadas, luz à esquerda, sombra sob cada camada e tronco com casca e raízes.
+  Cada pinheiro varia em altura, largura, número de camadas e inclinação, e as
+  árvores redondas variam o desenho da copa, para as bordas não parecerem uma
+  parede repetida. Posição, colisão, corte e produção das árvores não mudaram.
+- **Pedras, galhos, tocos e matinhos**: pedras de silhueta irregular, com face
+  clara em cima, lado na sombra, rachaduras ou musgo e sombra de contato; galhos
+  com casca, raminhos e pontas de corte; tocos com raízes, casca estriada e
+  anéis no corte; matinhos com lâminas de alturas diferentes. Cada tipo tem
+  quatro variações escolhidas pela posição do objeto, então a aparência é a
+  mesma ao mover a câmera, salvar e carregar. Quantidade, posição, interação e
+  recursos de cada objeto não mudaram.
+- **Lago**: margem com pequenas reentrâncias, barranco de terra com a grama
+  entrando, pedrinhas e taboas; faixa rasa clara junto à margem e água mais
+  funda no meio, com ondulações pequenas e suaves. A posição, a área de pesca e
+  as colisões são as mesmas.
+- Tudo segue as estações e a luz do dia e da noite. A casa e o galinheiro não
+  mudaram.
 
 ## A serra e Lúcio
 
