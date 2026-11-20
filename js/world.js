@@ -2319,7 +2319,8 @@ const World = (() => {
       ctx.fillStyle = 'rgba(20,30,20,.28)'; ctx.fillRect(ax + OX(-6), ay - 2, OX(6) - OX(-6), 3);   // sombra no tamanho do personagem do mundo
       const tk = a.tool ? Math.min(1, (t - a.tool.t0) / 280) : -1, using = tk >= 0 && tk < 1;
       if (using && a.dir === 'up') toolSwing(ctx, a, ax, ay, tk);
-      Sprites.drawWorld(ctx, a.look, ax, ay + (a.hop || 0) + (using && tk > 0.4 ? 1 : 0) + (a.fish ? a.fish.lean || 0 : 0), a.moving ? Sprites.walk(t) : (using ? 1 : 0), a.dir || 'down');
+      const fy = ay + (a.hop || 0) + (using && tk > 0.4 ? 1 : 0) + (a.fish ? a.fish.lean || 0 : 0), fr = a.moving ? Sprites.walk(t) : (using ? 1 : 0);
+      if (!(a.art && typeof CharArt !== 'undefined' && CharArt.draw(ctx, a.art, ax, fy, fr, a.dir || 'down'))) Sprites.drawWorld(ctx, a.look, ax, fy, fr, a.dir || 'down');   // arte própria (Caleb) ou sprite comum
       if (using && a.dir !== 'up') toolSwing(ctx, a, ax, ay, tk);
       if (a.fish) fishRod(ctx, a);
       if (a.act) actFx(ctx, a, t);

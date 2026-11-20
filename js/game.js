@@ -548,7 +548,7 @@
     VILLAGERS.forEach(v => {
       const p = villagerAt(v, tm);
       if (p.where !== map.id) return;
-      list.push({ id: v.id, v, name: shownName(v), look: lookOf(v), x: p.x, y: p.y, dir: p.dir, moving: p.moving, act: p.act || null, reach: p.where === 'loja' ? 40 : 22, bubble: questMark(v) ? '!' : null });
+      list.push({ id: v.id, v, art: v.art || null, name: shownName(v), look: lookOf(v), x: p.x, y: p.y, dir: p.dir, moving: p.moving, act: p.act || null, reach: p.where === 'loja' ? 40 : 22, bubble: questMark(v) ? '!' : null });
     });
     return list;
   }
@@ -702,11 +702,15 @@
   /* =====================================================
      TELA: o jogo ocupa a janela inteira, com pixels inteiros
      ===================================================== */
+  let SCALE = 1;
   function fit() {
     const c = $('scene'), W = window.innerWidth, H = window.innerHeight;
     const k = Math.max(2, Math.min(4, Math.round(H / 210), Math.round(W / 300)));   // escala inteira (pixels maiores, como num jogo de fazenda clássico)
     const cw = Math.ceil(W / k), ch = Math.ceil(H / k);
-    if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+    /* o canvas tem a resolução da tela (cw×k); o mundo continua em cw×ch e é desenhado com escala inteira k,
+       então o cenário fica idêntico. Só o que tem arte própria em resolução maior (Caleb) aproveita os pixels extras. */
+    SCALE = k;
+    if (c.width !== cw * k || c.height !== ch * k) { c.width = cw * k; c.height = ch * k; }
     c.style.width = cw * k + 'px'; c.style.height = ch * k + 'px';
     c.style.left = Math.floor((W - cw * k) / 2) + 'px'; c.style.top = Math.floor((H - ch * k) / 2) + 'px';
     World.setView(cw, ch);
@@ -810,8 +814,9 @@
   const outdoor = () => map.id === 'fora' || map.id === 'montanha';
 
   function draw(t, list) {
-    const c = $('scene'); World.setView(c.width, c.height);
+    const c = $('scene'); World.setView(Math.round(c.width / SCALE), Math.round(c.height / SCALE));
     const cam = World.camera(map, P.x, P.y), ctx = c.getContext('2d');
+    ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); ctx.imageSmoothingEnabled = false;
     const me = { look: S.look, x: P.x, y: P.y, dir: P.dir, moving: P.moving, tool: P.tool, hop: P.hop && t < P.hop ? -Math.abs(Math.sin((P.hop - t) / 80)) * 4 : 0 };
     if (P.eat && t < P.eat.t0 + EAT_MS) { me.eat = { id: P.eat.id, k: (t - P.eat.t0) / EAT_MS }; me.dir = 'down'; me.tool = null; me.hop = -(Math.floor((t - P.eat.t0) / 120) % 2); }
     if (fishing) { me.fish = fishView(t); me.tool = null; me.moving = false; if (me.fish.hold) me.dir = 'down'; if (fishing.phase === 'game') { drawBar(t); placeBar(t); } if (fishing.phase === 'show') $('catch').classList.toggle('at-top', screenOf(P.x, P.y)[1] > window.innerHeight * 0.52); }
@@ -1620,7 +1625,7 @@
      nunca sobre o personagem ou a boia, e sempre dentro da tela. */
   function placeBar(now) {
     const f = fishing; if (!f || f.phase !== 'game') return;
-    const cv = $('scene'), r = cv.getBoundingClientRect(), k = Math.max(1, Math.round(r.width / cv.width));
+    const cv = $('scene'), r = cv.getBoundingClientRect(), k = Math.max(1, Math.round(r.width / (cv.width / SCALE)));
     const bw = BAR.w * k, bh = BAR.h * k, el2 = $('fishbar');
     if (el2.dataset.k !== String(k)) { el2.style.width = bw + 'px'; el2.style.height = bh + 'px'; el2.dataset.k = String(k); }
     const [hx, hy] = screenOf(P.x, P.y + Sprites.WORLD.oy(-34)), [fx, fy] = screenOf(P.x, P.y + 4), bob = screenOf(f.target[0], f.target[1]), me = screenOf(P.x, P.y + Sprites.WORLD.oy(-16));
