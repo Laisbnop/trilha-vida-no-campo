@@ -467,13 +467,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Verão',
+  title: 'Calçamento do centrinho',
   items: [
-    'Ambientação de verão: grama verde mais quente, copas cheias e vivas (sem as flores da primavera), florzinhas amarelas e laranja e luz do dia um pouco mais quente.',
-    'Milho: semente 150, vende por 50, primeira colheita em 14 dias e nova colheita a cada 4 dias, sem limite. Cresce no Verão e no Outono e passa de uma estação para a outra sem perder o progresso.',
-    'Melão (semente 80, vende por 250, 12 dias) e repolho roxo (semente 100, vende por 260, 9 dias): só de Verão, colheita única.',
-    'Os três são comestíveis (+25, +113 e +75 de energia) e dão XP de Cultivo (10, 27 e 28).',
-    'O Armazém vende todas as sementes o ano inteiro. Plantar fora de estação pergunta antes; a semente espera, sem crescer, até chegar a estação certa. A foice remove a semente que está esperando.',
-    'Loja mais compacta: clique no nome ou no ícone de uma semente para ver as "Informações de cultivo" sem comprar.',
+    'Novo calçamento na frente do Armazém CELESTE e na praça da fonte: pedras pequenas, arredondadas e de cantos gastos, em fileiras desencontradas, nos tons de bege, cinza quente e marrom suave.',
+    'Juntas estreitas e pouco escuras, luz discreta em cima das pedras e sombra suave embaixo, para o piso ficar de fundo sem competir com personagens e construções.',
+    'Frente do Armazém e praça formam uma superfície contínua, sem emendas.',
+    'Bordas com pedras de contorno: junto à grama, pequenas falhas e tufos; junto ao caminho de terra, as pedras terminam encaixadas e a terra chega até elas.',
+    'Fonte, bancos, postes, entrada do Armazém, caminhos e colisões continuam iguais.',
   ],
 };

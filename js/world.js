@@ -812,7 +812,7 @@ const World = (() => {
      (1 terra, 2 pedra, 3 areia) e paveFlush() pinta tudo de uma vez, pixel a pixel, com
      texturas que dependem só da posição no mundo. Assim os trechos ligados continuam o mesmo
      padrão, cruzamentos e curvas não têm emendas e nada muda de um quadro para o outro. */
-  const PAVE = { terra: 1, pedra: 2, areia: 3 };
+  const PAVE = { terra: 1, pedra: 2, areia: 3, centro: 4 };
   let dummyG = null;
   /* Mantém o sorteio do cenário igual ao de antes (árvores e arbustos nos mesmos lugares). */
   function spendRand(fn) { if (!dummyG) { const c = document.createElement('canvas'); c.width = c.height = 1; dummyG = c.getContext('2d'); } const prev = g; g = dummyG; try { fn(); } finally { g = prev; } }
@@ -845,6 +845,17 @@ const World = (() => {
     }
     return { gap: d2 - d1, id, up: y + 0.5 - sy };
   }
+  /* Calçamento antigo do centrinho (frente do Armazém CELESTE e praça da fonte): fileiras desencontradas de
+     pedras pequenas, de cantos gastos, alinhadas pelas coordenadas do mundo (sem emendas entre os trechos). */
+  const SETT_H = 5, SETT_W = 6;
+  const settEdge = (i, r, off) => i * SETT_W + off + Math.floor(hash(i, r, 52) * 3) - 1;
+  function settAt(x, y) {
+    const r = Math.floor(y / SETT_H), ly = y - r * SETT_H, off = ((r & 1) ? 3 : 0) + Math.floor(hash(r, 0, 51) * 2);
+    let i = Math.floor((x - off) / SETT_W);
+    if (x < settEdge(i, r, off)) i--; else if (x >= settEdge(i + 1, r, off)) i++;
+    const b0 = settEdge(i, r, off), sw = settEdge(i + 1, r, off) - b0;
+    return { lx: x - b0, ly, sw, id: hash(i, r, 53), id2: hash(i, r, 54), id3: hash(i, r, 56), id4: hash(i, r, 57) };
+  }
   function paveFlush() {
     const b = cur.paveBox; if (!b || !cur.pave) return; cur.paveBox = null;
     const M = cur.pave, x0 = Math.max(0, b[0] - 4), y0 = Math.max(0, b[1] - 4), x1 = Math.min(W, b[2] + 4), y1 = Math.min(H, b[3] + 4), w = x1 - x0, h = y1 - y0;
@@ -853,6 +864,8 @@ const World = (() => {
     const T = { base: rgb('#dcc48c'), dark: rgb('#c8ac70'), edge: rgb('#b4945a'), light: rgb('#f0e0b0') };
     const peb = [[150, 140, 128], [184, 176, 164], [118, 104, 88]];
     const STONE = [[204, 190, 164], [186, 176, 158], [196, 172, 140], [214, 202, 178], [178, 160, 138]], JOINT = [118, 102, 82], CURB = [[150, 138, 118], [170, 158, 136], [104, 90, 72]];
+    const SETT = [[204, 188, 160], [194, 180, 156], [186, 172, 150], [200, 180, 150], [182, 172, 158], [196, 184, 166]], SETT_J = [150, 132, 110], SETT_CURB = [[178, 166, 144], [168, 157, 137]];
+    const mixC = (a, b2, k) => a.map((v, j) => Math.round(v + (b2[j] - v) * k));
     const SAND = { base: [236, 212, 154], edge: [200, 168, 104], s1: [244, 226, 180], s2: [255, 240, 200] };
     const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? 0 : M[y * W + x]);
     const put = (i, c) => { D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2]; D[i + 3] = 255; };
@@ -861,10 +874,10 @@ const World = (() => {
       const k = M[y * W + x]; if (!k) continue;
       const i = ((y - y0) * w + (x - x0)) * 4;
       // distância até a grama (0 = pavimento algum) e até outro tipo de piso, em até 3 px
-      let dG = 9, dO = 9;
+      let dG = 9, dO = 9, d4 = 9;
       for (let oy = -3; oy <= 3; oy++) for (let ox = -3; ox <= 3; ox++) {
         const d = Math.max(Math.abs(ox), Math.abs(oy)); if (!d || (d >= dG && d >= dO)) continue;
-        const m = at(x + ox, y + oy); if (!m) { if (d < dG) dG = d; } else if (m !== k && d < dO) dO = d;
+        const m = at(x + ox, y + oy); if (!m) { if (d < dG) dG = d; } else if (m !== k && d < dO) { dO = d; if (m === 4) d4 = d; } else if (m === 4 && m !== k && d < d4) d4 = d;
       }
       const n = vnoise(x, y, 5, 7), hh = hash(x, y, 11);
       if (k === 1) {                                                   // ---------- terra batida ----------
@@ -879,6 +892,41 @@ const World = (() => {
         // pedrinhas ocasionais (2×1 com sombra embaixo)
         if (hash(x, y, 13) < 0.0035) c = peb[0]; else if (hash(x - 1, y, 13) < 0.0035) c = peb[1]; else if (hash(x, y - 1, 13) < 0.0035 || hash(x - 1, y - 1, 13) < 0.0035) c = peb[2];
         if (S === 2 && hash(x, y, 17) < 0.006) c = hash(x, y, 18) < 0.5 ? [200, 88, 30] : [138, 58, 24];
+        if (d4 === 1) c = n < 0.5 ? shadeC(T.dark, 0.94) : T.dark;    // terra encostada nas pedras do centrinho
+        else if (d4 === 2 && n < 0.25) c = T.dark;
+        put(i, c);
+      } else if (k === 4) {                                            // ---------- calçamento do centrinho ----------
+        const e = Math.min(dG, dO);
+        if (e <= 3) {                                                  // contorno: pedras alongadas, juntas finas
+          const horiz = [1, 2, 3].some(dd => dd <= e && (at(x, y - dd) !== 4 || at(x, y + dd) !== 4)), a = horiz ? x : y;
+          if (dG <= 2) {                                               // borda com a grama: falhas e tufos, sem recorte reto
+            if ((dG === 1 && vnoise(x, y, 5, 71) < 0.4) || (dG === 2 && vnoise(x, y, 5, 71) < 0.16)) continue;
+            const sg = Math.floor(a / 13), ta = sg * 13 + 2 + Math.floor(hash(sg, horiz ? 1 : 2, 73) * 9);
+            if (hash(sg, horiz ? 1 : 2, 72) < 0.4 && Math.abs(a - ta) <= 1 && (a === ta ? dG <= 2 : dG === 1)) { put(i, shadeC([D[i], D[i + 1], D[i + 2]], a === ta ? 0.8 : 0.9)); continue; }
+          }
+          if (e === 3) { put(i, hh < 0.5 ? SETT_J : shadeC(SETT_J, 1.05)); continue; }
+          const seg = Math.floor((a + 2) / 8);
+          if ((a + 2) % 8 === 7) { put(i, SETT_J); continue; }
+          let c = SETT_CURB[hash(seg, horiz ? 3 : 4, 74) < 0.5 ? 0 : 1];
+          const ca = (a + 2) % 8; if (ca === 0 || ca === 6) c = mixC(c, SETT_J, e === 1 ? 0.5 : 0.25);   // pontas gastas
+          c = shadeC(c, e === 1 ? 0.92 : 1.04);
+          if (S === 3 && e === 2 && hash(x, y, 19) < 0.5) c = [240, 244, 250];
+          put(i, c); continue;
+        }
+        const st = settAt(x, y);
+        if (st.lx === st.sw - 1 || st.ly === SETT_H - 1) { put(i, hh < 0.5 ? SETT_J : shadeC(SETT_J, 0.96)); continue; }
+        // peças um pouco menores aqui e ali (topo ou lado recolhido): fileiras menos certinhas
+        const top = st.id3 < 0.28 ? 1 : 0, right = st.sw > 5 && st.id4 < 0.3 ? st.sw - 3 : st.sw - 2;
+        if (st.ly < top || st.lx > right) { put(i, shadeC(SETT_J, 1.06)); continue; }
+        let c = st.id2 < 0.07 ? [168, 152, 130] : st.id2 > 0.94 ? [216, 204, 180] : SETT[Math.floor(st.id * SETT.length)];
+        c = shadeC(c, (0.95 + 0.1 * st.id4) * (0.97 + 0.06 * vnoise(x, y, 23, 61)));
+        const cx = st.lx === 0 || st.lx === right, cy = st.ly === top || st.ly === SETT_H - 2;
+        if (cx && cy) c = mixC(c, SETT_J, 0.6);                        // cantos gastos, arredondados
+        else if (st.ly === top) c = shadeC(c, 1.06);                   // luz discreta em cima
+        else if (st.ly === SETT_H - 2) c = shadeC(c, 0.91);            // sombra suave embaixo
+        else if (hash(x, y, 55) < 0.03) c = shadeC(c, 0.94);
+        if (S === 3 && st.ly === top && hash(x, y, 19) < 0.55) c = [240, 244, 250];
+        if (S === 2 && hash(x, y, 17) < 0.003) c = [200, 88, 30];
         put(i, c);
       } else if (k === 2) {                                            // ---------- calçamento de pedras ----------
         if (dG <= 2 || dO <= 1) {                                       // meio-fio: pedras de contorno, alongadas
@@ -1014,7 +1062,7 @@ const World = (() => {
     trail([[1110, 608], [1130, 640], [1166, 668], [1180, 700], [1168, 740], [1150, 770]], 8);   // trilha do poço à beira-rio
     trail([[1560, 608], [1530, 640], [1500, 690], [1470, 730], [1440, 770]], 8);     // trilha do pomar leste ao rio
     // centrinho calçado: frente do Armazém CELESTE, a rua até a casa de Seu Honório e a praça da fonte, num piso só
-    paveRect('pedra', 446, 148, 360, 30); paveRect('pedra', 560, 110, 140, 122);
+    paveRect('centro', 446, 148, 360, 30); paveRect('centro', 560, 110, 140, 122);
     paveFlush();
     // ---------- fazenda ----------
     keep(GRID.x0 - 6, GRID.y0 - 6, GRID.cols * GRID.s + 12, GRID.rows * GRID.s + 12);
