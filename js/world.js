@@ -98,11 +98,12 @@ const World = (() => {
     }
   }
 
-  function flowers(n, avoid) {
+  function flowers(n, avoid, thin) {
     for (let i = 0; i < n; i++) {
       const x = Math.floor(rand() * (W - 4)), y = Math.floor(rand() * (H - 4));
       if (avoid(x, y)) continue;
       const k = Math.floor(rand() * 4), c = ['#ffffff', '#ffe066', '#ff9ec0', '#c8a0ff'][k];
+      if (thin && thin(x, y)) continue;                                  // (o sorteio é consumido igual: nada muda de lugar)
       if (paintSeason === 2) { const lc = ['#c8581e', '#e09030', '#8a3a18', '#b8742a'][k]; R(x, y + 2, 2, 1, lc); R(x + 1, y + 1, 2, 1, lc); continue; }   // folhas caídas
       if (paintSeason === 3) { if (k === 0) { R(x + 1, y + 2, 1, 1, '#ffffff'); R(x, y + 3, 3, 1, '#d4e0ec'); } continue; }                                 // montinhos de neve
       if (paintSeason === 1) {                                                                                                                      // verão: capim alto e florzinhas quentes
@@ -233,19 +234,22 @@ const World = (() => {
     for (let t = tiers - 1; t >= 0; t--) {                                                        // de baixo para cima: cada camada cai por cima da de baixo
       const k = (t + 1) / tiers, cy = Math.round(top + 2 + t * step), th = Math.round(step + 5), half = Math.min(12, Math.round((3 + k * 8.5) * wk)), sh = (t % 2 ? 1 : -1) * (hs(5, t) < 0.5 ? 1 : 0), lx = Math.round(lean * (1 - k) * 2);
       for (let r = 0; r < th; r++) {
-        const f = Math.pow((r + 1) / th, 0.6), hw = Math.max(1, Math.round(half * f)), jl = r > 1 && hs(30 + t, r) < 0.3 ? 1 : 0, jr = r > 1 && hs(40 + t, r) < 0.3 ? 1 : 0, xl = x + lx - hw + jl + (r > th - 3 ? sh : 0), xr = x + lx + hw - jr + (r > th - 3 ? sh : 0);   // lados recortados
+        const f = Math.pow((r + 1) / th, 0.6), hw = Math.max(1, Math.round(half * f)), jl = 0, jr = 0, xl = x + lx - hw + jl + (r > th - 3 ? sh : 0), xr = x + lx + hw - jr + (r > th - 3 ? sh : 0);   // lados recortados
         R(xl - 1, cy + r, xr - xl + 2, 1, OL);
         R(xl, cy + r, xr - xl, 1, BD);
         R(xl, cy + r, Math.max(1, Math.round((xr - xl) * (r < th * 0.45 ? 0.5 : 0.3))), 1, r < 2 ? TP : r < th * 0.45 ? LT : MD);   // luz à esquerda e no alto da camada
         R(xr - Math.max(1, Math.round((xr - xl) * 0.28)), cy + r, Math.max(1, Math.round((xr - xl) * 0.28)), 1, DP);   // sombra à direita
-        if (r > 1 && r < th - 2 && (r + t) % 3 === 0) R(x + lx - Math.round(hw * 0.2), cy + r, Math.max(1, Math.round(hw * 0.5)), 1, MD);   // ramos
-        if (snow && r < th - 2 && (r % 2 === 0)) R(xl + 1, cy + r, Math.max(1, Math.round((xr - xl) * 0.55)), 1, '#eef4fa');
+        if (snow && r < 2) R(xl + 1, cy + r, Math.max(1, Math.round((xr - xl) * 0.6)), 1, '#eef4fa');
       }
       // pontas recortadas da camada (caem 1–2 px, desencontradas)
       const by = cy + th, hw = half;
       for (let i = -hw; i <= hw; i += 2) { const d = hs(10 + t, i + 20) < 0.5 ? 1 : 2; R(x + lx + i + sh, by, 1, d, OL); if (d === 2) R(x + lx + i + sh, by, 1, 1, i < 0 ? MD : DP); }
-      R(x + lx - Math.round(half * 0.6), by - 1, Math.round(half * 1.4), 1, DP);                            // sombra sob a camada
-      if (snow) { R(x + lx - Math.round(half * 0.7), cy + th - 3, Math.round(half * 0.9), 1, '#f8fbff'); }
+      R(x + lx - Math.round(half * 0.4), by - 1, Math.round(half * 1.2), 1, DP);                            // sombra sob a camada
+      if (!snow) {                                                                                            // tufos de folhas iluminadas (volume)
+        const ry2 = cy + Math.round(th * 0.45), lx2 = x + lx - Math.round(half * (0.45 + hs(50, t) * 0.2));
+        R(lx2, ry2, 3, 1, LT); R(lx2 + 1, ry2 - 1, 2, 1, TP); R(lx2 - 1, ry2 + 1, 3, 1, MD);
+        if (half > 7) { const lx3 = x + lx + Math.round(half * 0.15); R(lx3, ry2 + 2, 2, 1, MD); R(lx3 + 1, ry2 + 1, 1, 1, LT); }
+      }
     }
     R(x + Math.round(lean * 2) - 1, top, 2, 2, OL); R(x + Math.round(lean * 2), top, 1, 2, snow ? '#ffffff' : TP);   // ponta
   }
@@ -897,17 +901,14 @@ const World = (() => {
       const n = vnoise(x, y, 5, 7), hh = hash(x, y, 11);
       if (k === 1) {                                                   // ---------- terra batida ----------
         // borda em curvas suaves: a grama entra até 3 px, em ondas largas (não pixel a pixel)
-        const e = vnoise(x, y, 7, 43), e2 = vnoise(x, y, 3, 47);
-        if ((dG === 1 && e < 0.5) || (dG === 2 && e < 0.33) || (dG === 3 && e < 0.16) || (dG === 1 && e2 < 0.25)) continue;
-        if (dG <= 2 && hash(Math.floor(x / 5), Math.floor(y / 5), 49) < 0.2 && hash(x, y, 50) < 0.6) { put(i, [D[i], D[i + 1], D[i + 2]].map(v => Math.round(v * 0.82))); continue; }   // tufinhos na borda
+        const e = vnoise(x, y, 9, 43);
+        if ((dG === 1 && e < 0.5) || (dG === 2 && e < 0.33) || (dG === 3 && e < 0.16)) continue;
         let c = T.base;
         const fine = vnoise(x, y, 4, 21) * 0.6 + vnoise(x, y, 10, 31) * 0.4;                      // variações pequenas e suaves
-        if (fine > 0.66) c = mixC(T.base, T.dark, 0.55); else if (fine > 0.58) c = mixC(T.base, T.dark, 0.25); else if (fine < 0.3) c = mixC(T.base, T.light, 0.18);
+        if (fine > 0.64) c = mixC(T.base, T.dark, 0.3); else if (fine < 0.3) c = mixC(T.base, T.light, 0.12);
         if (dG === 1 || (dG === 2 && e < 0.5)) c = mixC(c, T.edge, 0.45);                          // borda suave, sem contorno
-        if (hh < 0.004) c = T.light;                                   // pouquíssimos grãos claros
-        else if (hh < 0.03 && hh > 0.026) c = shadeC(T.dark, 0.94);
         // pedrinhas ocasionais (2×1 com sombra embaixo)
-        if (hash(x, y, 13) < 0.0035) c = peb[0]; else if (hash(x - 1, y, 13) < 0.0035) c = peb[1]; else if (hash(x, y - 1, 13) < 0.0035 || hash(x - 1, y - 1, 13) < 0.0035) c = peb[2];
+        if (hash(x, y, 13) < 0.0025) c = peb[0]; else if (hash(x - 1, y, 13) < 0.0025) c = peb[1]; else if (hash(x, y - 1, 13) < 0.0025 || hash(x - 1, y - 1, 13) < 0.0025) c = peb[2];
         if (S === 2 && hash(x, y, 17) < 0.006) c = hash(x, y, 18) < 0.5 ? [200, 88, 30] : [138, 58, 24];
         if (d4 === 1) c = n < 0.5 ? shadeC(T.dark, 0.94) : T.dark;    // terra encostada nas pedras do centrinho
         else if (d4 === 2 && n < 0.25) c = T.dark;
@@ -971,57 +972,85 @@ const World = (() => {
     }
     g.putImageData(img, x0, y0);
   }
-  /* Chão da fazenda: clareiras de terra natural em volta da área de plantio, manchas de grama de tamanhos e
-     contornos variados, mais vegetação nas bordas e pequenos grupos de detalhes, com espaços de respiro. Tudo pela
-     posição (hash/ruído), sem tocar no sorteio que posiciona árvores e caminhos; nada sobre caminhos e construções. */
+  /* Chão da fazenda: a área de trabalho é uma clareira contínua de terra ocre dourada (que engloba a estrada em
+     frente à casa e os caminhos da fazenda), com bordas de grama viva avançando sobre a terra em recortes e tufos.
+     A grama fica junto à casa, ao lago e nas bordas, com vegetação mais densa nas bordas. Detalhes do chão só em
+     grupos ocasionais. Tudo pela posição (hash/ruído), sem tocar no sorteio do cenário; nada sobre caminhos de
+     moradores, construções ou objetos. A forma do chão não muda o que se cultiva ou atravessa. */
+  const FARM = { x0: 8, y0: 26, x1: 402, y1: 512 };
+  const mix0 = (a, b2, k) => a.map((v, j) => Math.round(v + (b2[j] - v) * k));
+  function farmDirtPal(S) {
+    if (S === 3) return { base: [226, 230, 236], v1: [214, 220, 228], v2: [236, 240, 245], mark: [196, 200, 206], shade: [198, 204, 214] };   // neve (terra por baixo)
+    if (S === 2) return { base: [206, 146, 70], v1: [196, 137, 64], v2: [214, 155, 80], mark: [172, 116, 54], shade: [180, 122, 58] };
+    return { base: [220, 160, 66], v1: [211, 151, 61], v2: [227, 169, 77], mark: [186, 126, 52], shade: [192, 134, 56] };
+  }
+  function farmIsDirt(x, y) {
+    const M = cur.pave; if (M && M[y * W + x] === 1) return true;                           // caminhos da fazenda viram parte da clareira
+    // área de trabalho: retângulo arredondado em volta da grade de plantio, ligado à estrada; borda em curvas e recortes
+    const rx0 = 30, ry0 = 180, rx1 = 376, ry1 = 368, out = Math.hypot(Math.max(0, rx0 - x, x - rx1), Math.max(0, ry0 - y, y - ry1));
+    const lim = 8 + (vnoise(x, y, 26, 401) - 0.5) * 18 + (vnoise(x, y, 6, 402) - 0.5) * 5;
+    if (out === 0 || out < lim) return true;                                              // dentro da área de trabalho, sempre terra (sem ilhas)
+    // a estrada em frente à casa se abre um pouco para os lados (sem parecer faixa colada por cima)
+    if (x > 56 && x < 402) { const d = Math.max(0, Math.abs(y - 164) - 12); if (d < 3 + (vnoise(x, y, 14, 403) - 0.5) * 8 + (vnoise(x, y, 5, 404) - 0.5) * 3) return true; }
+    return false;
+  }
   function farmGround() {
-    const X0 = 8, Y0 = 26, X1 = 402, Y1 = 512, w = X1 - X0, h = Y1 - Y0, img = g.getImageData(X0, Y0, w, h), D = img.data, M = cur.pave, S = paintSeason;
-    const T = { base: rgb('#c8ac70'), dark: rgb('#b4945a'), light: rgb('#dcc48c') }, grs = rgb('#3a7e2c');
-    const mix = (a, b2, k) => a.map((v, j) => Math.round(v + (b2[j] - v) * k));
-    const busy = (x, y) => { const c = Math.floor(x / CELL), r = Math.floor(y / CELL), i = r * cur.cols + c; return !!(cur.path[i] || cur.solid[i]); };
-    const gx0 = GRID.x0 - 10, gy0 = GRID.y0 - 10, gx1 = GRID.x0 + GRID.cols * GRID.s + 10, gy1 = GRID.y0 + GRID.rows * GRID.s + 10;
+    const { x0: X0, y0: Y0, x1: X1, y1: Y1 } = FARM, w = X1 - X0, h = Y1 - Y0, img = g.getImageData(X0, Y0, w, h), D = img.data, M = cur.pave, S = paintSeason;
+    const Pd = farmDirtPal(S), G0 = rgb('#58a83c'), G1 = mix0(rgb('#58a83c'), rgb('#4f9c38'), 0.5), GB = mix0(rgb('#3a7e2c'), rgb('#4f9c38'), 0.3);
+    const dirt = new Uint8Array(w * h);
+    for (let y = Y0; y < Y1; y++) for (let x = X0; x < X1; x++) dirt[(y - Y0) * w + (x - X0)] = farmIsDirt(x, y) ? 1 : 0;
+    const isD = (x, y) => x < X0 || y < Y0 || x >= X1 || y >= Y1 ? 0 : dirt[(y - Y0) * w + (x - X0)];
     for (let y = Y0; y < Y1; y++) for (let x = X0; x < X1; x++) {
-      if (M && M[y * W + x]) continue;
-      const i = ((y - Y0) * w + (x - X0)) * 4, px = [D[i], D[i + 1], D[i + 2]];
-      // clareira: ruído largo + preferência pela área de trabalho
-      const ddx = Math.max(0, gx0 - x, x - gx1), ddy = Math.max(0, gy0 - y, y - gy1), near = Math.max(0, 1 - Math.hypot(ddx, ddy) / 40);
-      const f = vnoise(x, y, 26, 201) * 0.68 + vnoise(x, y, 8, 202) * 0.32 + near * 0.14 - (x < 34 || x > 384 || y > 478 ? 0.2 : 0);
-      if (f > 0.71) {
-        const k = Math.min(1, (f - 0.71) / 0.025), hh = hash(x, y, 203);
-        if (k < 1 && vnoise(x, y, 2, 220) > k) continue;                                          // transição curta, em pequenos recortes
-        let c = vnoise(x, y, 5, 204) > 0.62 ? mix(T.base, T.dark, 0.4) : vnoise(x, y, 6, 205) < 0.3 ? mix(T.base, T.light, 0.3) : T.base;
-        c = mix(c, px, 0.05);
-        if (hh < 0.018) c = mix(px, grs, 0.3); else if (hh > 0.996) c = [150, 140, 128];          // brotinhos de grama e pedrinhas
-        D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2]; continue;
+      const i = ((y - Y0) * w + (x - X0)) * 4; let c;
+      if (isD(x, y)) {
+        c = vnoise(x, y, 34, 405) > 0.68 ? Pd.v1 : vnoise(x, y, 28, 406) < 0.27 ? Pd.v2 : Pd.base;     // variações próximas em áreas grandes
+        if (!isD(x, y - 1) || !isD(x, y - 2) && hash(x, 0, 407) < 0.5) c = Pd.shade;                  // sombra suave sob a borda de grama
+        if (x > X1 - 18 && M && M[y * W + x] === 1) { const k = (x - (X1 - 18)) / 18, o = [D[i], D[i + 1], D[i + 2]]; c = c.map((v, j) => Math.round(v + (o[j] - v) * k)); }   // emenda com a estrada da vila
+      } else {
+        if (M && M[y * W + x]) continue;
+        c = vnoise(x, y, 40, 408) > 0.63 ? G1 : G0;
+        if (isD(x, y + 1) || isD(x, y + 2) && hash(x, y, 409) < 0.6) c = GB;                         // base escura da grama que avança sobre a terra
       }
-      // manchas de grama com contornos variados
-      const m = vnoise(x, y, 30, 206) * 0.7 + vnoise(x, y, 11, 207) * 0.3;
-      const kk = m > 0.66 ? 0.92 : m > 0.6 ? 0.96 : m < 0.28 ? 1.05 : 1;
-      if (kk !== 1) { D[i] = Math.min(255, Math.round(px[0] * kk)); D[i + 1] = Math.min(255, Math.round(px[1] * kk)); D[i + 2] = Math.min(255, Math.round(px[2] * kk)); }
+      D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2];
     }
     g.putImageData(img, X0, Y0);
-    // vegetação: mais densa nas bordas, quase nada no meio (área aberta para trabalhar)
-    const edgeK = (x, y) => Math.max(0, 1 - Math.min(x - 30, 384 - x, y - 40, 500 - y) / 36);
-    for (let cy = Y0 + 4; cy < Y1 - 6; cy += 9) for (let cx = X0 + 4; cx < X1 - 6; cx += 9) {
-      const x = cx + Math.floor(hash(cx, cy, 208) * 5), y = cy + Math.floor(hash(cx, cy, 209) * 5), ek = edgeK(x, y);
-      if (hash(cx, cy, 210) > 0.03 + ek * 0.3 || busy(x - 3, y - 8) || busy(x + 3, y) || (M && (M[y * W + x] || M[(y - 6) * W + x]))) continue;
-      const v = Math.floor(hash(cx, cy, 211) * 4), n = 3 + v;
-      for (let b = 0; b < n; b++) {                                                             // tufo assimétrico: lâminas de alturas diferentes
-        const bx = x - 2 + b + (b > 2 ? 1 : 0), hgt = 2 + Math.floor(hash(cx + b, cy, 212) * 4) + (b === v ? 2 : 0), lean = hash(cx, cy + b, 213) < 0.5 ? -1 : 1;
-        for (let k = 0; k < hgt; k++) R(bx + (k > hgt * 0.6 ? lean : 0), y - k, 1, 1, k === hgt - 1 ? '#78c452' : k < 1 ? '#2f7028' : (b + k) % 2 ? '#3a7e2c' : '#468c32');
+    const busy = (x, y) => { const c = Math.floor(x / CELL), r = Math.floor(y / CELL), i = r * cur.cols + c; return c < 0 || r < 0 || !!(cur.path[i] || cur.solid[i]); };
+    const L = { d: SC('#2f7028'), m: SC('#468c32'), l: SC('#78c452'), b: SC('#3a7e2c') };
+    // tufo de grama (folhas reconhecíveis: base escura, volume médio, pontas iluminadas)
+    const tuft = (x, y, n, hmax, v) => {
+      R(x - n, y + 1, n * 2 + 1, 1, 'rgba(40,30,10,.18)');
+      for (let b = -n; b <= n; b++) {
+        const ht = Math.max(2, hmax - Math.abs(b) - (hash(x + b, y, 410 + v) < 0.4 ? 1 : 0)), lean = b < 0 ? -1 : b > 0 ? 1 : 0;
+        for (let k = 0; k < ht; k++) R(x + b + (k > ht * 0.6 ? lean : 0), y - k, 1, 1, k < 1 ? L.d : k === ht - 1 ? L.l : (b + v) % 2 ? L.m : L.b);
       }
-      if (S === 3 && hash(cx, cy, 214) < 0.5) R(x - 2, y - 1, 4, 1, '#f4f8fc');
+      if (S === 3) R(x - n + 1, y - hmax + 1, n * 2 - 1, 1, '#f4f8fc');
+    };
+    // tufos na borda grama/terra, debruçados sobre a terra
+    for (let y = Y0 + 2; y < Y1 - 2; y += 3) for (let x = X0 + 2; x < X1 - 2; x += 2) {
+      if (isD(x, y) || !(isD(x, y + 1) || isD(x + 1, y) || isD(x - 1, y))) continue;
+      if (hash(Math.floor(x / 9), Math.floor(y / 9), 411) > 0.55 || hash(x, y, 412) > 0.22 || busy(x, y) || (M && M[(y + 1) * W + x] && M[(y + 1) * W + x] !== 1)) continue;
+      tuft(x, y + 1, 1 + Math.floor(hash(x, y, 413) * 2), 4 + Math.floor(hash(x, y, 414) * 3), x & 1);
     }
-    // pequenos grupos de detalhes (florzinhas, trevos, folhas secas), espaçados
-    const FL = [['#ffffff', '#ff9ec0'], ['#ffd23a', '#ff8a3a'], ['#c8581e', '#8a3a18'], null][Math.max(0, S)];
-    for (let cy = Y0 + 20; cy < Y1 - 20; cy += 44) for (let cx = X0 + 20; cx < X1 - 20; cx += 44) {
-      if (!FL || hash(cx, cy, 215) > 0.38) continue;
-      const ox = cx + Math.floor(hash(cx, cy, 216) * 24) - 12, oy = cy + Math.floor(hash(cx, cy, 217) * 24) - 12;
-      for (let k = 0; k < 4 + (cx + cy) % 3; k++) {
-        const x = ox + Math.floor(hash(ox, k, 218) * 9) - 4, y = oy + Math.floor(hash(oy, k, 219) * 7) - 3;
-        if (busy(x, y) || (M && M[y * W + x])) continue;
-        if (S === 2) { R(x, y, 2, 1, FL[k % 2]); continue; }
-        R(x, y + 1, 1, 2, '#3a7e2c'); R(x, y, 1, 1, FL[k % 2]); if (k % 3 === 0) R(x + 1, y + 2, 1, 1, '#468c32');
+    // grama: poucos grupos de folhas; vegetação mais volumosa perto das bordas da fazenda
+    const edgeK = (x, y) => Math.max(0, 1 - Math.min(x - 24, 392 - x, y - 36, 504 - y) / 28);
+    for (let cy = Y0 + 6; cy < Y1 - 6; cy += 12) for (let cx = X0 + 6; cx < X1 - 6; cx += 12) {
+      const x = cx + Math.floor(hash(cx, cy, 415) * 8), y = cy + Math.floor(hash(cx, cy, 416) * 8), ek = edgeK(x, y);
+      if (isD(x, y) || isD(x, y + 3) || busy(x, y) || busy(x, y - 6) || (M && M[y * W + x])) continue;
+      if (hash(cx, cy, 417) < 0.08 + ek * 0.55) {
+        if (ek > 0.35 && hash(cx, cy, 418) < 0.55) { tuft(x - 2, y, 2, 6, 0); tuft(x + 2, y + 1, 2, 7, 1); tuft(x, y + 2, 1, 5, 0); }   // touceira nas bordas
+        else tuft(x, y, 1, 3 + Math.floor(hash(cx, cy, 419) * 2), cx & 1);
+      }
+    }
+    // detalhes da terra: pequenos grupos (pedrinhas, marcas e brotinhos), com espaço livre entre eles
+    for (let cy = Y0 + 10; cy < Y1 - 10; cy += 30) for (let cx = X0 + 10; cx < X1 - 10; cx += 30) {
+      if (hash(cx, cy, 420) > 0.42) continue;
+      const ox = cx + Math.floor(hash(cx, cy, 421) * 20) - 10, oy = cy + Math.floor(hash(cx, cy, 422) * 20) - 10, kind = Math.floor(hash(cx, cy, 423) * 3);
+      for (let k = 0; k < 3 + (cx + cy) % 2; k++) {
+        const x = ox + Math.floor(hash(ox, k, 424) * 9) - 4, y = oy + Math.floor(hash(oy, k, 425) * 6) - 3;
+        if (!isD(x, y) || !isD(x + 2, y + 1) || !isD(x, y - 2) || busy(x, y)) continue;
+        if (kind === 0) { R(x, y, 2, 1, S === 3 ? '#c8ccd4' : '#c8b49a'); R(x, y + 1, 2, 1, S === 3 ? '#a8aeb8' : '#9a8468'); }       // pedrinha
+        else if (kind === 1) { g.fillStyle = `rgb(${Pd.mark.join(',')})`; g.fillRect(x, y, 2 + (k % 2), 1); }                            // marca na terra
+        else if (S !== 3) { R(x, y, 1, 1, L.m); R(x + 1, y - 1, 1, 1, L.l); R(x + 2, y, 1, 1, L.m); }                                    // brotinho
       }
     }
   }
@@ -1078,16 +1107,15 @@ const World = (() => {
     for (let y = Math.floor(cy - ry - 5); y <= cy + ry + 5; y++) for (let x = Math.floor(cx - rx - 5); x <= cx + rx + 5; x++) {
       const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry, d = Math.hypot(dx, dy), th = Math.atan2(dy, dx), b = edge(th);
       const reff = 1 / Math.hypot(Math.cos(th) / rx, Math.sin(th) / ry), px = (b - d) * reff, h = hsh(x, y, 114);
-      const bankW = 3 + 1.4 * hsh(Math.round(th * 9), cx, 115);
+      const bankW = 2.4 + 1.6 * vnoise(th * 30 + 100, 0, 7, cx);                                  // largura do barranco varia devagar
       if (px < -bankW) continue;
       if (px < 0) {                                                                              // barranco de terra, com a grama entrando
-        if (px < -bankW + 1.2 && hsh(Math.round(th * 40), cx, 118) < 0.5) continue;                  // borda externa recortada, sem pontilhado
-        if (hsh(Math.round(th * 14), cy, 116) < 0.18 && px < -1) { P(x, y, h < 0.5 ? C.gr : C.grD); continue; }
-        P(x, y, px > -1 ? C.bankD : h < 0.12 ? C.bankL : C.bank); continue;
+        P(x, y, px > -1 ? C.bankD : C.bank); continue;
       }
-      let c = px < 1 ? (dy < 0 ? C.lip : C.foam) : px < 3.5 ? C.sh : px < 8 ? C.mid : px < 15 ? C.deep : C.deeper;
-      if (px >= 3.5 && px < 4.5 && h < 0.4) c = C.sh; else if (px >= 8 && px < 9 && h < 0.4) c = C.mid; else if (px >= 15 && px < 16 && h < 0.4) c = C.deep;   // passagem em pontilhado
-      if (dy < 0 && px >= 1 && px < 2.2) c = shade(C.sh, 0.9);                                   // sombra do barranco no alto
+      // margem rasa estreita e a água do lago num tom só; a parte funda é uma mancha suave fora do centro (sem anéis)
+      const dz = Math.hypot((x + 0.5 - cx - rx * 0.12) / (rx * 0.62), (y + 0.5 - cy + ry * 0.1) / (ry * 0.55)) + (vnoise(x, y, 9, cx) - 0.5) * 0.25;
+      let c = px < 1 ? (dy < 0 ? C.lip : C.foam) : px < 3 ? C.sh : dz < 1 ? C.deep : C.mid;
+      if (px >= 3 && px < 4 && (x + y) % 2) c = C.sh;                                            // uma passagem discreta da faixa rasa
       P(x, y, c);
     }
     // pedrinhas e taboas na margem (sem taboas no inverno)
@@ -1297,7 +1325,7 @@ const World = (() => {
       (rand() < 0.35 ? addPine : addTree)(x, y, 9 + Math.floor(rand() * 3)); keep(x - 16, y - 30, 32, 40); placed++;
     }
     for (let i = 0; i < 150; i++) { const x = 30 + rand() * (W - 60), y = 50 + rand() * (H - 80); if (x > 404 && isFree(x - 8, y - 10, 16, 14)) { bush(Math.round(x), Math.round(y), 4 + Math.floor(rand() * 2)); solid(x - 4, y - 4, 8, 5); } }
-    flowers(1200, (x, y) => !isFree(x - 2, y - 2, 6, 8));
+    flowers(1200, (x, y) => !isFree(x - 2, y - 2, 6, 8), (x, y) => x < 404 && y < 512 && hash(x, y, 230) > 0.12);   // fazenda: poucas flores, chão tranquilo
     m.spawn = { x: m.doors.casa.x, y: m.doors.casa.y };
     m.places = PLACES;
     m.spawns = villageSpawns(m);
@@ -2017,7 +2045,7 @@ const World = (() => {
     const rows = [];
     for (let j = 0; j < h; j++) {
       const t = (j + 0.5) / h, k = t < 0.62 ? Math.sqrt(Math.max(0, 1 - ((0.62 - t) / 0.62) ** 2)) : 1 - Math.max(0, t - 0.86) * 1.2;
-      const jl = Math.round((hsh(v, j, 61) - 0.5) * 1.6), jr = Math.round((hsh(v, j, 62) - 0.5) * 1.6), lean = (v % 2 ? 1 : -1) * Math.round((1 - t) * 0.8);
+      const jl = j === Math.floor(h * 0.3) && v % 2 ? 1 : 0, jr = j === Math.floor(h * 0.5) && v % 2 === 0 ? -1 : 0, lean = (v % 2 ? 1 : -1) * Math.round((1 - t) * 0.8);   // facetas discretas, sem ruído
       rows.push([Math.round(cx - (w / 2) * k) + jl + lean, Math.round(cx + (w / 2) * k) + jr + lean]);
     }
     P(cx - w / 2 - 1, by - 1, w + 3, 2, 'rgba(30,36,24,.28)');                                     // sombra de contato
@@ -2033,8 +2061,7 @@ const World = (() => {
       if (j === h - 1) P(l, y, wd, 1, deep);
     });
     const mid = rows[Math.floor(h * 0.5)];
-    if (v % 3 !== 2) { const cx2 = mid[0] + Math.round((mid[1] - mid[0]) * (0.35 + hsh(v, 1, 63) * 0.3)); P(cx2, y0 + Math.floor(h * 0.42), 1, 2, dark); P(cx2 + 1, y0 + Math.floor(h * 0.42) + 2, 1, 1, dark); }   // rachadura
-    P(mid[0] + 2, y0 + Math.floor(h * 0.62), 1, 1, shade(base, 0.9)); P(mid[0] + Math.round((mid[1] - mid[0]) * 0.6), y0 + Math.floor(h * 0.7), 1, 1, shade(base, 0.9));
+    if (v % 3 === 0) { const cx2 = mid[0] + Math.round((mid[1] - mid[0]) * 0.45); P(cx2, y0 + Math.floor(h * 0.42), 1, 2, dark); }   // uma rachadura só, em algumas
     if (v % 4 === 2 || big) { P(rows[1][0] + 1, y0 + 1, 2, 1, '#6e8a3c'); P(rows[2][0], y0 + 2, 1, 1, '#58763a'); }   // musgo
     if (v % 4 === 0) { P(cx + w / 2 + 2, by - 2, 2, 2, '#55505a'); P(cx + w / 2 + 2, by - 2, 1, 1, light); }        // pedrinha ao lado
   }
@@ -2045,7 +2072,7 @@ const World = (() => {
     for (let i = 0; i <= L; i++) { const [x, y] = pt(i); P(x, y + 2, 1, 1, 'rgba(30,36,24,.22)'); }
     for (let i = 0; i <= L; i++) {
       const [x, y] = pt(i); P(x, y - 1, 1, 3, '#4a301c');
-      P(x, y - 1, 1, 1, i % 4 === 1 ? '#8a6038' : '#a87a48'); P(x, y, 1, 1, i % 3 === 0 ? '#5e3e24' : '#7a5232');
+      P(x, y - 1, 1, 1, '#a87a48'); P(x, y, 1, 1, '#7a5232');                                       // casca: luz em cima, base contínua
     }
     const [ax, ay] = pt(0), [bx, by] = pt(L);
     P(ax, ay - 1, 1, 2, '#e0c088'); P(ax, ay, 1, 1, '#b08a58');                                    // pontas de corte
@@ -2064,57 +2091,44 @@ const World = (() => {
     for (let x = 0; x < w; x++) {
       const t = x / (w - 1), c = t < 0.25 ? '#8e6440' : t < 0.6 ? '#74502e' : t < 0.85 ? '#62422a' : '#523620';
       P(l + x, top + 2, 1, h - 3, c);
-      if ((x + v) % 3 === 1) P(l + x, top + 3 + ((x * 7 + v) % 3), 1, h - 6, shade(c, 0.8));              // estrias da casca
     }
     P(l, top - 1, w, 4, '#3e2816'); P(l + 1, top - 2, w - 2, 1, '#3e2816');                               // corte de cima (oval)
     P(l + 1, top - 1, w - 2, 3, '#d8b47c'); P(l, top, 1, 1, '#d8b47c'); P(r - 1, top, 1, 1, '#c09a64');
     P(l + 2, top - 1, w - 4, 1, '#ead0a0');
-    P(l + 2, top, w - 4, 1, '#b8915c'); P(l + 3, top + 1, w - 6, 1, '#c8a46e'); P(cx - 1, top, 2, 1, '#e2c690'); P(cx, top, 1, 1, '#8e6440');   // anéis
-    if (v % 3 === 1) { P(r - 3, top + 4, 2, 2, '#6e8a3c'); P(r - 2, top + 3, 1, 1, '#88a84a'); }       // musgo
-    if (v % 3 === 2) { P(l + 1, top + 4, 1, 3, '#3e2816'); }                                               // fenda
+    P(l + 2, top, w - 4, 1, '#c09a64'); P(cx - 1, top, 2, 1, '#e2c690');                          // um anel
+    P(l + Math.round(w * 0.35), top + 3, 1, h - 5, '#5e3e24'); P(l + Math.round(w * 0.7), top + 4, 1, h - 6, '#46301c');   // duas estrias
+    if (v % 3 === 1) { P(r - 3, top + 4, 2, 2, '#6e8a3c'); }                                              // musgo
   }
   /* matinho: tufo de lâminas de alturas diferentes, inclinadas para lados diferentes, com base cheia */
   function weedShape(P, v, ss = 0) {
-    const n = 8 + v % 3, cols = ss === 3 ? ['#5a6a52', '#6a7a60', '#7a8a6e', '#62725a'] : ss === 2 ? ['#6a6a2c', '#8a7a36', '#a08a3c', '#7a7032'] : ['#2a6a2c', '#3a8436', '#4c9a3c', '#327a32'];
+    const n = 6 + v % 2, cols = ss === 3 ? ['#5a6a52', '#6a7a60', '#7a8a6e', '#62725a'] : ss === 2 ? ['#6a6a2c', '#8a7a36', '#a08a3c', '#7a7032'] : ['#2a6a2c', '#3a8436', '#4c9a3c', '#327a32'];
     P(2, 13, 12, 2, 'rgba(30,36,24,.25)');
-    P(3, 11, 10, 3, '#215a26'); P(4, 10, 8, 1, '#2a6a2c'); P(5, 11, 3, 1, '#3a8436'); P(9, 11, 2, 1, '#3a8436');
+    P(3, 11, 10, 3, cols[0]); P(4, 10, 8, 1, cols[3]);
     for (let i = 0; i < n; i++) {
-      const bx = 3 + Math.round(i * 9 / (n - 1) + (hsh(v, i, 71) - 0.5) * 1.5), ht = 4 + Math.floor(hsh(v, i, 72) * 6) + (i === (v * 3) % n ? 3 : 0), lean = hsh(v, i, 73) < 0.5 ? -1 : 1, c = cols[(i + v) % 4];
-      for (let k = 0; k < ht; k++) { const x = bx + (k > ht * 0.5 ? lean : 0) + (k > ht * 0.85 && ht > 6 ? lean : 0); P(x, 12 - k, 1, 1, k > ht - 2 ? '#6fb84a' : k < 2 ? '#215a26' : c); if (k < ht * 0.4 && ht > 6) P(x + (i % 2 ? 1 : -1), 12 - k, 1, 1, shade(c, 0.85)); }
+      const bx = 3 + Math.round(i * 9 / (n - 1) + (hsh(v, i, 71) - 0.5) * 1.5), ht = 4 + Math.floor(hsh(v, i, 72) * 6) + (i === (v * 3) % n ? 3 : 0), lean = hsh(v, i, 73) < 0.5 ? -1 : 1, c = cols[i % 2 ? 1 : 2];
+      for (let k = 0; k < ht; k++) { const x = bx + (k > ht * 0.5 ? lean : 0) + (k > ht * 0.85 && ht > 6 ? lean : 0); P(x, 12 - k, 1, 1, k > ht - 2 && ss < 2 ? '#6fb84a' : c); }
     }
     if (v % 4 === 1) { P(10, 3, 2, 2, '#ffe066'); P(10, 3, 1, 1, '#fff4a8'); P(11, 5, 1, 2, '#3a8436'); }   // florzinha
     if (v % 4 === 3) { P(5, 2, 1, 3, '#c8b878'); P(5, 1, 1, 1, '#e0d090'); P(6, 3, 1, 1, '#c8b878'); }       // espiga de capim
   }
-  /* Canteiro preparado: terra revolvida com sulcos curtos e desencontrados, torrões e leves diferenças de tom.
-     Os lados encostados em outro canteiro não têm borda (a terra continua); os lados livres terminam numa borda de
-     terra irregular. Molhado fica bem mais escuro. Cache por (molhado, vizinhos, variação). */
-  const SOIL = {}, SOILP = [{ base: [140, 100, 58], dark: [104, 70, 38], light: [168, 126, 80], edge: [112, 80, 46] }, { base: [84, 56, 32], dark: [58, 38, 20], light: [110, 76, 46], edge: [66, 44, 24] }];
+  /* Canteiro preparado (revisão limpa): marrom médio, três sulcos discretos e de baixo contraste, bordas simples
+     levemente irregulares. Lados encostados em outro canteiro continuam sem borda. Molhado mais escuro, mas legível.
+     Cache por (molhado, vizinhos, variação). */
+  const SOIL = {}, SOILP = [{ base: [146, 90, 48], dark: [128, 77, 40], light: [160, 101, 56], edge: [122, 74, 38] }, { base: [94, 57, 31], dark: [80, 47, 25], light: [106, 66, 37], edge: [74, 44, 23] }];
   function soilImg(wet, mask, v) {
     const key = (wet ? 'w' : 'd') + mask + ':' + v; if (SOIL[key]) return SOIL[key];
     const c = document.createElement('canvas'); c.width = c.height = 18; const x2 = c.getContext('2d'), img = x2.createImageData(18, 18), D = img.data, Pl = SOILP[wet ? 1 : 0];
-    const put = (x, y, col, a = 255) => { const i = (y * 18 + x) * 4; D[i] = col[0]; D[i + 1] = col[1]; D[i + 2] = col[2]; D[i + 3] = a; };
-    const sc = (col, k) => col.map(u => Math.max(0, Math.min(255, Math.round(u * k))));
+    const put = (x, y, col) => { const i = (y * 18 + x) * 4; D[i] = col[0]; D[i + 1] = col[1]; D[i + 2] = col[2]; D[i + 3] = 255; };
     const N = !(mask & 1), E = !(mask & 2), S = !(mask & 4), Wd = !(mask & 8);
     for (let ly = 0; ly < 16; ly++) for (let lx = 0; lx < 16; lx++) {
-      const h = hsh(lx + v * 31, ly, 92), blk = hsh((lx >> 1) + v * 13, ly >> 1, 93);
-      let col = blk < 0.3 ? sc(Pl.base, 0.95) : blk > 0.85 ? sc(Pl.base, 1.04) : Pl.base;
-      // sulcos: segmentos curtos, cada um com sua altura (±1) e falhas entre eles
-      const seg = (lx + ((v + ly) % 3)) >> 2, row = Math.floor((ly + 1) / 5), off = hsh(seg + v * 7, row, 94) < 0.33 ? -1 : hsh(seg + v * 7, row, 94) > 0.75 ? 1 : 0, fy = row * 5 + 3 + off;
-      const gap = hsh(seg + v * 5, row, 95) < 0.22 || (lx + ((v + ly) % 3)) % 4 === 3 && hsh(seg, row, 96) < 0.5;
-      if (!gap && ly === fy) col = Pl.dark; else if (!gap && ly === fy - 1) col = Pl.light;
-      if (h < 0.05) col = Pl.light; else if (h > 0.96) col = sc(Pl.dark, 1.05);                    // torrões
-      if (wet && h > 0.5 && h < 0.515) col = [92, 104, 122];                                          // brilho de água
-      // bordas livres: terra mais escura, com recortes
+      let col = Pl.base;
+      // sulcos curtos e desencontrados (traços de 3 px), em quatro fileiras
+      const row = Math.floor(ly / 4), fy = row * 4 + 2, ph = (row * 3 + v * 2) % 5, on = (lx + ph) % 5 < 3;
+      if (ly === fy && on) col = Pl.dark; else if (ly === fy - 1 && on && (lx + ph) % 5 === 1) col = Pl.light;
       const eN = N && ly === 0, eS = S && ly === 15, eW = Wd && lx === 0, eE = E && lx === 15;
       if ((eN || eS) && (eW || eE)) continue;                                                       // canto arredondado
-      if (eN || eS || eW || eE) { if (h < 0.18) continue; col = Pl.edge; }
-      else if ((N && ly === 1) || (S && ly === 14) || (Wd && lx === 1) || (E && lx === 14)) col = sc(col, 0.92);
+      if (eN || eS || eW || eE) col = Pl.edge;
       put(lx + 1, ly + 1, col);
-    }
-    // borda que avança um pouco sobre o chão, aqui e ali
-    for (let i = 1; i < 15; i++) {
-      if (N && hsh(i, v, 97) < 0.22) put(i + 1, 0, Pl.edge); if (S && hsh(i, v, 98) < 0.3) put(i + 1, 17, sc(Pl.edge, 0.9));
-      if (Wd && hsh(i, v, 99) < 0.22) put(0, i + 1, Pl.edge); if (E && hsh(i, v, 100) < 0.22) put(17, i + 1, Pl.edge);
     }
     x2.putImageData(img, 0, 0); return (SOIL[key] = c);
   }

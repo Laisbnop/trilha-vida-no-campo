@@ -467,13 +467,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Visual da fazenda',
+  title: 'Nova direção visual da fazenda',
   items: [
-    'Caminho de terra em frente à casa com variações suaves, bordas em curva, tufinhos e encontro com o degrau da varanda.',
-    'Chão da fazenda com clareiras de terra natural perto da plantação, manchas de grama variadas e mais vegetação nas bordas.',
-    'Canteiros de terra revolvida, ligados entre si, com o solo molhado bem mais escuro.',
-    'Pinheiros em camadas e árvores com pequenas diferenças entre si.',
-    'Novos desenhos de pedras, galhos, tocos e matinhos, com variações que não mudam ao salvar ou mover a câmera.',
-    'Lago com margem natural, faixa rasa, água mais funda no meio e taboas.',
+    'A área de trabalho virou uma clareira contínua de terra ocre dourada, que inclui a estrada em frente à casa.',
+    'A grama, em verdes vivos, avança sobre a terra em bordas irregulares com tufos de folhas. Há mais vegetação nas bordas e a área de produção ficou aberta.',
+    'Os canteiros são de marrom quente, com sulcos curtos e discretos. Terra natural, solo seco e solo regado ficam bem diferentes.',
+    'Pinheiros com camadas de folhagem mais cheias; pedras, galhos e tocos com luz e sombra agrupadas.',
+    'Lago com margem irregular e profundidade suave, sem anéis.',
   ],
 };
