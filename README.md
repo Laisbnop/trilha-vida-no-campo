@@ -599,8 +599,10 @@ não conta nada que Lúcio ainda não tenha contado a você.
 
 ## Moradores e amizade
 
-Seis moradores, cada um com rotina, personalidade e gostos: Dona Celeste
-(Armazém), Seu Honório, Bia, Tomé, Iara e Lúcio (na serra). A amizade vai de 0 a 5 corações:
+Sete moradores, cada um com rotina, personalidade e gostos: Dona Celeste
+(Armazém), Seu Honório, Bia, Tomé, Iara, Lúcio (na serra) e Caleb (neto da Dona
+Celeste, que chega à vila durante o jogo). A amizade vai de 0 a 5 corações (com
+o Caleb, até 8):
 
 - clique no morador para conversar; a primeira conversa do dia dá pontos; as seguintes continuam disponíveis, sem pontos;
 - cada morador aceita um presente por dia (com um produto na mão, a conversa oferece a opção), e os preferidos rendem mais; Lúcio e Iara têm regras próprias (acima e abaixo);
@@ -629,6 +631,49 @@ retrato, aparece uma silhueta neutra, nunca o rosto de outro morador.
 Cada conversa fixa o interlocutor ao começar e limpa nome, retrato, texto e
 opções ao abrir e ao fechar. Escolhas que abrem a conversa (loja, presente)
 mostram a fala e o rosto de quem pergunta. Narração aparece sem nome nem retrato.
+
+### Caleb
+
+Neto da Dona Celeste. Chega para morar com a avó no andar de cima do Armazém
+CELESTE. Tem estilo gótico/emo: cabelo preto, liso e em camadas, com uma franja
+longa que cobre um olho e uma mecha prateada discreta, camiseta preta, camisa
+vinho aberta, calça escura, botas, brinco de argola e pingente de mariposa. É
+reservado e observador, gosta de computador e de música, fala pouco no começo e
+é educado; com a amizade, aparecem o humor e o carinho em pequenos gestos. A
+idade não é definida, e a relação é só de amizade (sem romance).
+
+- **Chegada**: numa partida nova, na primeira visita ao Armazém com Dona Celeste
+  atendendo (6h às 18h). A apresentação acontece uma vez só; em jogos salvos de
+  antes desta versão, ela acontece na próxima visita nessas condições. Depois, a
+  loja volta ao normal.
+- **Rotina** (horários de início; os caminhos levam o tempo real de caminhada, e
+  ele só troca de lugar pela porta do Armazém ou pela escada):
+  - até 12h: no andar de cima (das 10h às 12h, no quarto, no computador e
+    ouvindo música), sem aparecer para o jogador;
+  - 12h–13h: desce para almoçar com a avó e ajuda com algumas caixas;
+  - 13h–16h: no cantinho do notebook, no térreo, ao lado do balcão;
+  - 16h–18h: caminha até o bosque e fica num ponto acessível, de fone;
+  - 18h–20h30: na beira da lagoa do bosque, ouvindo música;
+  - 20h30: volta ao Armazém e fica no térreo, perto do balcão, até as 22h;
+  - 22h: sobe para o quarto.
+- **Variações** (prioridade: chuva > sexta/domingo > rotina normal):
+  - sexta-feira: depois das 18h, fica na praça até as 21h e volta para casa;
+  - domingo: ajuda a avó no térreo das 10h às 13h, depois segue a rotina normal;
+  - chuva: sem passeios; fica em cima pela manhã, no térreo das 13h às 18h e
+    depois volta para cima.
+- **Conversa e amizade**: falas próprias por lugar e situação (almoço, notebook,
+  bosque, lagoa, praça, noite, chuva e domingo) e por faixa de amizade, sem
+  repetir as últimas. Usa o sistema de conversa diária, presentes (todos neutros:
+  ainda não há lista de favoritos) e a aba Amizades, com até 8 corações. Antes da
+  chegada, não aparece na aba.
+- **Retratos**: próprios (não são o sprite ampliado), com expressão neutra,
+  sorriso discreto, contente e envergonhado/surpreso.
+- **Armazém**: ganhou a porta da escada para o andar de cima, na parede do fundo
+  ao lado do balcão (com a plaquinha "Particular"; o mural de avisos foi alguns
+  pixels para a direita), e a mesinha com notebook do Caleb, ao lado do balcão,
+  fora da circulação. A escada ainda não leva o jogador para cima: só Caleb a usa
+  nesta etapa. Atendimento, produtos, preços e horários da Dona Celeste não
+  mudaram.
 
 ### Iara
 

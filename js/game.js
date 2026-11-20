@@ -348,7 +348,8 @@
   const COARSE = window.matchMedia && matchMedia('(pointer: coarse)').matches;
 
   const hearts = id => Math.floor((S.friends[id] || 0) / 100);
-  const addFriend = (id, pts) => { const before = hearts(id); S.friends[id] = Math.max(0, Math.min(FRIEND.max, (S.friends[id] || 0) + pts)); if (hearts(id) > before) toast(`${villagerById(id).name}: ${hearts(id)} coração(ões)`); };
+  const maxHearts = id => (villagerById(id) && villagerById(id).maxHearts) || 5;                       // Caleb: até 8; os outros: 5
+  const addFriend = (id, pts) => { const before = hearts(id); S.friends[id] = Math.max(0, Math.min(maxHearts(id) * 100, (S.friends[id] || 0) + pts)); if (hearts(id) > before) toast(`${villagerById(id).name}: ${hearts(id)} coração(ões)`); };
   /* Relógio interno contínuo (minutos com fração); a tela mostra de 10 em 10 minutos. 02:00 = 26*60. */
   const clock = (m = S.time) => { const t = Math.floor(m / 10) * 10; return `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
   const fmt = t => String(t)
@@ -463,6 +464,47 @@
     E.push([1096, [EXIT, READ], 'iara', 'read', 'up']);
     return E;
   }
+  /* Rotina de Caleb: [minuto, caminho, mapa, atividade, direção]. 'residencia' = no andar de cima (não aparece).
+     Prioridade: chegada (no dia da apresentação) > chuva > sexta/domingo > rotina normal. Os horários são o início
+     de cada atividade; os caminhos levam o tempo real de caminhada (18 px por minuto). */
+  const CALEB = { STAIR: [105, 70], NB: [104, 86], LUNCH: [102, 104], BOX: [96, 150], EV: [104, 100], EXIT: [152, 194], INTRO: [100, 104],
+    DOOR: [506, 159], BQ: [1000, 214], LK: [1030, 262], PR: [668, 222] };
+  const pathLen = (pts, from) => { let d = 0, a = from || pts[0]; pts.forEach(q => { d += Math.hypot(q[0] - a[0], q[1] - a[1]); a = q; }); return d; };
+  function calebSchedule(day = S.day, rain = isRaining()) {
+    const C = CALEB, c = calendar(day), fri = c.wd === 4, sun = c.wd === 6, E = [[0, [[0, 0]], 'residencia']];
+    const inToNB = [C.STAIR, C.NB], nbToExit = [[110, 100], [110, 170], [152, 170], C.EXIT], exitToEv = [C.EXIT, [152, 170], [110, 170], [110, 100], C.EV];
+    const up = (t, from) => { const pts = [[104, 92], C.STAIR]; E.push([t, pts, 'loja']); E.push([t + Math.ceil(pathLen(pts, from) / 18) + 1, [[0, 0]], 'residencia']); };
+    const out = (t, from, pts, act, dir) => { const tin = Math.ceil(pathLen(nbToExit, from) / 18) + 1; E.push([t, nbToExit, 'loja']); E.push([t + tin, [C.DOOR, ...pts], 'fora', act, dir]); };
+    const home = (t, from, pts) => { const all = [...pts, C.DOOR]; E.push([t, all, 'fora']); E.push([t + Math.ceil(pathLen(all, from) / 18) + 1, exitToEv, 'loja', 'idle', 'left']); };
+    if (rain) {                                                                // chuva: manhã em cima, 13h–18h no térreo, depois em cima
+      E.push([780, inToNB, 'loja', 'notebook', 'right']); up(1080, C.NB);
+    } else {
+      if (sun) E.push([600, [C.STAIR, [104, 100], C.LUNCH], 'loja', 'boxes', 'left'], [660, [[100, 130], C.BOX], 'loja', 'boxes', 'left'], [720, [[100, 130], C.LUNCH], 'loja', 'lunch', 'left']);   // domingo: ajuda a avó das 10h às 13h
+      else E.push([720, [C.STAIR, [104, 100], C.LUNCH], 'loja', 'lunch', 'left'], [750, [[100, 130], C.BOX], 'loja', 'boxes', 'left']);   // 12h: almoço com a avó e as caixas
+      E.push([780, [[100, 130], [104, 100], C.NB], 'loja', 'notebook', 'right']);                                                 // 13h: notebook no térreo
+      out(960, C.NB, [[506, 158], [1000, 158], C.BQ], 'music', 'right');                                                                 // 16h: caminhada no bosque
+      if (fri) {                                                                                                                         // sexta: praça das 18h às 21h
+        E.push([1080, [[1000, 158], [668, 158], [640, 190], C.PR], 'fora', 'music', 'down']);
+        home(1260, C.PR, [[640, 190], [668, 158], [506, 158]]);
+      } else {
+        E.push([1080, [[1006, 240], C.LK], 'fora', 'music', 'right']);                                                                 // 18h: beira da lagoa
+        home(1230, C.LK, [[1006, 262], [1006, 158], [506, 158]]);                                                                         // 20h30: volta ao Armazém
+      }
+      up(1320, C.EV);                                                                                                                    // 22h: sobe para o quarto
+    }
+    // dia da chegada: aparece ao lado da avó durante a apresentação e, depois, segue para onde a rotina mandaria
+    const K = S.caleb;
+    if (K && K.arrived && K.day === day && K.t > 0) {
+      const T0 = K.t, base = E.slice().sort((a, b) => a[0] - b[0]);
+      let cur = base[0]; base.forEach(e => { if (e[0] <= T0 + 2) cur = e; });
+      const keep = base.filter(e => e[0] > T0 + 2), I = [[T0, [C.INTRO], 'loja', 'idle', 'down']], T1 = T0 + 2, end = cur[1][cur[1].length - 1];
+      if (cur[2] === 'loja') I.push([T1, [[104, 100], end], 'loja', cur[3], cur[4]]);
+      else if (cur[2] === 'residencia') { I.push([T1, [[104, 100], C.STAIR], 'loja']); I.push([T1 + 3, [[0, 0]], 'residencia']); }
+      else { const tin = Math.ceil(pathLen([[110, 104], [110, 170], [152, 170], C.EXIT], C.INTRO) / 18) + 1; I.push([T1, [[110, 104], [110, 170], [152, 170], C.EXIT], 'loja']); I.push([T1 + tin, [C.DOOR, [506, 158], end[0] < 800 ? [668, 158] : [1006, 158], end], 'fora', cur[3], cur[4]]); }
+      return [...base.filter(e => e[0] <= T0), ...I, ...keep].sort((a, b) => a[0] - b[0]);
+    }
+    return E.sort((a, b) => a[0] - b[0]);
+  }
   /* Onde a rotina põe o morador no minuto tm: anda pelos caminhos (18 px por minuto do jogo);
      ao trocar de mapa, aparece na porta do mapa novo e segue dali. */
   function routineAt(E, tm) {
@@ -477,9 +519,13 @@
     }
     const last = pts[pts.length - 1]; return { where: mp, x: last[0], y: last[1], dir: dir || 'down', act: act || null };
   }
-  const schedCache = { key: '', E: null };
+  const schedCache = { key: '', E: null }, calebCache = { key: '', E: null };
   function villagerAt(v, tm) {
     if (v.routine === 'iara' && S) { const k = S.day + ':' + isRaining(); if (schedCache.key !== k) { schedCache.key = k; schedCache.E = iaraSchedule(); } return routineAt(schedCache.E, tm); }
+    if (v.routine === 'caleb' && S) {
+      if (!S.caleb || !S.caleb.arrived) return { where: 'ausente', x: 0, y: 0, dir: 'down' };                    // ainda não chegou à vila
+      const k = S.day + ':' + isRaining() + ':' + S.caleb.day + ':' + S.caleb.t; if (calebCache.key !== k) { calebCache.key = k; calebCache.E = calebSchedule(); } return routineAt(calebCache.E, tm);
+    }
     let idx = -1; v.sched.forEach((e, i) => { if (tm >= e[0]) idx = i; });
     const n = v.sched.length, wrap = idx < 0; if (wrap) idx = n - 1;
     const e = v.sched[idx];
@@ -530,6 +576,7 @@
     s.row = Math.floor(s.sel / HOTBAR);
     VILLAGERS.forEach(v => { if (typeof s.friends[v.id] !== 'number') s.friends[v.id] = 0; if (!s.known[v.id]) s.known[v.id] = {}; });
     /* Lúcio: conversa, presentes (dia, semana e aniversário), tenda, missões e cenas */
+    s.caleb = Object.assign({ arrived: false, day: 0, t: 0, last: '', again: 0 }, s.caleb);   // Caleb: chegada (uma vez) e última fala
     s.lucio = Object.assign({ met: false, permit: false, gifts: { week: -1, n: 0 }, bday: 0, tentUp: false, found: false, fireScene: false, iara: false, last: -1, again: 0 }, s.lucio);
     /* pesca: quem já jogava recebe a carta de Tomé na manhã seguinte à atualização */
     const hadFish = !!s.fish, oldXp = s.fish && s.fish.v !== 2 ? s.fish.xp || 0 : null;
@@ -633,7 +680,7 @@
   }
   function travel(to, x, y, dir) {
     const wrap = $('scene-wrap'); wrap.classList.add('fade'); busy = true;
-    setTimeout(() => { enterMap(to, x, y, dir); save(); wrap.classList.remove('fade'); busy = false; renderHud(); }, 220);
+    setTimeout(() => { enterMap(to, x, y, dir); save(); wrap.classList.remove('fade'); busy = false; renderHud(); if (to === 'loja') calebArrival(); }, 220);
   }
   const keepsakeVisible = () => qActive().includes('lembranca') && !S.lucio.found;
   const blocked = () => busy || paused || document.hidden || !$('modal').hidden || !$('summary').hidden || !$('letter').hidden || screen !== 'game' || fishPaused();
@@ -1179,7 +1226,7 @@
     $('dlg-text').classList.toggle('narr', who === 'narr');
   }
   /* "[contente]Texto" → expressão + texto. */
-  const splitExpr = t => { const m = /^\[(neutro|desconfiado|contente|emocionado|concentrada|triste|surpresa)\]/.exec(t); return m ? [m[1], t.slice(m[0].length)] : [null, t]; };
+  const splitExpr = t => { const m = /^\[(neutro|desconfiado|contente|emocionado|concentrada|triste|surpresa|sorriso|envergonhado)\]/.exec(t); return m ? [m[1], t.slice(m[0].length)] : [null, t]; };
   function say(who, text) {
     return new Promise(resolve => {
       const [expr, rest] = splitExpr(String(text)); text = fmt(rest); setSpeaker(who, expr);
@@ -1862,12 +1909,36 @@
       if (!S.daily.talk[v.id]) {
         S.daily.talk[v.id] = true; addFriend(v.id, FRIEND.talk);
         if (v.id === 'iara') await say(who, iaraLine(v));
+        else if (v.id === 'caleb') await say(who, calebLine(v));
         else if (v.talk.length === 4) await say(who, bandLine(v));
         else { const tier = Math.min(2, Math.floor(hearts(v.id) / 2)); await say(who, v.talk[tier][S.day % v.talk[tier].length]); }
-      } else if (Array.isArray(v.again)) { const L = v.id === 'iara' ? S.iara : S.lucio; L.again = (L.again + 1) % v.again.length; await say(who, v.again[L.again]); }
+      } else if (Array.isArray(v.again)) { const L = v.id === 'iara' ? S.iara : v.id === 'caleb' ? S.caleb : S.lucio; L.again = (L.again + 1) % v.again.length; await say(who, v.again[L.again]); }
       else await say(who, v.again);
       if (v.id === 'iara' && S.lucio.met && !S.lucio.iara) await iaraOnLucio(who);
       if (pending) await say('narr', `Missão em andamento com ${v.name}: ${QUESTS[pending].desc} (${qProgress(pending) || 'em andamento'})`);
+    });
+  }
+  /* Fala de Caleb: mistura falas do lugar/situação (almoço, notebook, bosque, lagoa, praça, noite, chuva, domingo)
+     com falas da faixa de amizade (0 · 1–2 · 3–5 · 6–8 corações), sem repetir a anterior. */
+  function calebLine(v) {
+    const p = villagerAt(v, S.time), h = hearts('caleb'), band = h === 0 ? 0 : h <= 2 ? 1 : h <= 5 ? 2 : 3, X = v.ctx, C = CALEB, near = (q, r = 40) => Math.hypot(p.x - q[0], p.y - q[1]) < r;
+    let key = null;
+    if (isRaining() && p.where === 'loja') key = 'chuva';
+    else if (p.where === 'loja') key = p.act === 'notebook' ? 'notebook' : (p.act === 'boxes' || p.act === 'lunch') ? (calendar().wd === 6 && S.time < 780 ? 'domingo' : 'almoco') : S.time >= 1230 ? 'noite' : null;
+    else if (p.where === 'fora') key = near(C.LK) ? 'lago' : near(C.PR) ? 'praca' : near(C.BQ, 80) ? 'bosque' : null;
+    const recent = Array.isArray(S.caleb.recent) ? S.caleb.recent : [], all = [...(key ? X[key] : []), ...(key ? X[key] : []), ...v.talk[band]];
+    const pool = all.filter(l => !recent.includes(l)), line = (pool.length ? pool : all.filter(l => l !== S.caleb.last))[Math.floor(Math.random() * (pool.length || all.length - 1))] || v.talk[band][0];
+    S.caleb.last = line; S.caleb.recent = [...recent, line].slice(-3); return line;                 // as três últimas não voltam logo
+  }
+  /* Chegada de Caleb (uma vez): na primeira visita ao Armazém com Dona Celeste atendendo. Vale também para
+     jogos salvos de antes desta versão (acontece na próxima visita nessas condições). */
+  function calebArrival() {
+    if (!S || !S.caleb || S.caleb.arrived || map.id !== 'loja' || villagerAt(villagerById('celeste'), S.time).where !== 'loja') return;
+    S.caleb.arrived = true; S.caleb.day = S.day; S.caleb.t = S.time; calebCache.key = ''; save();
+    run(async () => {
+      const who = id => speaker(villagerById(id));
+      for (const [id, line] of villagerById('caleb').arrival) await say(who(id), line);
+      save();
     });
   }
   /* Fala por faixa de amizade (0 · 1–2 · 3–4 · 5 corações), sem repetir a anterior. */
@@ -2379,7 +2450,7 @@
   $('modal').addEventListener('click', e => { if (e.target === $('modal') && performance.now() - modalT > 400) { menuClosedT = performance.now(); closeModal(); } });
   $('modal').addEventListener('pointerdown', e => e.stopPropagation());
   const closeBtn = () => { const b = btn('btn primary', 'Fechar', closeModal); b.style.marginTop = '12px'; return b; };
-  const heartsNode = n => { const s = el('span', 'hearts'); for (let i = 0; i < 5; i++) s.append(el('i', i < n ? 'on' : '', '♥')); return s; };
+  const heartsNode = (n, max = 5) => { const s = el('span', 'hearts'); for (let i = 0; i < max; i++) s.append(el('i', i < n ? 'on' : '', '♥')); return s; };
   /* Ícones das abas, desenhados em pixel art (16x16). */
   const TAB_ICON = {
     habilidades: g => { g.fillStyle = '#5a3a14'; [[7, 1, 2, 2], [6, 3, 4, 2], [1, 5, 14, 2], [3, 7, 10, 2], [4, 9, 8, 2], [3, 11, 4, 2], [9, 11, 4, 2], [2, 13, 3, 2], [11, 13, 3, 2]].forEach(r => g.fillRect(...r)); g.fillStyle = '#ffd75e'; [[7, 2, 2, 2], [7, 4, 2, 2], [2, 6, 12, 1], [4, 7, 8, 2], [5, 9, 6, 2], [4, 11, 2, 2], [10, 11, 2, 2], [3, 13, 1, 1], [12, 13, 1, 1]].forEach(r => g.fillRect(...r)); g.fillStyle = '#fff6c0'; g.fillRect(7, 5, 1, 3); },
@@ -2527,18 +2598,18 @@
       body.append(fl);
     },
     amizades(body) {
-      body.append(el('p', 'dim', 'A primeira conversa do dia e os presentes aumentam a amizade (100 pontos por coração, até 5). Cada morador tem seus gostos.'));
-      const known = VILLAGERS.filter(v => !v.hidden || (v.id === 'lucio' && S.lucio.met));
+      body.append(el('p', 'dim', `A primeira conversa do dia e os presentes aumentam a amizade (100 pontos por coração, até 5${S.caleb && S.caleb.arrived ? '; com o Caleb, até 8' : ''}). Cada morador tem seus gostos.`));
+      const known = VILLAGERS.filter(v => (!v.hidden || (v.id === 'lucio' && S.lucio.met)) && !(v.arrives && !(S.caleb && S.caleb.arrived)));
       if (!friendSel || !known.some(v => v.id === friendSel)) friendSel = known[0].id;
       const box = el('div', 'friends'), list = el('ul', 'friend-list'), det = el('div', 'friend-detail');
       known.forEach(v => {
         const li = el('li', 'friend' + (v.id === friendSel ? ' sel' : '')); li.dataset.id = v.id; li.tabIndex = 0;
         const pic = v.portrait ? Sprites.portrait(v.portrait, hearts(v.id) >= 3 ? 'contente' : 'neutro') : Sprites.canvas(v.look);
         if (v.portrait) pic.classList.add('portrait-pic');
-        const pts = S.friends[v.id] || 0, h = hearts(v.id), frac = h >= 5 ? 1 : (pts % 100) / 100;
+        const pts = S.friends[v.id] || 0, h = hearts(v.id), mh = maxHearts(v.id), frac = h >= mh ? 1 : (pts % 100) / 100;
         const txt = el('div', 'fl-txt'), bar = el('div', 'fbar'), fill = el('i'); fill.style.width = Math.round(frac * 100) + '%'; bar.append(fill);
-        bar.title = h >= 5 ? 'Amizade máxima' : `${pts % 100}/100 pontos para o próximo coração`;
-        txt.append(el('b', '', v.name), heartsNode(h), bar);
+        bar.title = h >= mh ? 'Amizade máxima' : `${pts % 100}/100 pontos para o próximo coração`;
+        txt.append(el('b', '', v.name), heartsNode(h, mh), bar);
         li.append(pic, txt);
         li.onclick = () => { friendSel = v.id; renderTab('amizades'); };
         li.onkeydown = e => { if (e.key === 'Enter') li.onclick(); };
@@ -2547,7 +2618,7 @@
       if (VILLAGERS.some(v => v.hidden && !(v.id === 'lucio' && S.lucio.met))) list.append(el('li', 'dim hint-li', 'Dizem na vila que alguém mora numa tenda na serra, ao norte.'));
       const v = villagerById(friendSel), pts = S.friends[v.id] || 0;
       det.dataset.id = v.id;
-      det.append(el('h3', '', v.name), heartsNode(hearts(v.id)), el('span', 'dim', `${pts} pontos de amizade · ${hearts(v.id)} de 5 corações`), el('p', '', v.bio), el('span', 'dim', `Costuma ficar ${v.place}.`));
+      det.append(el('h3', '', v.name), heartsNode(hearts(v.id), maxHearts(v.id)), el('span', 'dim', `${pts} pontos de amizade · ${hearts(v.id)} de ${maxHearts(v.id)} corações`), el('p', '', v.bio), el('span', 'dim', `Costuma ficar ${v.place}.`));
       if (v.birthday) det.append(el('span', '', `🎂 Aniversário: ${v.birthday.day} do ${SEASONS[v.birthday.season]}${isBirthday(v) ? ' — é hoje!' : ''}`));
       if (GIFT_RULES[v.id]) {
         const R = GIFT_RULES[v.id], L = giftState(v), n = L.gifts.week === weekOf(S.day) ? L.gifts.n : 0;
@@ -2848,7 +2919,7 @@
   window.__trilha = {
     get S() { return S; }, get P() { return P; }, get map() { return map; }, get hover() { return hover; }, get near() { return hover && hover.ok ? hover : null; }, get busy() { return blocked(); }, get hens() { return hens; }, save,
     cam: () => World.camera(map, P.x, P.y), lucioLine: () => bandLine(villagerById('lucio')), weekOf, get pet() { return pet; }, questTarget: id => questTarget(id || tracked()), openMap, fit, petEvent, cleanName, textWidth,
-    villagerAt: id => villagerAt(villagerById(id), S.time), iaraSchedule, iaraLine: () => iaraLine(villagerById('iara')), giftKind: (vid, id) => giftKind(villagerById(vid), id), iaraFinishPainting, tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
+    villagerAt: id => villagerAt(villagerById(id), S.time), iaraSchedule, whereAt: (id, tm) => villagerAt(villagerById(id), tm), calebSchedule, CALEB, maxHearts, addFriend, iaraLine: () => iaraLine(villagerById('iara')), giftKind: (vid, id) => giftKind(villagerById(vid), id), iaraFinishPainting, tile: i => World.tilePos(i), talk: id => talkTo(villagerById(id)),
     place(m, x, y, dir) { enterMap(m, x, y, dir || 'down'); P.x = x; P.y = y; },
     targetAt: (x, y) => targetAt(x, y, actors()), henMenu, newHen: () => { run(() => newHen('narr')); }, get Pobj() { return P; },
     luckKind, rollCatch, buildSeasonLuck, luckFish, luckEffect,

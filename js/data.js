@@ -252,6 +252,37 @@ const VILLAGERS = [
     bdayGift: { good: 'Você lembrou do meu aniversário! Que presente lindo!', neutral: 'Um presente de aniversário? Obrigada por lembrar!', bad: 'Você lembrou… mas eu não gosto muito disso.' },
     limit: { day: 'Você já me deu um presente hoje! Guarda esse para outro dia, tá?', week: 'Essa semana você já me deu presentes demais. Assim eu fico sem graça!' } },
 
+  /* Caleb: neto da Dona Celeste. Chega à vila na primeira visita ao Armazém em horário de atendimento (uma vez só).
+     Gótico/emo, reservado e observador; gosta de computador e de música. Amizade sem romance, até 8 corações.
+     Rotina própria (calebSchedule, game.js); presentes sem preferências cadastradas (todos neutros). */
+  { id: 'caleb', portrait: 'caleb', name: 'Caleb', routine: 'caleb', maxHearts: 8, arrives: true,
+    place: 'no Armazém CELESTE (mora com a avó no andar de cima): à tarde no cantinho do notebook, no fim da tarde no bosque e, à noite, perto da lagoa; às sextas, na praça',
+    bio: 'Neto da Dona Celeste, chegou para morar com a avó em cima do Armazém. Reservado e observador, gosta de computador e de música. Fala pouco no começo, mas é educado; com o tempo, aparecem o humor e o carinho nos pequenos gestos.',
+    look: mkLook('s2', 'emo', 'pretoQuente', 'camisaAberta', '#6a2430', 'calca', '#3a3238', { gender: 'm', body: 'm', shoeColor: '#221c22', earring: true, innerColor: '#1e1a22' }),
+    love: [], like: [], dislike: [],
+    sched: [[360, 'residencia']],                                          // a rotina de verdade vem de calebSchedule (game.js)
+    talk: [
+      ['[neutro]Minha avó conhece todo mundo. Eu ainda confundo os caminhos.', '[neutro]Não tô bravo. Só tava pensando.', '[neutro]Oi. Se precisar de alguma coisa da loja, a vó é que sabe onde fica tudo.', '[neutro]Ainda não sei o nome de metade das ruas. A vila tem rua?'],
+      ['[sorriso]Descobri que o sinal de internet aqui só pega perto da janela. Virou esporte.', '[neutro]A vó acorda antes do sol. Ainda tô tentando entender como.', '[sorriso]Tô montando uma playlist com barulho de chuva por baixo. Fica melhor do que parece.', '[neutro]Você trabalha na roça o dia inteiro? Respeito.'],
+      ['[sorriso]Você sempre chega quando eu tô no meio de uma música. Virou piada interna. Comigo mesmo.', '[contente]Carreguei as caixas da vó hoje. Ela disse que eu carrego tudo torto. Mas carreguei.', '[sorriso]Se quiser, um dia te mostro umas músicas. Só não ri das letras.', '[sorriso]Comecei a gostar do silêncio daqui. Não conta pra ninguém.'],
+      ['[contente]É estranho: na cidade eu conhecia mais gente e conversava menos.', '[sorriso]Guardei a última fatia do bolo da vó. Era pra mim... mas pode ficar com ela.', '[contente]Valeu por sempre parar pra falar comigo. Mesmo quando eu respondo pouco.', '[sorriso]Se um dia você quiser companhia pra caminhar no bosque, é só chamar.'],
+    ],
+    /* falas por lugar e situação (game.js escolhe sem repetir a anterior) */
+    ctx: {
+      almoco: ['[neutro]Hora do almoço. A vó diz que ninguém carrega caixa de barriga vazia.', '[sorriso]Ela me deixou mexer no estoque. Acho que é um teste.'],
+      notebook: ['[neutro]Tô organizando umas músicas. Pode falar, eu tiro um fone.', '[neutro]A internet daqui é lenta, mas é honesta.', '[sorriso]Esse canto virou meu. A vó jura que a ideia foi dela.'],
+      bosque: ['[neutro]O bosque é bem mais quieto que a cidade. Ainda tô me acostumando.', '[neutro]Achei uma trilha boa pra caminhar. Ninguém pergunta nada no caminho.'],
+      lago: ['[neutro]Às vezes eu venho aqui só para ouvir a água.', '[sorriso]Fone com música baixinha e a água por cima. Combinação boa.'],
+      praca: ['[neutro]Sexta a praça enche um pouco. Eu fico mais no canto.', '[sorriso]A fonte faz um barulho bom pra ficar pensando.'],
+      noite: ['[neutro]Daqui a pouco eu subo. A vó só dorme depois que eu subo.', '[sorriso]A loja fechada tem outro clima. Parece outro lugar.'],
+      chuva: ['[neutro]Aqui dá para ouvir a chuva sem o barulho dos carros.', '[sorriso]Dia de chuva é dia de notebook sem culpa.'],
+      domingo: ['[neutro]Domingo de manhã eu ajudo a vó. Ela diz que é o dia mais movimentado.', '[sorriso]Etiquetar pote é mais difícil do que parece.'],
+    },
+    again: ['[neutro]A gente já conversou hoje. Mas... pode ficar, se quiser.', '[sorriso]De novo? Tá. Eu não me importo.', '[neutro]Hm? Ah, oi de novo.'],
+    gift: { love: '[sorriso]Pra mim? Valeu. De verdade.', like: '[sorriso]Pra mim? Valeu. De verdade.', neutral: '[sorriso]Pra mim? Valeu. De verdade.', dislike: '[neutro]Hm. Obrigado por lembrar de mim.' },
+    /* chegada (uma vez só): Celeste apresenta o neto no Armazém */
+    arrival: [['celeste', '[contente]Meu neto chegou para morar comigo! Este é o Caleb.'], ['caleb', '[neutro]Oi. Ainda tô conhecendo o lugar.'], ['celeste', '[contente]Você pode mostrar a vila para ele qualquer dia!'], ['caleb', '[envergonhado]Vó… deixa a pessoa fazer as compras primeiro.']] },
+
   /* Lúcio vive na serra. As falas começam com [expressão] do retrato: neutro, desconfiado, contente, emocionado.
      talk tem quatro faixas: 0 coração, 1–2, 3–4 e 5. Presentes e aniversário têm regras próprias (ver game.js). */
   { id: 'lucio', name: 'Lúcio', map: 'montanha', portrait: 'lucio', hidden: true,
@@ -467,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Capim e terra da fazenda',
+  title: 'Caleb chegou à vila',
   items: [
-    'Capim alto mais cheio: folhas compridas e curvas, de alturas e direções variadas, e florzinhas ou sementes em alguns.',
-    'Capins vizinhos se emendam em moitas contínuas de bordas irregulares; cada um tem uma sombra discreta e as pontas balançam de leve.',
-    'Quem passa atrás do capim tem os pés cobertos pelas folhas da frente.',
-    'A terra ocre ganhou uma textura fina, com pequenas marcas em grupos espaçados e sem manchas grandes.',
-    'A grama baixa das bordas tem pequenos grupos de folhas variadas, diferente do capim alto que se corta com a foice.',
+    'Novo morador: Caleb, neto da Dona Celeste, que vem morar com a avó em cima do Armazém CELESTE. É apresentado uma vez, na primeira visita ao Armazém em horário de atendimento.',
+    'Rotina própria: almoço e caixas com a avó ao meio-dia, notebook no térreo à tarde, bosque e lagoa no fim do dia. Sextas na praça, domingos ajudando no Armazém e dias de chuva em casa.',
+    'Conversas próprias por lugar e situação; amizade de até 8 corações na aba Amizades, com presentes neutros por enquanto.',
+    'Retratos próprios com quatro expressões e sprite com franja, mecha prateada, camisa vinho, brinco e pingente de mariposa.',
+    'No Armazém: a porta da escada para o andar de cima (particular) e o cantinho do notebook do Caleb.',
   ],
 };
