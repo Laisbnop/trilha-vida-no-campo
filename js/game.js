@@ -753,7 +753,12 @@
     const mix = j => A[j] + (B[j] - A[j]) * k;
     const night = Math.max(0, Math.min(1, m < 480 ? (450 - m) / 90 : (m - 1110) / 150));
     if (inside) return { r: 70, g: 46, b: 30, a: 0.10 * night, glow: 0 };            // interiores: luz própria, só um pouco mais quente à noite
-    return { r: Math.round(mix(1)), g: Math.round(mix(2)), b: Math.round(mix(3)), a: +mix(4).toFixed(3), glow: +night.toFixed(3) };
+    const L = { r: Math.round(mix(1)), g: Math.round(mix(2)), b: Math.round(mix(3)), a: +mix(4).toFixed(3), glow: +night.toFixed(3) };
+    if (S && calendar().si === 1 && night < 0.5) {                     // verão: luz do dia um pouco mais quente (a noite não muda)
+      const w = 0.07 * (1 - night * 2), k2 = L.a / (L.a + w);
+      L.r = Math.round(L.r * k2 + 255 * (1 - k2)); L.g = Math.round(L.g * k2 + 206 * (1 - k2)); L.b = Math.round(L.b * k2 + 130 * (1 - k2)); L.a = +(L.a + w).toFixed(3);
+    }
+    return L;
   }
   const outdoor = () => map.id === 'fora' || map.id === 'montanha';
 
@@ -890,9 +895,14 @@
 
   const SEASON_IN = ['na Primavera', 'no Verão', 'no Outono', 'no Inverno'];
   const seasonList = l => { const n = l.map(i => SEASON_IN[i]); return n.length > 1 ? n.slice(0, -1).join(', ') + ' e ' + n[n.length - 1] : n[0]; };
+  /* A planta cresce nesta estação? (sem seasons: o ano inteiro) */
+  const cropInSeason = (crop, si = calendar().si) => { const C = CROPS[crop]; return !C.seasons || C.seasons.includes(si); };
+  /* Semente plantada que ainda não germinou (nada cresceu e nunca foi colhida). */
+  const dormantSeed = o => !!(o && o.crop && !o.dead && !(o.g > 0) && !(o.cyc > 0));
   /* Texto de uma plantação: estágio, noites regadas, rebrota e rega. */
   function cropText(o) {
     const C = CROPS[o.crop], st = cropState(o);
+    if (dormantSeed(o) && !cropInSeason(o.crop)) return `Semente de ${C.name.toLowerCase()} esperando a estação: cresce ${seasonText(C.seasons)}`;
     if (st.ripe) return `${C.name}: pronto para colher`;
     const fase = st.regrow ? `nova colheita em ${st.left} dia(s) regado(s)` : C.stages ? `estágio ${st.stage} de 5 · ${st.left} dia(s) regado(s) para colher` : `${Math.min(o.g || 0, C.days)} de ${C.days} dias`;
     return `${C.name}: ${fase}${o.w ? ', regado' : ', precisa de água'}`;
@@ -914,6 +924,10 @@
       const nm = CROPS[o.crop].name.toLowerCase();
       if (id === 'foice') return T(`Remover pé seco de ${nm}`, () => { if (!useTool('foice', 1)) return; S.farm.tiles[i] = { k: 'soil' }; bang(cx, cy, 'leaf'); toast('Pé seco removido'); save(); });
       return T(`Pé seco de ${nm} — use a foice`, () => tip(`Pé seco de ${nm}: a estação acabou. Use a foice para limpar o canteiro.`));
+    }
+    if (o && o.k === 'soil' && dormantSeed(o) && !cropInSeason(o.crop) && id === 'foice') {   // semente fora de estação: a foice limpa (sem devolver)
+      const nm = CROPS[o.crop].name.toLowerCase();
+      return T(`Remover semente de ${nm}`, () => { if (!useTool('foice', 1)) return; S.farm.tiles[i] = { k: 'soil' }; bang(cx, cy, 'leaf'); toast('Semente removida'); save(); });
     }
     if (o && o.k === 'soil' && o.crop && cropState(o).ripe) return T('Colher ' + CROPS[o.crop].name.toLowerCase(), () => {
       const C = CROPS[o.crop];
@@ -941,10 +955,12 @@
     if (kind === 'seed') {
       if (o && o.k === 'soil' && !o.crop) {
         const C = CROPS[ITEMS[id].crop], si = calendar().si;
-        if (C.seasons && !C.seasons.includes(si)) return T(`${C.name}: fora de estação`, () => tip(`${C.name} só pode ser plantado ${seasonList(C.seasons)}. Nada foi gasto.`));
+        if (C.seasons && !C.seasons.includes(si)) return T(`Plantar ${C.name.toLowerCase()} (fora de estação)`, () => {   // planta, mas só germina na estação certa
+          run(async () => { if (await ask('Esta semente não cresce nesta estação. Plantar mesmo assim?', ['Sim', 'Não']) === 0) plantSeed(i, id); });
+        });
         return T('Plantar ' + C.name.toLowerCase(), () => {
           const daysLeft = SEASON_DAYS - calendar().day;                 // manhãs que ainda restam nesta estação
-          if (C.seasonal && C.days > daysLeft) {
+          if (C.seasonal && C.days > daysLeft && !cropInSeason(ITEMS[id].crop, (si + 1) % 4)) {   // só avisa se a próxima estação não serve
             run(async () => { if (await ask(`Não dá tempo: ${C.name.toLowerCase()} precisa de ${C.days} dias regados e a estação acaba em ${daysLeft + 1} dia(s). O pé seca na troca de estação. Plantar mesmo assim?`, ['Sim, plantar', 'Não']) === 0) plantSeed(i, id); });
             return;
           }
@@ -1009,6 +1025,7 @@
     if (screen !== 'game' || !S) return;
     const k = e.key, low = k.length === 1 ? k.toLowerCase() : k;
     // 1) carta aberta: E ou Esc só fecham a carta
+    if (!$('seed-info').hidden) { if (['Escape', 'Enter', ' '].includes(k) || low === 'e') { e.preventDefault(); if (!e.repeat) closeSeedInfo(); } return; }
     if (!$('painting').hidden) { if (['Escape', 'Enter', ' '].includes(k) || low === 'e') { e.preventDefault(); if (!e.repeat) $('painting-ok').click(); } return; }
     if (!$('letter').hidden) { if ((k === 'Escape' || low === 'e') && !e.repeat) { e.preventDefault(); $('letter-ok').click(); } return; }
     if (typing(e)) return;
@@ -2222,7 +2239,7 @@
     let grew = 0, ripe = 0, fruits = 0, eggs = 0, hungry = 0;
     for (const key in S.farm.tiles) {
       const o = S.farm.tiles[key];
-      if (o.k === 'soil') { if (o.crop && !o.dead && o.w && !cropState(o).ripe) { o.g = (o.g || 0) + 1; grew++; if (cropState(o).ripe) ripe++; } o.w = 0; }   // sem rega, não cresce; maduro espera a colheita
+      if (o.k === 'soil') { if (o.crop && !o.dead && o.w && !cropState(o).ripe && cropInSeason(o.crop, calendar().si)) { o.g = (o.g || 0) + 1; grew++; if (cropState(o).ripe) ripe++; } o.w = 0; }   // sem rega ou fora de estação, não cresce; maduro espera a colheita
       if (o.k === 'tree') { const T = TREES[o.sp]; o.age++; if (o.age >= T.grow && !o.fruit) { o.cool = (o.cool || 0) + 1; if (o.cool >= T.every) { o.fruit = true; o.cool = 0; fruits++; } } }
     }
     S.coop.hens.forEach(h => { if (S.coop.feed > 0) { S.coop.feed--; h.well = Math.min(100, h.well + 6); if (S.coop.eggs < S.coop.hens.length * 3) { S.coop.eggs++; eggs++; } } else { h.well = Math.max(0, h.well - 12); hungry++; } });
@@ -2233,8 +2250,11 @@
     Object.keys(S.nature.rocks).forEach(k => { if (S.day >= S.nature.rocks[k]) delete S.nature.rocks[k]; });
     refreshForage(S);
     const newSeason = calendar().si !== calendar(finished).si;
-    let dried = 0;                                                       // troca de estação: morango e abóbora secam (frutos não colhidos se perdem)
-    if (newSeason) for (const key in S.farm.tiles) { const o = S.farm.tiles[key]; if (o.k === 'soil' && o.crop && !o.dead && CROPS[o.crop].seasonal) { o.dead = true; o.w = 0; dried++; } }
+    let dried = 0;                                                       // troca de estação: plantas já germinadas secam se não crescem na estação nova (frutos não colhidos se perdem)
+    if (newSeason) for (const key in S.farm.tiles) {                     // a que cresce nas duas estações (milho: verão e outono) continua; semente que não germinou espera
+      const o = S.farm.tiles[key]; if (o.k !== 'soil' || !o.crop || o.dead || !CROPS[o.crop].seasonal || cropInSeason(o.crop) || dormantSeed(o)) continue;
+      o.dead = true; o.w = 0; dried++;
+    }
     const spawned = spawnSeasonal();
     World.setSeason(calendar().si);
     const b = World.get('casa').objs.find(o => o.kind === 'bed');
@@ -2344,7 +2364,10 @@
     if (tab === 'ajuste') return;
     if (tab === t) closeModal(); else { picked = null; renderTab(t); }
   }
+  $('seed-info-ok').onclick = () => closeSeedInfo();
+  $('seed-info').onclick = e => { if (e.target === $('seed-info')) closeSeedInfo(); };
   function closeModal() {
+    closeSeedInfo();
     if (!$('modal').hidden && tab === 'ajuste' && S && needsSetup()) return;      // o ajuste precisa ser respondido
     $('modal').hidden = true; if (S) { renderHotbar(); renderHud(); }
   }
@@ -2644,14 +2667,19 @@
       const row = (id, name, unit, max, label, go, extra) => {
         const li = el('li'), meta = el('div', 'meta'), qty = el('b', 'qty', '1'), tot = el('span', '', '');
         let n = 1; const upd = () => { qty.textContent = n; tot.textContent = `${label} ${n} × ${unit} = ${n * unit} moedas`; ok.disabled = !max || (label === 'Comprar' && n * unit > S.coins); };
-        const ok = btn('btn primary', 'Confirmar', tx(label + id, () => go(n))); ok.dataset.item = id;
-        const left = el('div', 'shop-item'); left.append(cloneIcon(extra || id), el('span', '', `${name} — ${unit} moedas cada`));
+        const seed = label === 'Comprar' && ITEMS[id] && ITEMS[id].kind === 'seed';
+        const ok = btn('btn primary', label === 'Comprar' ? 'Comprar' : 'Confirmar', tx(label + id, () => go(n))); ok.dataset.item = id;
+        const left = el(seed ? 'button' : 'div', 'shop-item' + (seed ? ' seed-open' : '')); left.append(cloneIcon(extra || id), el('span', '', `${name} — ${unit} moedas cada`));
+        if (seed) {                                                    // ícone e nome abrem as informações de cultivo (não compram)
+          left.type = 'button'; left.dataset.info = id; left.title = 'Informações de cultivo'; left.onclick = () => openSeedInfo(id);
+          if (!cropInSeason(ITEMS[id].crop)) left.append(el('span', 'tag-out', 'Fora de estação'));
+        }
         meta.append(btn('btn', '−', () => { n = Math.max(1, n - 1); upd(); }), qty, btn('btn', '+', () => { n = Math.min(Math.max(1, max), n + 1); upd(); }), tot, ok);
         li.append(left, meta); upd(); return li;
       };
       body.append(el('h3', '', 'Comprar'));
       const buy = el('ul', 'list buy');
-      SHOP.filter(id => !ITEMS[id].seasons || ITEMS[id].seasons.includes(calendar().si)).forEach(id => buy.append(row(id, ITEMS[id].name, ITEMS[id].price, 20, 'Comprar', n => {
+      SHOP.forEach(id => buy.append(row(id, ITEMS[id].name, ITEMS[id].price, 20, 'Comprar', n => {
         if (S.coins < n * ITEMS[id].price) return toast('Moedas insuficientes');
         if (!canAdd(id, n)) return toast('Mochila cheia');
         S.coins -= n * ITEMS[id].price; addTo(S.inv, id, n); toast(`+${n} ${ITEMS[id].name}`); save(); renderTab('loja');
@@ -2703,6 +2731,24 @@
     },
   };
   const SPECIAL = ['bau', 'roupa', 'loja', 'ajuste'];
+  /* Painel "Informações de cultivo": abre por cima da loja (sem comprar nada e sem mexer na lista). */
+  function openSeedInfo(id) {
+    const crop = ITEMS[id].crop, C = CROPS[crop], prod = ITEMS[crop], box = $('seed-info'), body = $('seed-info-body'), inS = cropInSeason(crop);
+    body.replaceChildren();
+    const head = el('div', 'si-head'), ic = el('canvas', 'pixel'); ic.width = 16; ic.height = 16; ic.getContext('2d').drawImage(World.icon(crop), 0, 0);
+    head.append(ic, el('b', '', C.name)); body.append(head);
+    const dl = el('dl', 'si-list'), add = (k, v) => dl.append(el('dt', '', k), el('dd', '', v));
+    add('Semente', `${ITEMS[id].price} moedas`); add('Venda', `${prod.sell} moedas por ${prod.name.toLowerCase()}`);
+    add('Estações', C.seasons ? C.seasons.map(i => SEASONS[i]).join(', ') : 'o ano inteiro');
+    add('Primeira colheita', `${C.days} dias de crescimento`); add('Produção', `${C.yield || 1} por colheita`);
+    add('Tipo', C.regrow ? `produção recorrente: nova colheita a cada ${C.regrow} dias após colher` : 'colheita única');
+    add('Rega', 'precisa de rega: só cresce nos dias regados'); add('Agora', inS ? `cresce ${SEASON_IN[calendar().si] || 'nesta estação'}` : 'fora de estação');
+    body.append(el('p', '', cropSummary(crop)), dl);
+    if (C.regrow) body.append(el('p', 'dim', 'Quantas colheitas dá depende dos dias que ainda restam na estação, da rega e de quando você colhe.'));
+    if (!inS) body.append(el('p', 'si-out', 'Pode ser comprada e plantada agora, mas só começará a crescer na estação indicada.'));
+    box.hidden = false; $('seed-info-ok').focus();
+  }
+  const closeSeedInfo = () => { const b = $('seed-info'); if (b && !b.hidden) { b.hidden = true; return true; } return false; };
   /* Nível de pesca na aba Personagem: nível, barra e a zona verde que ele dá. */
   function fishSkill() {
     const box = el('div', 'xp fish-skill');

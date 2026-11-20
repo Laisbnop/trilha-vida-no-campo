@@ -592,3 +592,22 @@ body:has(#screen-create:not([hidden])) { background: #2e1c10 repeating-linear-gr
 .skill-ups, .skill-ups span { color: #3a2614; }
 .skill-ups h3 { color: #7a2a14; }
 .skill-ups b { color: #3a2614; font-family: var(--px); font-weight: normal; font-size: 11px; }
+
+/* loja: informações de cultivo */
+.list.buy .shop-item.seed-open { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; width: fit-content; max-width: 100%; }
+.list.buy .shop-item.seed-open span:not(.tag-out) { text-decoration: underline dotted; text-underline-offset: 3px; }
+.list.buy .shop-item.seed-open:hover span:not(.tag-out) { color: #7a2a14; }
+.tag-out { font-size: 12px; color: #fff; background: #a8743e; border-radius: 3px; padding: 1px 5px; }
+.seed-info { position: fixed; inset: 0; z-index: 12; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 6, .45); padding: 12px; }
+.seed-info[hidden] { display: none; }
+.si-win { width: min(440px, 100%); max-height: min(70vh, 520px); display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: #f6e4bb; color: #3a2614; border: 3px solid #7a4a26; border-radius: 4px; box-shadow: 0 0 0 2px #3a2214, inset 0 0 0 2px #fff4d8; }
+.si-win h3 { margin: 0; color: #7a2a14; }
+.si-body { overflow-y: auto; min-height: 0; padding-right: 4px; font-size: 16px; }
+.si-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.si-head canvas { width: 48px; height: 48px; image-rendering: pixelated; }
+.si-head b { font-family: var(--px); font-weight: normal; font-size: 13px; }
+.si-list { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 8px 0; }
+.si-list dt { font-weight: bold; } .si-list dd { margin: 0; }
+.si-out { color: #a8401a; font-weight: bold; }
+.si-body .dim { color: #6a4a2a; font-style: italic; }
+.si-win .btn { align-self: flex-end; }

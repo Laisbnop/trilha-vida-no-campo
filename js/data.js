@@ -7,7 +7,7 @@ const DAY_END = 26 * 60;           // 02:00 da madrugada seguinte: o personagem 
 const MS_PER_GAME_MIN = 900;       // 54 s reais por hora de jogo (9 s a cada 10 min) → 20 horas em 18 minutos ativos
 /* Comestíveis do jogo (regra do vale): só os itens desta lista podem ser comidos, cada um
    com o valor "food" (energia recuperada) definido no item. Outras flores e plantas não. */
-const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango', 'alga'];
+const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango', 'alga', 'milho', 'melao', 'repolho_roxo'];
 const MAX_ENERGY = 100;
 const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
 
@@ -23,10 +23,16 @@ const ITEMS = {
   vara_fibra: { name: 'Vara de fibra de vidro', kind: 'tool', rod: true, bait: true, desc: 'Leve e firme. Aceita isca de minhoca, que faz o peixe morder mais rápido.' },
   minhoca:  { name: 'Minhoca', kind: 'bait', price: 20, desc: 'Isca simples. Carregue na vara de fibra de vidro pelo inventário: cada lançamento usa uma.' },
 
-  sem_rabanete: { name: 'Sementes de rabanete', kind: 'seed', crop: 'rabanete', price: 12, desc: 'Precisa de rega: 3 dias regados até a colheita. Colheita única: depois de colher, o canteiro fica com a terra preparada para uma nova semente. Cada rabanete vende por 20 moedas.' },
-  sem_tomate:   { name: 'Sementes de tomate',   kind: 'seed', crop: 'tomate',   price: 20, desc: 'Precisa de rega: 4 dias regados até a colheita. Colheita única: depois de colher, o canteiro fica com a terra preparada para uma nova semente. Cada tomate vende por 60 moedas.' },
-  sem_abobora:  { name: 'Sementes de abóbora',  kind: 'seed', crop: 'abobora',  price: 42, seasons: [0, 2], desc: 'Plante na Primavera ou no Outono. Precisa de rega: 13 dias regados até a primeira abóbora e depois 6 para cada nova (1 por colheita, contando a partir da colheita); o pé continua no lugar e seca no fim da estação. Cada abóbora vende por 88 moedas.' },
-  sem_morango:  { name: 'Sementes de morango',  kind: 'seed', crop: 'morango',  price: 150, seasons: [0, 2, 3], desc: 'Plante na Primavera, no Outono ou no Inverno. Precisa de rega: 5 dias regados até o primeiro morango e depois 4 para cada novo (1 por colheita, contando a partir da colheita); o pé continua no lugar e seca no fim da estação. Cada morango vende por 320 moedas.' },
+  sem_rabanete: { name: 'Sementes de rabanete', kind: 'seed', crop: 'rabanete', price: 12, desc: '' },
+  sem_tomate:   { name: 'Sementes de tomate',   kind: 'seed', crop: 'tomate',   price: 20, desc: '' },
+  sem_abobora:  { name: 'Sementes de abóbora',  kind: 'seed', crop: 'abobora',  price: 42, desc: '' },
+  sem_morango:  { name: 'Sementes de morango',  kind: 'seed', crop: 'morango',  price: 150, desc: '' },
+  sem_milho:         { name: 'Sementes de milho',        kind: 'seed', crop: 'milho',        price: 150, desc: '' },
+  sem_melao:         { name: 'Sementes de melão',        kind: 'seed', crop: 'melao',        price: 80,  desc: '' },
+  sem_repolho_roxo:  { name: 'Sementes de repolho roxo', kind: 'seed', crop: 'repolho_roxo', price: 100, desc: '' },
+  milho:        { name: 'Milho',        cat: 'vegetal', sell: 50,  food: 25,  desc: 'Espiga dourada de verão, docinha. Comestível: recupera 25 de energia.' },
+  melao:        { name: 'Melão',        cat: 'fruta',   sell: 250, food: 113, desc: 'Redondo, perfumado e muito doce. Comestível: recupera 113 de energia.' },
+  repolho_roxo: { name: 'Repolho roxo', cat: 'vegetal', sell: 260, food: 75,  desc: 'Folhas firmes e roxas, boas para salada. Comestível: recupera 75 de energia.' },
   rabanete: { name: 'Rabanete', sell: 20, desc: 'Crocante e ardidinho.' },
   tomate:   { name: 'Tomate',   sell: 60, desc: 'Vermelho e suculento.' },
   abobora:  { name: 'Abóbora',  sell: 88, desc: 'Pesada e doce.' },
@@ -68,14 +74,32 @@ const ITEMS = {
 /* Cultivos. days = noites regadas até a primeira colheita. Os de rebrota têm também:
    stages = noites regadas em cada um dos 5 estágios (somam days); regrow = noites regadas
    entre uma colheita e a próxima (o pé fica); yield = itens por colheita; seasons = estações
-   de plantio (0 Primavera, 1 Verão, 2 Outono, 3 Inverno); seasonal = o pé seca quando a
-   estação muda. Sem rega, a noite não conta. */
+   em que a planta cresce (0 Primavera, 1 Verão, 2 Outono, 3 Inverno); sem seasons, cresce o ano
+   inteiro. seasonal = a planta já germinada seca ao entrar numa estação em que não cresce. Uma
+   semente plantada fora de estação espera (não germina) até chegar uma estação certa.
+   Sem rega, a noite não conta; fora de estação, também não. */
 const CROPS = {
   rabanete: { name: 'Rabanete', days: 3, seed: 'sem_rabanete' },
   tomate:   { name: 'Tomate',   days: 4, seed: 'sem_tomate' },
   abobora:  { name: 'Abóbora',  days: 13, seed: 'sem_abobora', stages: [1, 2, 3, 4, 3], regrow: 6, yield: 1, seasons: [0, 2], seasonal: true },
   morango:  { name: 'Morango',  days: 5, seed: 'sem_morango', stages: [1, 1, 1, 1, 1], regrow: 4, yield: 1, seasons: [0, 2, 3], seasonal: true },
+  milho:    { name: 'Milho',    days: 14, seed: 'sem_milho', stages: [2, 3, 3, 3, 3], regrow: 4, yield: 1, seasons: [1, 2], seasonal: true, tall: true },
+  melao:    { name: 'Melão',    days: 12, seed: 'sem_melao', stages: [1, 2, 3, 3, 3], yield: 1, seasons: [1], seasonal: true },
+  repolho_roxo: { name: 'Repolho roxo', days: 9, seed: 'sem_repolho_roxo', stages: [1, 1, 2, 2, 3], yield: 1, seasons: [1], seasonal: true },
 };
+const SEASON_NAMES_LOW = ['primavera', 'verão', 'outono', 'inverno'];
+const seasonText = list => { const n = list.map(i => (i === 0 ? 'na ' : 'no ') + SEASON_NAMES_LOW[i]); return n.length > 1 ? n.slice(0, -1).join(', ') + ' e ' + n[n.length - 1] : n[0]; };
+/* Texto de cultivo gerado dos dados reais (sem números repetidos em descrições). */
+function cropSummary(crop) {
+  const C = CROPS[crop], prod = ITEMS[crop].name.toLowerCase(), n = C.yield || 1;
+  const where = C.seasons ? (C.seasons.length === 1 ? ` ${seasonText(C.seasons)}` : '') : '';
+  let t = `Cresce em ${C.days} dias${where}. Produz ${n} ${prod}`;
+  t += C.regrow ? ` e volta a produzir a cada ${C.regrow} dias após colher.` : '. Colheita única: plante outra semente para produzir novamente.';
+  if (C.seasons && C.seasons.length > 1) t += ` Cresce ${seasonText(C.seasons)}.`;
+  if (!C.seasons) t += ' Cresce o ano inteiro.';
+  return t;
+}
+Object.keys(CROPS).forEach(c => { ITEMS[CROPS[c].seed].desc = cropSummary(c) + ' Precisa de rega.'; });
 /* Estado de uma plantação { crop, g, w, cyc, dead }: g = noites regadas no ciclo atual;
    cyc = colheitas já feitas (0 = primeira produção); dead = pé seco.
    Devolve { need, ripe, left, stage (1–5 na primeira produção), regrow, frac }. */
@@ -92,7 +116,7 @@ const TREES = {
   goiaba:  { name: 'Goiabeira',  grow: 6, every: 3, n: 2, fruit: 'goiaba' },
 };
 
-const SHOP = ['sem_rabanete', 'sem_tomate', 'sem_abobora', 'sem_morango', 'muda_laranja', 'muda_goiaba', 'racao', 'chapeu_palha', 'minhoca'];
+const SHOP = ['sem_rabanete', 'sem_tomate', 'sem_abobora', 'sem_morango', 'sem_milho', 'sem_melao', 'sem_repolho_roxo', 'muda_laranja', 'muda_goiaba', 'racao', 'chapeu_palha', 'minhoca'];
 const HEN_PRICE = 130, MAX_HENS = 4;
 
 /* Aparência. Todas as opções valem para qualquer gênero. */
@@ -421,7 +445,7 @@ const SKILLS = {
     perk: l => (l ? `Machado gasta ${l * 5}% menos energia.` : 'Machado com gasto normal de energia.'), tools: ['machado'] },
 };
 const SKILL_GAIN = {
-  harvest: { rabanete: 15, tomate: 12, morango: 18, abobora: 31 },
+  harvest: { rabanete: 15, tomate: 12, morango: 18, abobora: 31, milho: 10, melao: 27, repolho_roxo: 28 },
   henPet: 5, egg: 5,
   fish: { sardinha: 13, tucunare: 20 }, junk: 3, perfectMult: 2.4,
   forage: 7, tree: 12, stump: 1,
@@ -443,13 +467,13 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Habilidades',
+  title: 'Verão',
   items: [
-    'Novas habilidades: Cultivo, Pesca e Coleta, cada uma do nível 0 ao 10, com experiência própria (100, 380, 770, 1.300 até 15.000 de XP total).',
-    'Cultivo: colher plantações, fazer carinho nas galinhas e recolher ovos. Cada nível faz a enxada e o regador gastarem 5% menos energia.',
-    'Pesca: capturas concluídas dão XP (sardinha 13, tucunaré 20, alga, musgo e lixo 3; perfeito vale 2,4×). Cada nível aumenta a faixa verde em 1 ponto, e o nível 2 libera a vara de fibra de vidro.',
-    'Coleta: flores, frutos e cogumelos da natureza, árvores derrubadas e tocos. Cada nível faz o machado gastar 5% menos energia.',
-    'O XP entra na hora; o nível novo vale depois de dormir, com um resumo de tudo o que subiu. A nova aba Habilidades (estrela) mostra o progresso.',
-    'A pesca antiga foi convertida em XP de Pesca. Cultivo e Coleta começam do zero.',
+    'Ambientação de verão: grama verde mais quente, copas cheias e vivas (sem as flores da primavera), florzinhas amarelas e laranja e luz do dia um pouco mais quente.',
+    'Milho: semente 150, vende por 50, primeira colheita em 14 dias e nova colheita a cada 4 dias, sem limite. Cresce no Verão e no Outono e passa de uma estação para a outra sem perder o progresso.',
+    'Melão (semente 80, vende por 250, 12 dias) e repolho roxo (semente 100, vende por 260, 9 dias): só de Verão, colheita única.',
+    'Os três são comestíveis (+25, +113 e +75 de energia) e dão XP de Cultivo (10, 27 e 28).',
+    'O Armazém vende todas as sementes o ano inteiro. Plantar fora de estação pergunta antes; a semente espera, sem crescer, até chegar a estação certa. A foice remove a semente que está esperando.',
+    'Loja mais compacta: clique no nome ou no ícone de uma semente para ver as "Informações de cultivo" sem comprar.',
   ],
 };
