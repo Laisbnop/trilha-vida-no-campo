@@ -312,12 +312,23 @@ A área rural e o centrinho têm pisos diferentes:
   serra): tons de ocre e marrom claro, com manchas de terra compactada, pedrinhas
   ocasionais e pouquíssimos grãos claros. As bordas são levemente irregulares, com
   a grama entrando em alguns trechos, e a faixa central fica limpa para andar.
-- **Calçamento de pedras** (o centrinho): da frente do Armazém CELESTE, passando
-  pela rua até a casa de Seu Honório, até a praça da fonte, num piso contínuo, e
-  também na praça do coreto. As pedras são pequenas e irregulares, de cantos
-  suaves, em bege, cinza quente e marrom suave, com juntas escuras, luz em cima e
-  sombra embaixo. Onde o calçamento encontra a terra ou a grama, uma fileira de
-  pedras de meio-fio fecha a borda.
+- **Calçamento antigo do centrinho**: da frente do Armazém CELESTE, passando
+  pela rua até a casa de Seu Honório, até a praça da fonte, num piso contínuo.
+  São pedras pequenas, arredondadas ou levemente retangulares e de cantos gastos,
+  em fileiras desencontradas com pequenas variações de tamanho e posição. Os tons
+  ficam próximos de bege, cinza quente e marrom suave, com algumas peças mais
+  claras ou mais escuras, distribuídas com moderação. As juntas são estreitas e só
+  um pouco mais escuras, com luz discreta em cima de cada peça e sombra suave
+  embaixo. O padrão é alinhado pelas coordenadas do mundo: entre a frente do
+  Armazém e a praça não há emenda nem reinício da textura, e ela não muda com a
+  câmera nem entre os quadros. Nas bordas, uma fileira discreta de pedras de
+  contorno fecha o piso. Junto à grama, a borda tem pequenas falhas e alguns
+  tufos, sem recorte reto. Junto ao caminho de terra (que continua de terra até a
+  fazenda), as pedras terminam bem encaixadas e a terra chega até elas, um pouco
+  mais escura e compactada. A fonte, os bancos, os postes e a entrada do Armazém
+  continuam no mesmo lugar.
+- **Calçamento de pedras irregulares** na praça do coreto (vila sul), com
+  meio-fio nas bordas.
 - **Areia** nas margens do rio.
 
 As ruas não são mais pintadas retângulo por retângulo: cada trecho marca uma
