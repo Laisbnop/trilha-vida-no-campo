@@ -707,10 +707,8 @@
     const c = $('scene'), W = window.innerWidth, H = window.innerHeight;
     const k = Math.max(2, Math.min(4, Math.round(H / 210), Math.round(W / 300)));   // escala inteira (pixels maiores, como num jogo de fazenda clássico)
     const cw = Math.ceil(W / k), ch = Math.ceil(H / k);
-    /* o canvas tem a resolução da tela (cw×k); o mundo continua em cw×ch e é desenhado com escala inteira k,
-       então o cenário fica idêntico. Só o que tem arte própria em resolução maior (Caleb) aproveita os pixels extras. */
-    SCALE = k;
-    if (c.width !== cw * k || c.height !== ch * k) { c.width = cw * k; c.height = ch * k; }
+    SCALE = 1;                                                            // um pixel do canvas = um pixel do mundo (todos os personagens na mesma grade)
+    if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
     c.style.width = cw * k + 'px'; c.style.height = ch * k + 'px';
     c.style.left = Math.floor((W - cw * k) / 2) + 'px'; c.style.top = Math.floor((H - ch * k) / 2) + 'px';
     World.setView(cw, ch);
