@@ -491,35 +491,37 @@ galinheiro mantêm o desenho próprio. O mapa (M) mostra as fachadas e as árvor
 
 ### Visual da fazenda
 
-- **Chão**: clareiras de terra natural em volta da área de plantio, manchas de
-  grama de tamanhos e contornos variados, mais tufos de capim nas bordas
-  (perto dos pinheiros, da cerca e da mata) e quase nenhum no meio, deixando
-  áreas abertas para trabalhar. Pequenos grupos de florzinhas (ou folhas secas
-  no outono) ficam espaçados. A terra natural é clara e ocre; a terra preparada
-  é marrom e revolvida. Nada disso aparece sobre caminhos, construções ou
-  objetos, e a grade de plantio continua existindo sem ser desenhada no chão.
-- **Canteiros**: terra revolvida com sulcos curtos e desencontrados, torrões e
-  leves diferenças de tom. Canteiros vizinhos se ligam, sem moldura em cada
-  célula; os lados livres terminam numa borda de terra irregular. Molhado fica
-  bem mais escuro. Plantas, estágios, rega e seleção não mudaram.
-- **Pinheiros**: ramos em camadas que caem umas sobre as outras, com pontas
-  recortadas, luz à esquerda, sombra sob cada camada e tronco com casca e raízes.
-  Cada pinheiro varia em altura, largura, número de camadas e inclinação, e as
-  árvores redondas variam o desenho da copa, para as bordas não parecerem uma
-  parede repetida. Posição, colisão, corte e produção das árvores não mudaram.
-- **Pedras, galhos, tocos e matinhos**: pedras de silhueta irregular, com face
-  clara em cima, lado na sombra, rachaduras ou musgo e sombra de contato; galhos
-  com casca, raminhos e pontas de corte; tocos com raízes, casca estriada e
-  anéis no corte; matinhos com lâminas de alturas diferentes. Cada tipo tem
-  quatro variações escolhidas pela posição do objeto, então a aparência é a
-  mesma ao mover a câmera, salvar e carregar. Quantidade, posição, interação e
-  recursos de cada objeto não mudaram.
-- **Lago**: margem com pequenas reentrâncias, barranco de terra com a grama
-  entrando, pedrinhas e taboas; faixa rasa clara junto à margem e água mais
-  funda no meio, com ondulações pequenas e suaves. A posição, a área de pesca e
-  as colisões são as mesmas.
-- Tudo segue as estações e a luz do dia e da noite. A casa e o galinheiro não
-  mudaram.
+Pixel art de cores vivas, terra quente e vegetação volumosa, com detalhes bem
+desenhados e sem ruído espalhado. Nada usa desfoque.
+
+- **Terra da área de trabalho**: em volta dos canteiros há uma clareira contínua
+  de terra ocre dourada, com variações próximas e discretas em áreas grandes. A
+  estrada em frente à casa e os caminhos da fazenda fazem parte dessa clareira, em
+  vez de faixas coladas por cima, e na porteira a terra emenda aos poucos com a
+  estrada da vila. A grama continua junto à casa, ao lago e nas bordas. Marcas de
+  terra, pedrinhas e brotinhos aparecem só em pequenos grupos ocasionais.
+- **Grama e vegetação**: verdes vivos, com a grama avançando sobre a terra em
+  bordas irregulares, base mais escura, sombra suave na terra logo abaixo e tufos
+  de folhas reconhecíveis (base escura, volume médio, pontas iluminadas). Mais
+  touceiras nas bordas da fazenda e a área de produção aberta. Os tufos
+  decorativos são menores que o mato removível.
+- **Canteiros**: marrom quente, mais escuro que a terra natural, com textura fina
+  de sulcos curtos e bordas simples. Terra natural, solo preparado seco e solo
+  regado ficam bem diferentes, e as plantas se destacam. Canteiros vizinhos se
+  ligam; a grade de plantio e a seleção não mudaram.
+- **Pinheiros**: camadas de folhagem com tufos de folhas iluminadas, sombra sob
+  cada camada e contorno recortado; cada pinheiro varia em altura, largura,
+  número de camadas e inclinação, e as árvores redondas variam a copa.
+- **Pedras, galhos, tocos e matinhos**: silhuetas claras com luz e sombra em
+  áreas agrupadas, poucos detalhes e sombra de contato. Quatro variações de cada
+  tipo, pela posição (a aparência é a mesma ao mover a câmera, salvar e carregar).
+- **Lago**: margem irregular de terra, faixa rasa estreita, água num tom só com
+  uma parte funda suave fora do centro (sem anéis), taboas e ondulações pequenas.
+- **Preservado**: área cultivável e regras de plantio, plantações, rega e
+  crescimento, construções, objetos, recursos e seus estados, colisões, acessos,
+  animais e saves. A aparência do chão não muda onde se cultiva ou se atravessa.
+  Tudo acompanha as estações (no inverno, a clareira fica coberta de neve) e a
+  luz do dia e da noite.
 
 ## A serra e Lúcio
 
