@@ -495,16 +495,28 @@ Pixel art de cores vivas, terra quente e vegetação volumosa, com detalhes bem
 desenhados e sem ruído espalhado. Nada usa desfoque.
 
 - **Terra da área de trabalho**: em volta dos canteiros há uma clareira contínua
-  de terra ocre dourada, com variações próximas e discretas em áreas grandes. A
+  de terra ocre dourada, com textura fina e de baixo contraste: pequenas marcas
+  desenhadas (risquinhos, grãos, marcas em diagonal) em grupos espaçados, com áreas
+  tranquilas entre eles e sem manchas grandes de limites visíveis. A
   estrada em frente à casa e os caminhos da fazenda fazem parte dessa clareira, em
   vez de faixas coladas por cima, e na porteira a terra emenda aos poucos com a
   estrada da vila. A grama continua junto à casa, ao lago e nas bordas. Marcas de
   terra, pedrinhas e brotinhos aparecem só em pequenos grupos ocasionais.
-- **Grama e vegetação**: verdes vivos, com a grama avançando sobre a terra em
-  bordas irregulares, base mais escura, sombra suave na terra logo abaixo e tufos
-  de folhas reconhecíveis (base escura, volume médio, pontas iluminadas). Mais
-  touceiras nas bordas da fazenda e a área de produção aberta. Os tufos
-  decorativos são menores que o mato removível.
+- **Grama baixa (decorativa)**: verdes vivos, com a grama avançando sobre a
+  terra em bordas irregulares, base mais escura e sombra suave na terra logo
+  abaixo. Pequenos grupos de folhas curtas, em direções e tamanhos variados (não
+  leques iguais), espaçados no gramado e mais cheios nas bordas da fazenda; a
+  área de produção fica aberta.
+- **Capim alto (mato removível)**: moitas cheias, com folhas estreitas, compridas
+  e curvas, de alturas diferentes e inclinadas para lados variados; base
+  verde-escura, meios-tons e pontas verde-amareladas, com florzinhas ou sementes
+  em alguns. Capins vizinhos se emendam em agrupamentos contínuos de bordas
+  irregulares (tufo isolado, bordas, centro mais denso, aberturas onde não há
+  capim), sem base reta nem cara de vasinho. Há uma sombra discreta junto à base
+  e só as pontas das folhas oscilam, de leve. O capim é ordenado pela posição dos
+  pés: quem está atrás tem os pés cobertos pelas folhas da frente, sem sumir. A
+  área de corte, as colisões, os recursos e a foice não mudaram, e nada é criado
+  ou regenerado: muda só a aparência dos capins existentes.
 - **Canteiros**: marrom quente, mais escuro que a terra natural, com textura fina
   de sulcos curtos e bordas simples. Terra natural, solo preparado seco e solo
   regado ficam bem diferentes, e as plantas se destacam. Canteiros vizinhos se
