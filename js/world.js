@@ -202,7 +202,8 @@ const World = (() => {
     const AUT = [{ '#267a3a': '#b8521c', '#369a48': '#d06e22', '#58b858': '#e89a34' }, { '#267a3a': '#9a2e1c', '#369a48': '#c0442a', '#58b858': '#de6a3a' }, { '#267a3a': '#b88a1c', '#369a48': '#d8a82a', '#58b858': '#f0c848' }][Math.abs(treeSeed) % 3];
     const L = c => (paintSeason === 2 ? AUT[c] || c : c);
     // copa feita de cachos de folhas: contorno, base, luz no alto à esquerda e brilho
-    const lobes = [[0, -0.55, 0.6], [-0.58, -0.12, 0.56], [0.58, -0.12, 0.56], [-0.32, 0.42, 0.56], [0.34, 0.42, 0.56], [0, 0.05, 0.62]].map(([a, b2, k]) => [x + a * r, cy + b2 * r, Math.max(3, Math.round(k * r))]);
+    const tv = i => { let h = (treeSeed * 2654435761 + i * 40503) | 0; h = Math.imul(h ^ (h >>> 15), 2246822519); h ^= h >>> 13; return ((h >>> 0) % 1000) / 1000; };   // variação de cada exemplar
+    const lobes = [[0, -0.55, 0.6], [-0.58, -0.12, 0.56], [0.58, -0.12, 0.56], [-0.32, 0.42, 0.56], [0.34, 0.42, 0.56], [0, 0.05, 0.62], [tv(9) < 0.5 ? -0.7 : 0.7, 0.2, tv(8) < 0.5 ? 0.42 : 0]].filter(l => l[2] > 0).map(([a, b2, k], i) => [x + (a + (tv(i) - 0.5) * 0.24) * r, cy + (b2 + (tv(i + 20) - 0.5) * 0.2) * r, Math.max(3, Math.round(k * r * (0.9 + tv(i + 40) * 0.22)))]);
     lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx), Math.round(ly), rr + 1, '#143c24'));
     lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx), Math.round(ly), rr, L('#267a3a')));
     lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx - rr * 0.25), Math.round(ly - rr * 0.3), Math.max(1, Math.round(rr * 0.62)), L('#369a48')));
@@ -219,20 +220,34 @@ const World = (() => {
       for (let i = 0; i < r; i++) { const a = i * 2.4, d = (i * 7) % Math.max(2, r - 3); R(x + Math.cos(a) * d, cy + Math.sin(a) * d - 1, 2, 1, '#a2dc5a'); }
     }
   }
+  /* Pinheiro: ramos em camadas que caem para os lados, com pontas recortadas, luz à esquerda, sombra sob cada
+     camada e tronco com casca. Cada exemplar varia (altura, largura, número de camadas, inclinação), pela posição. */
   function pine(x, y) {
+    const hs = (i, k) => { let h = (treeSeed * 374761393 + i * 668265263 + k * 1013904223) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+    const OL = '#173a20', DP = '#21522a', BD = '#2c6e38', MD = '#3a8444', LT = '#58a050', TP = '#82c060', snow = paintSeason === 3;
+    const tiers = 3 + (hs(1, 1) < 0.5 ? 1 : 0), wk = 0.88 + hs(2, 1) * 0.24, ht = 30 + Math.floor(hs(3, 1) * 5), lean = hs(4, 1) < 0.33 ? -1 : hs(4, 1) > 0.67 ? 1 : 0;
     shadowOval(x, y, 8, 2);
-    R(x - 2, y - 6, 4, 6, '#5a3a22');
-    for (let layer = 0; layer < 3; layer++) {
-      const top = y - 31 + layer * 8, hgt = 12, half = 5 + layer * 2;
-      for (let r = 0; r < hgt; r++) {
-        const wd = Math.round((r + 1) / hgt * half);
-        R(x - wd - 1, top + r, wd * 2 + 2, 1, '#143c24');
-        R(x - wd, top + r, wd * 2, 1, '#2a8046');
-        R(x - wd, top + r, Math.max(1, Math.floor(wd / 2)), 1, '#58b860');
+    R(x - 2, y - 7, 5, 8, '#3a2416'); R(x - 1, y - 7, 3, 7, '#6a4428'); R(x - 1, y - 7, 1, 7, '#8a5e36'); R(x + 1, y - 5, 1, 2, '#4a3020');   // tronco
+    R(x - 3, y - 1, 2, 1, '#4a3020'); R(x + 2, y - 1, 2, 1, '#4a3020');                                                                  // raízes
+    const top = y - 6 - ht, step = (ht - 4) / tiers;
+    for (let t = tiers - 1; t >= 0; t--) {                                                        // de baixo para cima: cada camada cai por cima da de baixo
+      const k = (t + 1) / tiers, cy = Math.round(top + 2 + t * step), th = Math.round(step + 5), half = Math.min(12, Math.round((3 + k * 8.5) * wk)), sh = (t % 2 ? 1 : -1) * (hs(5, t) < 0.5 ? 1 : 0), lx = Math.round(lean * (1 - k) * 2);
+      for (let r = 0; r < th; r++) {
+        const f = Math.pow((r + 1) / th, 0.6), hw = Math.max(1, Math.round(half * f)), jl = r > 1 && hs(30 + t, r) < 0.3 ? 1 : 0, jr = r > 1 && hs(40 + t, r) < 0.3 ? 1 : 0, xl = x + lx - hw + jl + (r > th - 3 ? sh : 0), xr = x + lx + hw - jr + (r > th - 3 ? sh : 0);   // lados recortados
+        R(xl - 1, cy + r, xr - xl + 2, 1, OL);
+        R(xl, cy + r, xr - xl, 1, BD);
+        R(xl, cy + r, Math.max(1, Math.round((xr - xl) * (r < th * 0.45 ? 0.5 : 0.3))), 1, r < 2 ? TP : r < th * 0.45 ? LT : MD);   // luz à esquerda e no alto da camada
+        R(xr - Math.max(1, Math.round((xr - xl) * 0.28)), cy + r, Math.max(1, Math.round((xr - xl) * 0.28)), 1, DP);   // sombra à direita
+        if (r > 1 && r < th - 2 && (r + t) % 3 === 0) R(x + lx - Math.round(hw * 0.2), cy + r, Math.max(1, Math.round(hw * 0.5)), 1, MD);   // ramos
+        if (snow && r < th - 2 && (r % 2 === 0)) R(xl + 1, cy + r, Math.max(1, Math.round((xr - xl) * 0.55)), 1, '#eef4fa');
       }
-      R(x - half - 1, top + hgt, half * 2 + 2, 1, '#143c24');
-      if (paintSeason === 3) { for (let r = 2; r < hgt; r += 1) { const wd = Math.round((r + 1) / hgt * half); if (r % 3 !== 1) R(x - wd, top + r, Math.max(1, Math.floor(wd * 0.8)), 1, '#f2f6fb'); } R(x - 1, top, 2, 2, '#ffffff'); }
+      // pontas recortadas da camada (caem 1–2 px, desencontradas)
+      const by = cy + th, hw = half;
+      for (let i = -hw; i <= hw; i += 2) { const d = hs(10 + t, i + 20) < 0.5 ? 1 : 2; R(x + lx + i + sh, by, 1, d, OL); if (d === 2) R(x + lx + i + sh, by, 1, 1, i < 0 ? MD : DP); }
+      R(x + lx - Math.round(half * 0.6), by - 1, Math.round(half * 1.4), 1, DP);                            // sombra sob a camada
+      if (snow) { R(x + lx - Math.round(half * 0.7), cy + th - 3, Math.round(half * 0.9), 1, '#f8fbff'); }
     }
+    R(x + Math.round(lean * 2) - 1, top, 2, 2, OL); R(x + Math.round(lean * 2), top, 1, 2, snow ? '#ffffff' : TP);   // ponta
   }
   function bush(x, y, r = 5, c = '#2f8a40') {
     shadowOval(x, y + 1, r + 1, 2);
@@ -881,12 +896,14 @@ const World = (() => {
       }
       const n = vnoise(x, y, 5, 7), hh = hash(x, y, 11);
       if (k === 1) {                                                   // ---------- terra batida ----------
-        if (dG === 1 && n < 0.32) continue;                            // a grama entra na borda, aqui e ali
-        if (dG === 2 && n < 0.13) continue;
-        if (dG === 1 || (dG === 2 && n < 0.3)) { put(i, T.edge); continue; }
+        // borda em curvas suaves: a grama entra até 3 px, em ondas largas (não pixel a pixel)
+        const e = vnoise(x, y, 7, 43), e2 = vnoise(x, y, 3, 47);
+        if ((dG === 1 && e < 0.5) || (dG === 2 && e < 0.33) || (dG === 3 && e < 0.16) || (dG === 1 && e2 < 0.25)) continue;
+        if (dG <= 2 && hash(Math.floor(x / 5), Math.floor(y / 5), 49) < 0.2 && hash(x, y, 50) < 0.6) { put(i, [D[i], D[i + 1], D[i + 2]].map(v => Math.round(v * 0.82))); continue; }   // tufinhos na borda
         let c = T.base;
-        if (vnoise(x, y, 9, 21) > 0.6) c = T.dark;                     // terra compactada, em manchas
-        else if (vnoise(x, y, 13, 31) < 0.22) c = shadeC(T.base, 1.04);
+        const fine = vnoise(x, y, 4, 21) * 0.6 + vnoise(x, y, 10, 31) * 0.4;                      // variações pequenas e suaves
+        if (fine > 0.66) c = mixC(T.base, T.dark, 0.55); else if (fine > 0.58) c = mixC(T.base, T.dark, 0.25); else if (fine < 0.3) c = mixC(T.base, T.light, 0.18);
+        if (dG === 1 || (dG === 2 && e < 0.5)) c = mixC(c, T.edge, 0.45);                          // borda suave, sem contorno
         if (hh < 0.004) c = T.light;                                   // pouquíssimos grãos claros
         else if (hh < 0.03 && hh > 0.026) c = shadeC(T.dark, 0.94);
         // pedrinhas ocasionais (2×1 com sombra embaixo)
@@ -954,6 +971,60 @@ const World = (() => {
     }
     g.putImageData(img, x0, y0);
   }
+  /* Chão da fazenda: clareiras de terra natural em volta da área de plantio, manchas de grama de tamanhos e
+     contornos variados, mais vegetação nas bordas e pequenos grupos de detalhes, com espaços de respiro. Tudo pela
+     posição (hash/ruído), sem tocar no sorteio que posiciona árvores e caminhos; nada sobre caminhos e construções. */
+  function farmGround() {
+    const X0 = 8, Y0 = 26, X1 = 402, Y1 = 512, w = X1 - X0, h = Y1 - Y0, img = g.getImageData(X0, Y0, w, h), D = img.data, M = cur.pave, S = paintSeason;
+    const T = { base: rgb('#c8ac70'), dark: rgb('#b4945a'), light: rgb('#dcc48c') }, grs = rgb('#3a7e2c');
+    const mix = (a, b2, k) => a.map((v, j) => Math.round(v + (b2[j] - v) * k));
+    const busy = (x, y) => { const c = Math.floor(x / CELL), r = Math.floor(y / CELL), i = r * cur.cols + c; return !!(cur.path[i] || cur.solid[i]); };
+    const gx0 = GRID.x0 - 10, gy0 = GRID.y0 - 10, gx1 = GRID.x0 + GRID.cols * GRID.s + 10, gy1 = GRID.y0 + GRID.rows * GRID.s + 10;
+    for (let y = Y0; y < Y1; y++) for (let x = X0; x < X1; x++) {
+      if (M && M[y * W + x]) continue;
+      const i = ((y - Y0) * w + (x - X0)) * 4, px = [D[i], D[i + 1], D[i + 2]];
+      // clareira: ruído largo + preferência pela área de trabalho
+      const ddx = Math.max(0, gx0 - x, x - gx1), ddy = Math.max(0, gy0 - y, y - gy1), near = Math.max(0, 1 - Math.hypot(ddx, ddy) / 40);
+      const f = vnoise(x, y, 26, 201) * 0.68 + vnoise(x, y, 8, 202) * 0.32 + near * 0.14 - (x < 34 || x > 384 || y > 478 ? 0.2 : 0);
+      if (f > 0.71) {
+        const k = Math.min(1, (f - 0.71) / 0.025), hh = hash(x, y, 203);
+        if (k < 1 && vnoise(x, y, 2, 220) > k) continue;                                          // transição curta, em pequenos recortes
+        let c = vnoise(x, y, 5, 204) > 0.62 ? mix(T.base, T.dark, 0.4) : vnoise(x, y, 6, 205) < 0.3 ? mix(T.base, T.light, 0.3) : T.base;
+        c = mix(c, px, 0.05);
+        if (hh < 0.018) c = mix(px, grs, 0.3); else if (hh > 0.996) c = [150, 140, 128];          // brotinhos de grama e pedrinhas
+        D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2]; continue;
+      }
+      // manchas de grama com contornos variados
+      const m = vnoise(x, y, 30, 206) * 0.7 + vnoise(x, y, 11, 207) * 0.3;
+      const kk = m > 0.66 ? 0.92 : m > 0.6 ? 0.96 : m < 0.28 ? 1.05 : 1;
+      if (kk !== 1) { D[i] = Math.min(255, Math.round(px[0] * kk)); D[i + 1] = Math.min(255, Math.round(px[1] * kk)); D[i + 2] = Math.min(255, Math.round(px[2] * kk)); }
+    }
+    g.putImageData(img, X0, Y0);
+    // vegetação: mais densa nas bordas, quase nada no meio (área aberta para trabalhar)
+    const edgeK = (x, y) => Math.max(0, 1 - Math.min(x - 30, 384 - x, y - 40, 500 - y) / 36);
+    for (let cy = Y0 + 4; cy < Y1 - 6; cy += 9) for (let cx = X0 + 4; cx < X1 - 6; cx += 9) {
+      const x = cx + Math.floor(hash(cx, cy, 208) * 5), y = cy + Math.floor(hash(cx, cy, 209) * 5), ek = edgeK(x, y);
+      if (hash(cx, cy, 210) > 0.03 + ek * 0.3 || busy(x - 3, y - 8) || busy(x + 3, y) || (M && (M[y * W + x] || M[(y - 6) * W + x]))) continue;
+      const v = Math.floor(hash(cx, cy, 211) * 4), n = 3 + v;
+      for (let b = 0; b < n; b++) {                                                             // tufo assimétrico: lâminas de alturas diferentes
+        const bx = x - 2 + b + (b > 2 ? 1 : 0), hgt = 2 + Math.floor(hash(cx + b, cy, 212) * 4) + (b === v ? 2 : 0), lean = hash(cx, cy + b, 213) < 0.5 ? -1 : 1;
+        for (let k = 0; k < hgt; k++) R(bx + (k > hgt * 0.6 ? lean : 0), y - k, 1, 1, k === hgt - 1 ? '#78c452' : k < 1 ? '#2f7028' : (b + k) % 2 ? '#3a7e2c' : '#468c32');
+      }
+      if (S === 3 && hash(cx, cy, 214) < 0.5) R(x - 2, y - 1, 4, 1, '#f4f8fc');
+    }
+    // pequenos grupos de detalhes (florzinhas, trevos, folhas secas), espaçados
+    const FL = [['#ffffff', '#ff9ec0'], ['#ffd23a', '#ff8a3a'], ['#c8581e', '#8a3a18'], null][Math.max(0, S)];
+    for (let cy = Y0 + 20; cy < Y1 - 20; cy += 44) for (let cx = X0 + 20; cx < X1 - 20; cx += 44) {
+      if (!FL || hash(cx, cy, 215) > 0.38) continue;
+      const ox = cx + Math.floor(hash(cx, cy, 216) * 24) - 12, oy = cy + Math.floor(hash(cx, cy, 217) * 24) - 12;
+      for (let k = 0; k < 4 + (cx + cy) % 3; k++) {
+        const x = ox + Math.floor(hash(ox, k, 218) * 9) - 4, y = oy + Math.floor(hash(oy, k, 219) * 7) - 3;
+        if (busy(x, y) || (M && M[y * W + x])) continue;
+        if (S === 2) { R(x, y, 2, 1, FL[k % 2]); continue; }
+        R(x, y + 1, 1, 2, '#3a7e2c'); R(x, y, 1, 1, FL[k % 2]); if (k % 3 === 0) R(x + 1, y + 2, 1, 1, '#468c32');
+      }
+    }
+  }
   function road(kind, x, y, w, h) { spendRand(() => ground(kind, x, y, w, h)); paveRect(kind, x, y, w, h); keep(x - 4, y - 4, w + 8, h + 8); }
   /* Trilha de terra em curva (pontos [x, y]), com borda e pedrinhas. */
   function trail(pts, r = 9) {
@@ -997,14 +1068,35 @@ const World = (() => {
     return d;
   }
   function water(cx, cy, rx, ry, zone = 'lago') {
-    for (let y = -ry - 3; y <= ry + 3; y++) {
-      const k = Math.sqrt(Math.max(0, 1 - (y * y) / ((ry + 3) * (ry + 3)))), hw = Math.round((rx + 3) * k);
-      R(cx - hw, cy + y, hw * 2, 1, '#86764c');
-      const k2 = Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry))), hw2 = Math.round(rx * k2);
-      if (Math.abs(y) <= ry && hw2 > 1) { R(cx - hw2, cy + y, hw2 * 2, 1, '#bfe4ff'); R(cx - hw2 + 1, cy + y, hw2 * 2 - 2, 1, '#3f86d8'); if (hw2 > 6) R(cx - hw2 + 5, cy + y, hw2 * 2 - 10, 1, '#3478cc'); }
+    /* Lago de margem natural: contorno com pequenas reentrâncias (sempre dentro da elipse de colisão), barranco de
+       terra com grama entrando, faixa rasa clara junto à margem e água mais funda no meio. Variação pela posição. */
+    const ph1 = hsh(cx, cy, 111) * 6.28, ph2 = hsh(cx, cy, 112) * 6.28, ph3 = hsh(cx, cy, 113) * 6.28;
+    const edge = th => 0.955 + 0.03 * Math.sin(3 * th + ph1) + 0.015 * Math.sin(5 * th + ph2) + 0.012 * Math.sin(9 * th + ph3) - 0.012;
+    const C = { bank: SC('#86764c'), bankD: shade(SC('#86764c'), 0.82), bankL: shade(SC('#86764c'), 1.14), gr: SC('#58a83c'), grD: SC('#4f9c38'), foam: SC('#bfe4ff'),
+      sh: shade(SC('#3f86d8'), 1.16), mid: SC('#3f86d8'), deep: SC('#3478cc'), deeper: shade(SC('#3478cc'), 0.88), lip: shade(SC('#3f86d8'), 0.8) };
+    const P = (x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
+    for (let y = Math.floor(cy - ry - 5); y <= cy + ry + 5; y++) for (let x = Math.floor(cx - rx - 5); x <= cx + rx + 5; x++) {
+      const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry, d = Math.hypot(dx, dy), th = Math.atan2(dy, dx), b = edge(th);
+      const reff = 1 / Math.hypot(Math.cos(th) / rx, Math.sin(th) / ry), px = (b - d) * reff, h = hsh(x, y, 114);
+      const bankW = 3 + 1.4 * hsh(Math.round(th * 9), cx, 115);
+      if (px < -bankW) continue;
+      if (px < 0) {                                                                              // barranco de terra, com a grama entrando
+        if (px < -bankW + 1.2 && hsh(Math.round(th * 40), cx, 118) < 0.5) continue;                  // borda externa recortada, sem pontilhado
+        if (hsh(Math.round(th * 14), cy, 116) < 0.18 && px < -1) { P(x, y, h < 0.5 ? C.gr : C.grD); continue; }
+        P(x, y, px > -1 ? C.bankD : h < 0.12 ? C.bankL : C.bank); continue;
+      }
+      let c = px < 1 ? (dy < 0 ? C.lip : C.foam) : px < 3.5 ? C.sh : px < 8 ? C.mid : px < 15 ? C.deep : C.deeper;
+      if (px >= 3.5 && px < 4.5 && h < 0.4) c = C.sh; else if (px >= 8 && px < 9 && h < 0.4) c = C.mid; else if (px >= 15 && px < 16 && h < 0.4) c = C.deep;   // passagem em pontilhado
+      if (dy < 0 && px >= 1 && px < 2.2) c = shade(C.sh, 0.9);                                   // sombra do barranco no alto
+      P(x, y, c);
+    }
+    // pedrinhas e taboas na margem (sem taboas no inverno)
+    for (let i = 0; i < 8; i++) {
+      const th = ph1 + i * 0.79 + hsh(i, cx, 117) * 0.6, b = edge(th), reff = 1 / Math.hypot(Math.cos(th) / rx, Math.sin(th) / ry), x = Math.round(cx + Math.cos(th) * (b * reff + 2)), y = Math.round(cy + Math.sin(th) * (b * reff + 2));
+      if (i % 3 === 1) { P(x, y, '#6a6870'); P(x + 1, y, '#8a8890'); P(x, y - 1, '#a8a6ae'); }
+      else if (paintSeason !== 3 && Math.sin(th) > -0.3) { const st = paintSeason === 2 ? '#a08a3a' : '#3a7a2c'; for (let k = 0; k < 3; k++) { const hx = x - 1 + k * 2, hh = 5 + ((i + k) % 3); g.fillStyle = st; g.fillRect(hx, y - hh, 1, hh); g.fillStyle = '#6a4424'; g.fillRect(hx, y - hh - 1, 1, 2); } }
     }
     // margem clara por dentro e vitórias-régias (não no inverno)
-    for (let y = -ry; y <= ry; y++) { const hw2 = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)))); if (hw2 > 3 && y < ry - 1) { R(cx - hw2 + 1, cy + y, 2, 1, '#bfe4ff'); } }
     if (paintSeason !== 3) for (let i = 0; i < Math.max(1, Math.round(rx / 14)); i++) {
       const lx = Math.round(cx - rx * 0.6 + rand2() * rx * 1.2), ly = Math.round(cy - ry * 0.4 + rand2() * ry * 0.8);
       R(lx - 3, ly - 2, 6, 4, '#2c6a22'); R(lx - 2, ly - 2, 4, 3, '#58a838'); R(lx, ly - 2, 1, 2, '#2c6a22'); if (paintSeason === 0 && i % 2 === 0) { R(lx + 2, ly - 3, 2, 2, '#ffb8d0'); R(lx + 2, ly - 3, 1, 1, '#ffffff'); }
@@ -1063,7 +1155,9 @@ const World = (() => {
     trail([[1560, 608], [1530, 640], [1500, 690], [1470, 730], [1440, 770]], 8);     // trilha do pomar leste ao rio
     // centrinho calçado: frente do Armazém CELESTE, a rua até a casa de Seu Honório e a praça da fonte, num piso só
     paveRect('centro', 446, 148, 360, 30); paveRect('centro', 560, 110, 140, 122);
+    paveDisc('terra', 100, 157, 14);                                                // terra batida que chega ao degrau da varanda
     paveFlush();
+    farmGround();
     // ---------- fazenda ----------
     keep(GRID.x0 - 6, GRID.y0 - 6, GRID.cols * GRID.s + 12, GRID.rows * GRID.s + 12);
     {
@@ -1679,8 +1773,8 @@ const World = (() => {
       if (fruit) [[-7, -22], [5, -28], [6, -18], [-2, -16], [-9, -30], [1, -33]].forEach(([x, y]) => { box(x, y, 3, 3, fr); R(x, y, 1, 1, shade(fr, 1.3)); });
     });
   }
-  const wildTree = () => fig('wild', 34, 50, 17, () => { shadowOval(0, 0, 11, 3); R(-3, -14, 6, 14, OUT); R(-2, -14, 4, 13, '#5a3a22'); R(-2, -14, 1, 13, '#7a5230'); if (paintSeason === 3) return bareBranches(0, -40, 13); return tree(0, 0, 13); blob(0, -28, 13, '#0f3020'); blob(0, -28, 12, '#1f6a34'); blob(-3, -31, 8, '#2a7e40'); blob(-5, -34, 4, '#3f9a52'); blob(5, -22, 4, '#175428'); });
-  const stump = () => fig('stump', 16, 14, 8, () => { box(-5, -6, 10, 6, '#7a5230'); R(-5, -6, 10, 2, '#c8a070'); R(-3, -5, 6, 1, '#a88050'); R(-6, -1, 2, 1, '#5a3a22'); R(5, -1, 2, 1, '#5a3a22'); });
+  const wildTree = (i = 0) => fig('wild' + (i % 3), 34, 50, 17, () => { treeSeed = 9173 + (i % 3) * 131; shadowOval(0, 0, 11, 3); R(-3, -14, 6, 14, OUT); R(-2, -14, 4, 13, '#5a3a22'); R(-2, -14, 1, 13, '#7a5230'); if (paintSeason === 3) return bareBranches(0, -40, 13); return tree(0, 0, 13); blob(0, -28, 13, '#0f3020'); blob(0, -28, 12, '#1f6a34'); blob(-3, -31, 8, '#2a7e40'); blob(-5, -34, 4, '#3f9a52'); blob(5, -22, 4, '#175428'); });
+  const stump = (i = 0) => fig('stump' + (i % 4), 22, 16, 11, () => stumpShape((a, b, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(a), Math.round(b), w, h); }, 0, 2, [11, 12, 11, 13][i % 4], [10, 9, 11, 9][i % 4], i % 4));
   const dummyFig = () => fig('dummy', 22, 34, 11, () => { R(-1, -22, 2, 22, '#6a4426'); box(-6, -22, 12, 12, '#d8b878'); R(-6, -22, 12, 2, '#f0d8a0'); R(-3, -18, 2, 2, OUT); R(2, -18, 2, 2, OUT); R(-9, -17, 18, 2, '#8a5e36'); blob(0, -26, 5, OUT); blob(0, -26, 4, '#e8c888'); blob(0, -16, 2, '#c8483a'); });
   const HEN = [['#f8f8f0', '#d8d8c8'], ['#c8843a', '#a06428'], ['#4a4a52', '#2e2e36'], ['#e8c878', '#c8a050']];
   function hen(ctx, x, y, kind, flip, peck, bob) {
@@ -1909,14 +2003,134 @@ const World = (() => {
     P(3, 5, 10, 9, '#2a1a14'); P(4, 6, 8, 7, '#e88a20'); P(6, 6, 1, 7, '#c06a10'); P(9, 6, 1, 7, '#c06a10');   // madura: grande e laranja
     P(4, 7, 1, 3, '#ffc070'); P(5, 6, 1, 1, '#ffc070'); P(7, 3, 2, 3, '#2a1a14'); P(7, 4, 1, 2, '#6a8a2a'); P(4, 12, 8, 1, '#a85a10');
   }
-  function debris(ctx, x, y, k) {
-    const P = (a, b, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + a, y + b, w, h); };
-    if (k === 'stone') { P(2, 5, 12, 9, OUT); P(3, 6, 10, 7, '#9a9aa8'); P(4, 6, 6, 2, '#c8c8d4'); P(9, 10, 4, 2, '#6a6a78'); P(5, 3, 6, 3, OUT); P(6, 4, 4, 2, '#b0b0bc'); }
-    if (k === 'branch') { P(1, 9, 14, 4, OUT); P(2, 10, 12, 2, '#8a5e36'); P(2, 10, 12, 1, '#b88448'); P(9, 5, 3, 5, OUT); P(10, 6, 1, 4, '#8a5e36'); P(4, 6, 3, 4, OUT); P(5, 7, 1, 3, '#8a5e36'); P(11, 4, 3, 2, '#58b858'); }
-    if (k === 'stump') { P(2, 7, 12, 8, OUT); P(3, 8, 10, 6, '#7a5230'); P(3, 8, 10, 2, '#c8a070'); P(5, 9, 6, 1, '#a88050'); P(1, 13, 3, 2, '#5a3a22'); P(12, 13, 3, 2, '#5a3a22'); P(7, 5, 2, 3, '#7a5230'); }
-    if (k === 'weed') { P(2, 8, 12, 6, '#2f8a40'); P(3, 5, 2, 4, '#3f9648'); P(7, 3, 2, 6, '#58b858'); P(11, 5, 2, 4, '#3f9648'); P(5, 9, 6, 4, '#3f9648'); P(1, 11, 2, 3, '#267a3a'); P(13, 11, 2, 3, '#267a3a'); P(9, 6, 1, 1, '#ffe066'); }
+  /* Recursos do chão (pedras, galhos, tocos e matinhos): sprites pequenos com variações que dependem só da
+     posição do objeto (mesma aparência ao mover a câmera, salvar e carregar). Ficam em cache por tipo e variação. */
+  const DCACHE = {};
+  function dsprite(key, w, h, fn) {
+    if (!DCACHE[key]) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); fn((a, b, ww, hh, col) => { x.fillStyle = col; x.fillRect(Math.round(a), Math.round(b), ww, hh); }); DCACHE[key] = c; }
+    return DCACHE[key];
   }
-  function rock(ctx, x, y) { const P = (a, b, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + a, y + b, w, h); }; P(-9, -11, 18, 12, OUT); P(-8, -10, 16, 10, '#8a8a98'); P(-7, -10, 9, 3, '#c0c0cc'); P(1, -4, 6, 3, '#5e5e6c'); P(-5, -15, 9, 5, OUT); P(-4, -14, 7, 4, '#a4a4b2'); }
+  const hsh = (a, b, s = 0) => { let h = (a * 374761393 + b * 668265263 + s * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+  /* pedra de silhueta irregular: perfil linha a linha com lados independentes, faces claras em cima,
+     lado direito na sombra, contorno suave e sombra de contato. (cx, by) = centro da base. */
+  function stoneShape(P, cx, by, w, h, v, big) {
+    const rows = [];
+    for (let j = 0; j < h; j++) {
+      const t = (j + 0.5) / h, k = t < 0.62 ? Math.sqrt(Math.max(0, 1 - ((0.62 - t) / 0.62) ** 2)) : 1 - Math.max(0, t - 0.86) * 1.2;
+      const jl = Math.round((hsh(v, j, 61) - 0.5) * 1.6), jr = Math.round((hsh(v, j, 62) - 0.5) * 1.6), lean = (v % 2 ? 1 : -1) * Math.round((1 - t) * 0.8);
+      rows.push([Math.round(cx - (w / 2) * k) + jl + lean, Math.round(cx + (w / 2) * k) + jr + lean]);
+    }
+    P(cx - w / 2 - 1, by - 1, w + 3, 2, 'rgba(30,36,24,.28)');                                     // sombra de contato
+    const y0 = by - h;
+    rows.forEach(([l, r], j) => { if (r - l < 1) return; P(l - 1, y0 + j, r - l + 2, 1, '#55505a'); });
+    if (rows[0][1] - rows[0][0] > 0) P(rows[0][0], y0 - 1, rows[0][1] - rows[0][0], 1, '#55505a');
+    const base = ['#9a96a0', '#a29a94', '#96989e', '#a09c98'][v % 4], light = shade(base, 1.18), top = shade(base, 1.32), dark = shade(base, 0.78), deep = shade(base, 0.66);
+    rows.forEach(([l, r], j) => {
+      if (r - l < 1) return; const y = y0 + j, t = j / h, wd = r - l;
+      P(l, y, wd, 1, t < 0.38 ? light : base);
+      if (t < 0.22) P(l + 1, y, Math.max(1, Math.round(wd * 0.55)), 1, top);                        // face de cima, luz do alto à esquerda
+      P(r - Math.max(1, Math.round(wd * (t < 0.4 ? 0.2 : 0.34))), y, Math.max(1, Math.round(wd * (t < 0.4 ? 0.2 : 0.34))), 1, dark);
+      if (j === h - 1) P(l, y, wd, 1, deep);
+    });
+    const mid = rows[Math.floor(h * 0.5)];
+    if (v % 3 !== 2) { const cx2 = mid[0] + Math.round((mid[1] - mid[0]) * (0.35 + hsh(v, 1, 63) * 0.3)); P(cx2, y0 + Math.floor(h * 0.42), 1, 2, dark); P(cx2 + 1, y0 + Math.floor(h * 0.42) + 2, 1, 1, dark); }   // rachadura
+    P(mid[0] + 2, y0 + Math.floor(h * 0.62), 1, 1, shade(base, 0.9)); P(mid[0] + Math.round((mid[1] - mid[0]) * 0.6), y0 + Math.floor(h * 0.7), 1, 1, shade(base, 0.9));
+    if (v % 4 === 2 || big) { P(rows[1][0] + 1, y0 + 1, 2, 1, '#6e8a3c'); P(rows[2][0], y0 + 2, 1, 1, '#58763a'); }   // musgo
+    if (v % 4 === 0) { P(cx + w / 2 + 2, by - 2, 2, 2, '#55505a'); P(cx + w / 2 + 2, by - 2, 1, 1, light); }        // pedrinha ao lado
+  }
+  /* galho caído: tronco fino em diagonal, casca com luz em cima, pontas de corte e raminhos */
+  function branchShape(P, v, ss = 0) {
+    const flip = v % 2, L = 11 + (v >> 1) % 2 * 2, x0 = flip ? 15 : 3, y0 = 13 - (v % 3), dx = flip ? -1 : 1, rise = 3 + (v % 3);
+    const pt = i => [x0 + dx * i, y0 - Math.round(i * rise / L)];
+    for (let i = 0; i <= L; i++) { const [x, y] = pt(i); P(x, y + 2, 1, 1, 'rgba(30,36,24,.22)'); }
+    for (let i = 0; i <= L; i++) {
+      const [x, y] = pt(i); P(x, y - 1, 1, 3, '#4a301c');
+      P(x, y - 1, 1, 1, i % 4 === 1 ? '#8a6038' : '#a87a48'); P(x, y, 1, 1, i % 3 === 0 ? '#5e3e24' : '#7a5232');
+    }
+    const [ax, ay] = pt(0), [bx, by] = pt(L);
+    P(ax, ay - 1, 1, 2, '#e0c088'); P(ax, ay, 1, 1, '#b08a58');                                    // pontas de corte
+    P(bx, by - 1, 1, 2, '#d8b47a');
+    const twig = (i, up, len, leaf) => { const [x, y] = pt(i); for (let k = 1; k <= len; k++) P(x + dx * (k >> 1) * (up ? 1 : -1), y - 1 - k, 1, 1, k === len ? '#7a5232' : '#5e3e24'); if (leaf && ss !== 3) { P(x + dx * (len >> 1) * (up ? 1 : -1) - 1, y - 2 - len, 2, 1, ss === 2 ? '#c8781e' : '#58a848'); P(x + dx * (len >> 1) * (up ? 1 : -1), y - 3 - len, 1, 1, ss === 2 ? '#e8a040' : '#7cc458'); } };
+    twig(4 + v % 2, true, 3, v % 3 !== 1); if (v % 4 !== 3) twig(8, false, 2, v % 2 === 0);
+  }
+  /* toco: raízes abertas, casca com estrias verticais, corte de cima oval com anéis */
+  function stumpShape(P, cx, by, w, h, v) {
+    const l = Math.round(cx - w / 2), top = by - h, r = l + w;
+    P(l - 2, by - 1, w + 4, 2, 'rgba(30,36,24,.28)');
+    P(l - 3, by - 3, 4, 3, '#3e2816'); P(l - 2, by - 3, 3, 2, '#6a4428'); P(l - 3, by - 1, 1, 1, '#6a4428');   // raízes
+    P(r - 1, by - 3, 4, 3, '#3e2816'); P(r - 1, by - 3, 3, 2, '#5e3e24'); P(r + 2, by - 1, 1, 1, '#5e3e24');
+    if (v % 2) { P(cx - 2, by - 1, 4, 1, '#3e2816'); P(cx - 1, by - 1, 2, 1, '#6a4428'); }
+    P(l - 1, top + 1, w + 2, h - 1, '#3e2816');                                                          // corpo
+    for (let x = 0; x < w; x++) {
+      const t = x / (w - 1), c = t < 0.25 ? '#8e6440' : t < 0.6 ? '#74502e' : t < 0.85 ? '#62422a' : '#523620';
+      P(l + x, top + 2, 1, h - 3, c);
+      if ((x + v) % 3 === 1) P(l + x, top + 3 + ((x * 7 + v) % 3), 1, h - 6, shade(c, 0.8));              // estrias da casca
+    }
+    P(l, top - 1, w, 4, '#3e2816'); P(l + 1, top - 2, w - 2, 1, '#3e2816');                               // corte de cima (oval)
+    P(l + 1, top - 1, w - 2, 3, '#d8b47c'); P(l, top, 1, 1, '#d8b47c'); P(r - 1, top, 1, 1, '#c09a64');
+    P(l + 2, top - 1, w - 4, 1, '#ead0a0');
+    P(l + 2, top, w - 4, 1, '#b8915c'); P(l + 3, top + 1, w - 6, 1, '#c8a46e'); P(cx - 1, top, 2, 1, '#e2c690'); P(cx, top, 1, 1, '#8e6440');   // anéis
+    if (v % 3 === 1) { P(r - 3, top + 4, 2, 2, '#6e8a3c'); P(r - 2, top + 3, 1, 1, '#88a84a'); }       // musgo
+    if (v % 3 === 2) { P(l + 1, top + 4, 1, 3, '#3e2816'); }                                               // fenda
+  }
+  /* matinho: tufo de lâminas de alturas diferentes, inclinadas para lados diferentes, com base cheia */
+  function weedShape(P, v, ss = 0) {
+    const n = 8 + v % 3, cols = ss === 3 ? ['#5a6a52', '#6a7a60', '#7a8a6e', '#62725a'] : ss === 2 ? ['#6a6a2c', '#8a7a36', '#a08a3c', '#7a7032'] : ['#2a6a2c', '#3a8436', '#4c9a3c', '#327a32'];
+    P(2, 13, 12, 2, 'rgba(30,36,24,.25)');
+    P(3, 11, 10, 3, '#215a26'); P(4, 10, 8, 1, '#2a6a2c'); P(5, 11, 3, 1, '#3a8436'); P(9, 11, 2, 1, '#3a8436');
+    for (let i = 0; i < n; i++) {
+      const bx = 3 + Math.round(i * 9 / (n - 1) + (hsh(v, i, 71) - 0.5) * 1.5), ht = 4 + Math.floor(hsh(v, i, 72) * 6) + (i === (v * 3) % n ? 3 : 0), lean = hsh(v, i, 73) < 0.5 ? -1 : 1, c = cols[(i + v) % 4];
+      for (let k = 0; k < ht; k++) { const x = bx + (k > ht * 0.5 ? lean : 0) + (k > ht * 0.85 && ht > 6 ? lean : 0); P(x, 12 - k, 1, 1, k > ht - 2 ? '#6fb84a' : k < 2 ? '#215a26' : c); if (k < ht * 0.4 && ht > 6) P(x + (i % 2 ? 1 : -1), 12 - k, 1, 1, shade(c, 0.85)); }
+    }
+    if (v % 4 === 1) { P(10, 3, 2, 2, '#ffe066'); P(10, 3, 1, 1, '#fff4a8'); P(11, 5, 1, 2, '#3a8436'); }   // florzinha
+    if (v % 4 === 3) { P(5, 2, 1, 3, '#c8b878'); P(5, 1, 1, 1, '#e0d090'); P(6, 3, 1, 1, '#c8b878'); }       // espiga de capim
+  }
+  /* Canteiro preparado: terra revolvida com sulcos curtos e desencontrados, torrões e leves diferenças de tom.
+     Os lados encostados em outro canteiro não têm borda (a terra continua); os lados livres terminam numa borda de
+     terra irregular. Molhado fica bem mais escuro. Cache por (molhado, vizinhos, variação). */
+  const SOIL = {}, SOILP = [{ base: [140, 100, 58], dark: [104, 70, 38], light: [168, 126, 80], edge: [112, 80, 46] }, { base: [84, 56, 32], dark: [58, 38, 20], light: [110, 76, 46], edge: [66, 44, 24] }];
+  function soilImg(wet, mask, v) {
+    const key = (wet ? 'w' : 'd') + mask + ':' + v; if (SOIL[key]) return SOIL[key];
+    const c = document.createElement('canvas'); c.width = c.height = 18; const x2 = c.getContext('2d'), img = x2.createImageData(18, 18), D = img.data, Pl = SOILP[wet ? 1 : 0];
+    const put = (x, y, col, a = 255) => { const i = (y * 18 + x) * 4; D[i] = col[0]; D[i + 1] = col[1]; D[i + 2] = col[2]; D[i + 3] = a; };
+    const sc = (col, k) => col.map(u => Math.max(0, Math.min(255, Math.round(u * k))));
+    const N = !(mask & 1), E = !(mask & 2), S = !(mask & 4), Wd = !(mask & 8);
+    for (let ly = 0; ly < 16; ly++) for (let lx = 0; lx < 16; lx++) {
+      const h = hsh(lx + v * 31, ly, 92), blk = hsh((lx >> 1) + v * 13, ly >> 1, 93);
+      let col = blk < 0.3 ? sc(Pl.base, 0.95) : blk > 0.85 ? sc(Pl.base, 1.04) : Pl.base;
+      // sulcos: segmentos curtos, cada um com sua altura (±1) e falhas entre eles
+      const seg = (lx + ((v + ly) % 3)) >> 2, row = Math.floor((ly + 1) / 5), off = hsh(seg + v * 7, row, 94) < 0.33 ? -1 : hsh(seg + v * 7, row, 94) > 0.75 ? 1 : 0, fy = row * 5 + 3 + off;
+      const gap = hsh(seg + v * 5, row, 95) < 0.22 || (lx + ((v + ly) % 3)) % 4 === 3 && hsh(seg, row, 96) < 0.5;
+      if (!gap && ly === fy) col = Pl.dark; else if (!gap && ly === fy - 1) col = Pl.light;
+      if (h < 0.05) col = Pl.light; else if (h > 0.96) col = sc(Pl.dark, 1.05);                    // torrões
+      if (wet && h > 0.5 && h < 0.515) col = [92, 104, 122];                                          // brilho de água
+      // bordas livres: terra mais escura, com recortes
+      const eN = N && ly === 0, eS = S && ly === 15, eW = Wd && lx === 0, eE = E && lx === 15;
+      if ((eN || eS) && (eW || eE)) continue;                                                       // canto arredondado
+      if (eN || eS || eW || eE) { if (h < 0.18) continue; col = Pl.edge; }
+      else if ((N && ly === 1) || (S && ly === 14) || (Wd && lx === 1) || (E && lx === 14)) col = sc(col, 0.92);
+      put(lx + 1, ly + 1, col);
+    }
+    // borda que avança um pouco sobre o chão, aqui e ali
+    for (let i = 1; i < 15; i++) {
+      if (N && hsh(i, v, 97) < 0.22) put(i + 1, 0, Pl.edge); if (S && hsh(i, v, 98) < 0.3) put(i + 1, 17, sc(Pl.edge, 0.9));
+      if (Wd && hsh(i, v, 99) < 0.22) put(0, i + 1, Pl.edge); if (E && hsh(i, v, 100) < 0.22) put(17, i + 1, Pl.edge);
+    }
+    x2.putImageData(img, 0, 0); return (SOIL[key] = c);
+  }
+  function debris(ctx, x, y, k, seed = 0) {
+    const v = Math.floor(seed * 4) % 4;
+    const ss = k === 'branch' || k === 'weed' ? SEASON : 0;
+    const img = dsprite(k + v + ':' + ss, 20, 20, P => {
+      const Q = (a, b, w, h, c) => P(a + 2, b + 2, w, h, c);
+      if (k === 'stone') stoneShape(Q, 8, 14, [12, 13, 11, 12][v], [9, 8, 10, 9][v], v);
+      else if (k === 'branch') branchShape(Q, v, ss);
+      else if (k === 'stump') stumpShape(Q, 8, 15, [9, 10, 9, 11][v], [9, 8, 10, 8][v], v);
+      else if (k === 'weed') weedShape(Q, v, ss);
+    });
+    ctx.drawImage(img, x - 2, y - 2);
+  }
+  function rock(ctx, x, y, i = 0) { const v = i % 4; ctx.drawImage(dsprite('rock' + v, 30, 22, P => stoneShape(P, 15, 20, [18, 20, 17, 19][v], [12, 11, 13, 12][v], v + 4, true)), x - 15, y - 19); }
   function forage(ctx, x, y, id) {
     const P = (a, b, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + a, y + b, w, h); };
     if (id === 'amora') { P(-6, -8, 12, 8, '#267a3a'); P(-4, -11, 8, 4, '#3f9648'); [[-4, -6], [1, -8], [3, -4], [-2, -3]].forEach(([a, b]) => P(a, b, 2, 2, '#6a2a8a')); }
@@ -1942,7 +2156,7 @@ const World = (() => {
 
     if (map.id === 'fora') {
       const ph = Math.floor(t / 280);
-      map.waters.forEach((w, k) => { for (let i = 0; i < 9; i++) { const y = w.cy - w.ry + 4 + (i * 7 + ph + k * 3) % (w.ry * 2 - 8), hw = w.rx * Math.sqrt(1 - ((y - w.cy) ** 2) / (w.ry * w.ry)) - 8; if (hw > 4) R(w.cx - hw + (i * 13 + ph * 2) % (hw * 2), y, 3 + i % 2, 1, i % 2 ? '#e4fbf6' : '#9fe0e4'); } });
+      map.waters.forEach((w, k) => { for (let i = 0; i < 9; i++) { const y = w.cy - w.ry + 4 + (i * 7 + ph + k * 3) % (w.ry * 2 - 8), hw = w.rx * Math.sqrt(1 - ((y - w.cy) ** 2) / (w.ry * w.ry)) - 8; if (hw > 4 && i % 3 !== 2) R(w.cx - hw + (i * 13 + ph * 2) % (hw * 2), y, 2 + i % 2, 1, i % 2 ? '#bfe9f0' : '#8fd2e0'); } });
       (map.streams || []).forEach(st => { const n = st.pts.length; for (let i = 0; i < n; i += 23) { const j = Math.floor(i + t / 70) % n, [x, y] = st.pts[j]; R(x - 2 + (i % 3) - 1, y - 1 + (i % 2) * 2, 3, 1, i % 2 ? '#e4fbf6' : '#9fe0e4'); } });
       for (let i = 0; i < 4; i++) { const k = ((t / 900) + i / 4) % 1; ctx.fillStyle = `rgba(255,255,255,${0.8 * (1 - k)})`; ctx.fillRect(Math.round(628 + Math.sin(k * 5 + i) * 5), Math.round(126 - k * 8), 2, 2); }
       // terra, plantas e entulho da fazenda
@@ -1950,16 +2164,17 @@ const World = (() => {
       for (const key in tiles) {
         const o = tiles[key], q = tilePos(+key); if (!seen(q.x + 8, q.y + 8)) continue;
         if (o.k === 'soil') {
-          R(q.x, q.y, 16, 16, o.w ? '#4a3018' : '#8a6238'); for (let r = 3; r < 16; r += 5) R(q.x + 1, q.y + r, 14, 1, o.w ? '#38220e' : '#6e4c28');
-          if (o.w) { R(q.x + 3, q.y + 6, 2, 1, '#6a8ab8'); R(q.x + 11, q.y + 12, 2, 1, '#6a8ab8'); }
+          const key0 = +key, col = key0 % GRID.cols, isSoil = n => !!(tiles[n] && tiles[n].k === 'soil');
+          const mask = (key0 >= GRID.cols && isSoil(key0 - GRID.cols) ? 1 : 0) | (col < GRID.cols - 1 && isSoil(key0 + 1) ? 2 : 0) | (isSoil(key0 + GRID.cols) ? 4 : 0) | (col > 0 && isSoil(key0 - 1) ? 8 : 0);
+          ctx.drawImage(soilImg(!!o.w, mask, Math.floor(hsh(key0, 3, 91) * 4)), q.x - 1, q.y - 1);
           if (o.crop) { if (CROPS[o.crop].stages) staged(ctx, q.x, q.y, o); else { const st = cropState(o); crop(ctx, q.x, q.y, o.crop, st.ripe ? 3 : !o.g ? 0 : o.g * 2 > CROPS[o.crop].days ? 2 : 1); } }
         } else if (o.k === 'tree') put(fruitTree(o.sp, o.age >= TREES[o.sp].grow ? 2 : o.age * 2 >= TREES[o.sp].grow ? 1 : 0, o.fruit), q.x + 8, q.y + 13);
-        else debris(ctx, q.x + shk('f' + key), q.y, o.k);
+        else debris(ctx, q.x + shk('f' + key), q.y, o.k, hsh(+key, 7, 81));
       }
       // bosque
       const cleared = S.nature.cleared || {};
-      NTREES.forEach(([x, y], i) => { if (!cleared[i] && seen(x, y, 50)) put(S.nature.trees[i] ? stump() : wildTree(), x + shk((S.nature.trees[i] ? 's' : 't') + i), y); });
-      NROCKS.forEach(([x, y], i) => { if (!S.nature.rocks[i] && seen(x, y)) rock(ctx, x + shk('r' + i), y); });
+      NTREES.forEach(([x, y], i) => { if (!cleared[i] && seen(x, y, 50)) put(S.nature.trees[i] ? stump(i) : wildTree(i), x + shk((S.nature.trees[i] ? 's' : 't') + i), y); });
+      NROCKS.forEach(([x, y], i) => { if (!S.nature.rocks[i] && seen(x, y)) rock(ctx, x + shk('r' + i), y, i); });
       FORAGE.forEach(([x, y], i) => { if (S.nature.forage[i] && seen(x, y)) forage(ctx, x, y, S.nature.forage[i]); });
       if (S.nature.hat) forage(ctx, SPOT.hat[0], SPOT.hat[1], 'chapeu_tome');
       // banco da praça: quebrado até a missão do Seu Honório
