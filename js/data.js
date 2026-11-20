@@ -255,7 +255,7 @@ const VILLAGERS = [
   /* Caleb: neto da Dona Celeste. Chega à vila na primeira visita ao Armazém em horário de atendimento (uma vez só).
      Gótico/emo, reservado e observador; gosta de computador e de música. Amizade sem romance, até 8 corações.
      Rotina própria (calebSchedule, game.js); presentes sem preferências cadastradas (todos neutros). */
-  { id: 'caleb', portrait: 'caleb', name: 'Caleb', routine: 'caleb', maxHearts: 8, arrives: true,
+  { id: 'caleb', portrait: 'caleb', art: 'caleb', name: 'Caleb', routine: 'caleb', maxHearts: 8, arrives: true,
     place: 'no Armazém CELESTE (mora com a avó no andar de cima): à tarde no cantinho do notebook, no fim da tarde no bosque e, à noite, perto da lagoa; às sextas, na praça',
     bio: 'Neto da Dona Celeste, chegou para morar com a avó em cima do Armazém. Reservado e observador, gosta de computador e de música. Fala pouco no começo, mas é educado; com o tempo, aparecem o humor e o carinho nos pequenos gestos.',
     look: mkLook('s2', 'emo', 'pretoQuente', 'camisaAberta', '#6a2430', 'calca', '#3a3238', { gender: 'm', body: 'm', shoeColor: '#221c22', earring: true, innerColor: '#1e1a22' }),
@@ -498,12 +498,11 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Caleb chegou à vila',
+  title: 'Caleb com a arte aprovada',
   items: [
-    'Novo morador: Caleb, neto da Dona Celeste, que vem morar com a avó em cima do Armazém CELESTE. É apresentado uma vez, na primeira visita ao Armazém em horário de atendimento.',
-    'Rotina própria: almoço e caixas com a avó ao meio-dia, notebook no térreo à tarde, bosque e lagoa no fim do dia. Sextas na praça, domingos ajudando no Armazém e dias de chuva em casa.',
-    'Conversas próprias por lugar e situação; amizade de até 8 corações na aba Amizades, com presentes neutros por enquanto.',
-    'Retratos próprios com quatro expressões e sprite com franja, mecha prateada, camisa vinho, brinco e pingente de mariposa.',
-    'No Armazém: a porta da escada para o andar de cima (particular) e o cantinho do notebook do Caleb.',
+    'Caleb agora usa a arte da ficha aprovada: retratos de diálogo com as quatro expressões e sprites de corpo inteiro nas quatro vistas, com passos de caminhada.',
+    'No mapa, ele tem o mesmo tamanho dos outros moradores, mas mostra a franja diagonal, a mecha prateada, o rosto e as proporções da ficha.',
+    'A cena passou a ser desenhada na resolução da tela, com escala inteira. O cenário e os outros personagens continuam iguais.',
+    'Rotina, conversas, amizade, chegada e jogos salvos não mudaram.',
   ],
 };
