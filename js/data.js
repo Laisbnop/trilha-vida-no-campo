@@ -467,12 +467,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Nova direção visual da fazenda',
+  title: 'Capim e terra da fazenda',
   items: [
-    'A área de trabalho virou uma clareira contínua de terra ocre dourada, que inclui a estrada em frente à casa.',
-    'A grama, em verdes vivos, avança sobre a terra em bordas irregulares com tufos de folhas. Há mais vegetação nas bordas e a área de produção ficou aberta.',
-    'Os canteiros são de marrom quente, com sulcos curtos e discretos. Terra natural, solo seco e solo regado ficam bem diferentes.',
-    'Pinheiros com camadas de folhagem mais cheias; pedras, galhos e tocos com luz e sombra agrupadas.',
-    'Lago com margem irregular e profundidade suave, sem anéis.',
+    'Capim alto mais cheio: folhas compridas e curvas, de alturas e direções variadas, e florzinhas ou sementes em alguns.',
+    'Capins vizinhos se emendam em moitas contínuas de bordas irregulares; cada um tem uma sombra discreta e as pontas balançam de leve.',
+    'Quem passa atrás do capim tem os pés cobertos pelas folhas da frente.',
+    'A terra ocre ganhou uma textura fina, com pequenas marcas em grupos espaçados e sem manchas grandes.',
+    'A grama baixa das bordas tem pequenos grupos de folhas variadas, diferente do capim alto que se corta com a foice.',
   ],
 };
