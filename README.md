@@ -269,7 +269,7 @@ acumulada** (do nível 1 ao 2, por exemplo, faltam 380 − 100 = 280 XP):
 
 | Habilidade | Como ganha experiência | Benefício por nível |
 | --- | --- | --- |
-| Cultivo | colher rabanete 15, tomate 12, morango 18, abóbora 31 (uma vez por colheita; morango e abóbora dão de novo a cada nova produção); carinho em galinha 5 (uma vez por dia por galinha); ovo recolhido do ninho 5 | enxada e regador gastam 5% menos energia (50% no nível 10) |
+| Cultivo | colher rabanete 15, tomate 12, morango 18, abóbora 31, milho 10, melão 27, repolho roxo 28 (uma vez por colheita; morango, abóbora e milho dão de novo a cada nova produção); carinho em galinha 5 (uma vez por dia por galinha); ovo recolhido do ninho 5 | enxada e regador gastam 5% menos energia (50% no nível 10) |
 | Pesca | captura concluída: sardinha 13, tucunaré 20; alga, musgo ou lixo 3. Captura perfeita de peixe: × 2,4, arredondado para baixo (não vale para alga, musgo e lixo) | zona verde do minijogo: 22% da pista + 1 ponto por nível (32% no 10); vara de fibra de vidro liberada no nível 2 |
 | Coleta | coletável da natureza (flor, fruto, cogumelo; na vila, no bosque e na serra) 7 por ponto; árvore derrubada com o machado 12 (só quando cai); toco da árvore 1 | machado gasta 5% menos energia (50% no nível 10) |
 
@@ -404,6 +404,9 @@ galinheiro mantêm o desenho próprio. O mapa (M) mostra as fachadas e as árvor
 | Tomate | qualquer | 4 dias regados | — (colheita única) | 20 | 60 |
 | Morango | Primavera, Outono e Inverno | 5 dias regados (5 estágios de 1 dia) | a cada 4 dias regados | 150 | 320 |
 | Abóbora | Primavera e Outono | 13 dias regados (estágios de 1, 2, 3, 4 e 3 dias) | a cada 6 dias regados | 42 | 88 |
+| Milho | Verão e Outono | 14 dias regados | a cada 4 dias regados | 150 | 50 |
+| Melão | Verão | 12 dias regados | — (colheita única) | 80 | 250 |
+| Repolho roxo | Verão | 9 dias regados | — (colheita única) | 100 | 260 |
 
   Semente: preço de compra por unidade. Venda: preço de cada unidade colhida.
   **Rabanete e tomate** dão uma única colheita: ao colher, a planta sai e o
@@ -415,17 +418,54 @@ galinheiro mantêm o desenho próprio. O mapa (M) mostra as fachadas e as árvor
   aparecem no canteiro: no morango, broto, folhas, flores, frutos verdes e frutos
   vermelhos (prontos); na abóbora, broto, folhas, rama, flor, abóbora verde
   pequena e abóbora laranja grande (pronta). Na rebrota, o pé adulto mostra a flor,
-  depois o fruto em formação e o fruto maduro. As sementes ficam à venda no
-  Armazém só nas estações de plantio; o Armazém compra os frutos em qualquer
-  estação. Fora da estação, o plantio é bloqueado sem gastar semente nem energia.
-  Se não houver tempo para a primeira colheita antes da troca de estação, o jogo
-  avisa e pergunta se quer plantar mesmo assim. **Na manhã da nova estação**, os
-  pés de morango e de abóbora secam (mesmo que a nova estação também permita o
-  plantio), e os frutos que ficaram se perdem; limpe o canteiro com a foice (1 de
-  energia) e plante de novo quando a estação permitir. O morango é comestível
+  depois o fruto em formação e o fruto maduro. O Armazém compra os frutos em
+  qualquer estação. **Na manhã da nova estação**, um pé já germinado seca se a
+  nova estação não for uma das suas (o morango atravessa do Outono para o
+  Inverno; a abóbora seca no Verão e no Inverno), e os frutos que ficaram se
+  perdem; limpe o canteiro com a foice (1 de energia). Se não houver tempo para a
+  primeira colheita antes da troca para uma estação incompatível, o jogo avisa e
+  pergunta se quer plantar mesmo assim. O morango é comestível
   (+30 de energia) e é o presente favorito da Dona Celeste: vale 150 pontos de
   amizade, com resposta própria. Para os outros moradores, é um presente neutro.
   A contagem da próxima produção de morango e abóbora começa depois da colheita.
+
+  **Cultivos de verão.** O **milho** cresce em 14 dias regados, dá 1 espiga e o
+  pé fica: volta a produzir a cada 4 dias regados contados depois da colheita,
+  sem limite de colheitas. É alto (broto, folhas, colmo, pendão, espigas verdes e
+  espigas douradas), mas o personagem sempre aparece na frente e os canteiros
+  atrás continuam clicáveis. Cresce no Verão e no Outono: na virada do Verão para
+  o Outono o pé continua com o progresso; seca ao chegar o Inverno. O **melão** (12
+  dias) e o **repolho roxo** (9 dias) são só de Verão e de colheita única: ao
+  colher, a planta sai e o canteiro fica pronto. Os três são comestíveis (milho
+  +25, melão +113, repolho roxo +75, sempre até o máximo de 100), são vendidos no
+  Armazém (50, 250 e 260 moedas), dão XP de Cultivo a cada colheita (10, 27 e 28)
+  e são presentes neutros para quem não tem preferência cadastrada. Não há
+  receitas, produtos artesanais nem cultivos gigantes.
+
+  **Sementes o ano todo e plantio fora de estação.** Todas as sementes ficam à
+  venda no Armazém em qualquer estação; as que não crescem na estação atual têm a
+  etiqueta "Fora de estação". Ao plantar uma delas, o jogo pergunta "Esta semente
+  não cresce nesta estação. Plantar mesmo assim?" (**Sim**/**Não**). "Não" não
+  gasta semente nem energia. "Sim" gasta a semente e ocupa o canteiro: a semente
+  fica esperando, não avança mesmo regada, e os dias fora de estação não contam.
+  Quando chega uma estação permitida, ela começa a crescer normalmente (a noite da
+  virada não conta; depois, só os dias regados). Enquanto espera, a semente
+  sobrevive às trocas de estação e ao salvar/carregar, e a foice pode removê-la
+  (sem devolver a semente). Só sementes ainda não germinadas esperam: plantas que
+  já cresceram seguem a regra acima e secam numa estação incompatível.
+
+  **Informações de cultivo.** Na loja, cada semente ocupa uma linha compacta:
+  ícone, nome, preço, botão **Comprar** e, se for o caso, "Fora de estação".
+  Clicar no nome ou no ícone abre o painel "Informações de cultivo" (sem comprar
+  nada), com imagem, preço da semente, preço de venda, estações, dias até a
+  primeira colheita, produção, colheita única ou recorrente, intervalo de
+  rebrota, necessidade de rega e se a semente cresce agora. Cultivos recorrentes
+  avisam que a quantidade de colheitas depende dos dias restantes, da rega e de
+  quando você colhe; fora de estação aparece "Pode ser comprada e plantada agora,
+  mas só começará a crescer na estação indicada." Tudo é gerado dos dados do
+  cultivo (`CROPS` e `ITEMS`, em `js/data.js`), assim como a descrição das
+  sementes. O painel tem tamanho limitado, rola por dentro e, ao fechar (Fechar,
+  Esc, E, Enter ou clique fora), a lista da loja continua na mesma posição.
 - **Árvores frutíferas**: laranjeira e goiabeira. A muda precisa de grama livre,
   sem outra árvore encostada. Ficam adultas em 5 ou 6 dias e dão 2 frutos a cada
   3 dias. Não precisam de rega.
@@ -782,8 +822,10 @@ própria e não escurecem como lá fora. Painel, textos e menus nunca escurecem.
 ### Estações no cenário
 
 Os cenários externos são redesenhados em cada estação (não é um filtro): grama
-verde e árvores floridas na primavera; verdes mais intensos, copas cheias e
-capim alto no verão; copas laranja, vermelhas e amarelas, folhas no chão e
+verde e árvores floridas na primavera; no verão, grama verde mais quente,
+copas cheias e vivas (sem as flores da primavera), capim alto e florzinhas
+amarelas e laranja, com a luz do dia um pouco mais quente (a noite, a chuva, a
+duração do dia, a energia e a sorte não mudam); copas laranja, vermelhas e amarelas, folhas no chão e
 vegetação seca no outono; neve no chão, nos telhados, nos pinheiros e nos
 arbustos, árvores de galhos nus e água mais fria no inverno. Caminhos, portas,
 pontes e colisões são os mesmos em todas as estações. A neve é só visual, e as
@@ -824,7 +866,11 @@ Comestíveis (regra do vale, cadastrada item a item em `EDIBLE`, no `js/data.js`
 
 | Item | Energia |
 | --- | --- |
+| Melão | +113 |
+| Repolho roxo | +75 |
 | Fruta de cristal | +40 |
+| Morango | +30 |
+| Milho | +25 |
 | Tucunaré | +32 |
 | Sardinha | +22 |
 | Ovo | +20 |
@@ -834,7 +880,7 @@ Comestíveis (regra do vale, cadastrada item a item em `EDIBLE`, no `js/data.js`
 | Amora silvestre | +8 |
 | Alga | +3 |
 
-Outras flores, cogumelos e colheitas não são comestíveis. A energia nunca passa de 100; o valor de cada alimento
+Outras flores, cogumelos e colheitas (rabanete, tomate e abóbora) não são comestíveis. A energia nunca passa de 100; o valor de cada alimento
 está na descrição dele. Só escolher o alimento na barra não come nada: é preciso um
 clique novo no cenário. Se o clique cair num morador, porta, baú ou outro alvo
 próximo, vale essa interação. Dar o alimento de presente ou entregá-lo numa missão
