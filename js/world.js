@@ -1446,9 +1446,24 @@ const World = (() => {
     // janelas no fundo, à direita
     [[236, 6], [270, 6]].forEach(([x, y]) => { R(x - 2, y - 2, 26, 28, OUT); R(x - 1, y - 1, 24, 26, '#f4f0e4'); R(x + 1, y + 1, 20, 22, '#9ad4f4'); R(x + 1, y + 1, 20, 6, '#c8ecff'); R(x + 11, y + 1, 1, 22, '#f4f0e4'); R(x + 1, y + 12, 20, 1, '#f4f0e4'); R(x + 1, y + 1, 4, 22, '#e8a0a8'); R(x + 17, y + 1, 4, 22, '#e8a0a8'); R(x - 3, y + 24, 28, 3, OUT); R(x - 2, y + 24, 26, 2, '#d8c8a8'); cur.lights.push({ kind: 'win', x: x + 1, y: y + 1, w: 20, h: 22 }); });
     // mural de avisos (cortiça com bilhetes)
-    R(112, 6, 46, 28, OUT); R(113, 7, 44, 26, '#8a5a32'); R(115, 9, 40, 22, '#c89a62'); for (let i = 0; i < 30; i++) R(116 + rand() * 38, 10 + rand() * 20, 1, 1, '#a87a48');
-    [[118, 11, '#f4f0e4'], [131, 13, '#f8e8a0'], [144, 10, '#c8f0e8'], [121, 21, '#f8c8d8'], [138, 22, '#f4f0e4']].forEach(([x, y, c]) => { R(x, y, 9, 8, c); R(x + 1, y + 3, 6, 1, '#8a8a98'); R(x + 1, y + 5, 4, 1, '#8a8a98'); R(x + 4, y - 1, 2, 2, '#e04a3a'); });
-    obj({ id: 'mural-loja', kind: 'text', x: 135, y: 72, r: 16, hit: [110, 4, 50, 32], label: 'Mural de avisos', text: 'Bilhetes presos com tachinhas: "Vendo mudas de goiabeira", "Quem achou um chapéu velho no bosque?", "Ensaio no coreto, sábado à tarde".' });
+    R(118, 6, 46, 28, OUT); R(119, 7, 44, 26, '#8a5a32'); R(121, 9, 40, 22, '#c89a62'); for (let i = 0; i < 30; i++) R(122 + rand() * 38, 10 + rand() * 20, 1, 1, '#a87a48');   // (6 px à direita: abre espaço para a escada)
+    [[124, 11, '#f4f0e4'], [137, 13, '#f8e8a0'], [150, 10, '#c8f0e8'], [127, 21, '#f8c8d8'], [144, 22, '#f4f0e4']].forEach(([x, y, c]) => { R(x, y, 9, 8, c); R(x + 1, y + 3, 6, 1, '#8a8a98'); R(x + 1, y + 5, 4, 1, '#8a8a98'); R(x + 4, y - 1, 2, 2, '#e04a3a'); });
+    obj({ id: 'mural-loja', kind: 'text', x: 141, y: 72, r: 16, hit: [116, 4, 50, 32], label: 'Mural de avisos', text: 'Bilhetes presos com tachinhas: "Vendo mudas de goiabeira", "Quem achou um chapéu velho no bosque?", "Ensaio no coreto, sábado à tarde".' });
+    // porta da escada para a casa, no andar de cima (particular: só Dona Celeste e Caleb usam)
+    R(95, 24, 21, 40, OUT); R(96, 25, 19, 39, '#8a5a32'); R(98, 27, 15, 37, '#2e2018');
+    for (let i = 0; i < 6; i++) { const sy = 58 - i * 6, sx = 98 + i; R(sx, sy, 15 - i, 2, '#7a5634'); R(sx, sy, 15 - i, 1, '#a07448'); R(sx, sy + 2, 15 - i, 4, '#3a2a1e'); }   // degraus subindo
+    R(112, 28, 1, 34, '#c89a62'); for (let y = 32; y < 62; y += 7) R(110, y, 2, 1, '#c89a62');     // corrimão
+    R(95, 24, 21, 2, '#b88448'); R(96, 22, 19, 2, OUT); R(99, 18, 13, 5, '#f4ead4'); R(99, 18, 13, 5, OUT); R(100, 19, 11, 3, '#f8f0dc'); R(101, 20, 9, 1, '#8a8a98');   // plaquinha "Particular"
+    obj({ id: 'escada-loja', kind: 'text', x: 105, y: 72, r: 14, hit: [95, 18, 21, 46], label: 'Escada (particular)', text: 'Na plaquinha: "Particular". A escada sobe para a casa da Dona Celeste e do Caleb, no andar de cima do Armazém.' });
+    // cantinho do Caleb: mesinha com notebook e banquinho, ao lado do balcão (fora da circulação)
+    bldSprite(108, 62, 22, 26, 82, () => {
+      R(111, 70, 15, 7, OUT); R(112, 71, 13, 4, '#a8784a'); R(112, 71, 13, 1, '#c89a62'); R(112, 75, 13, 1, '#7a5230');
+      R(113, 76, 2, 6, '#6a4426'); R(122, 76, 2, 6, '#6a4426');
+      R(114, 69, 9, 3, '#2a2a34'); R(115, 69, 7, 1, '#5a5a6a'); R(118, 70, 1, 1, '#c8c6d0');            // notebook fechado (com adesivo)
+    });
+    solid(112, 72, 12, 8);
+    bldSprite(96, 76, 16, 12, 85, () => { R(99, 79, 11, 3, OUT); R(100, 79, 9, 2, '#8a5a32'); R(100, 82, 1, 4, '#6a4426'); R(108, 82, 1, 4, '#6a4426'); });   // banquinho
+    obj({ id: 'mesa-caleb', kind: 'text', x: 118, y: 86, r: 12, hit: [110, 66, 18, 18], label: 'Mesinha com notebook', text: 'Uma mesinha com um notebook cheio de adesivos e um fone enrolado em cima. É o cantinho do Caleb.' });
     // cartaz de frutas e relógio
     R(166, 8, 28, 24, OUT); R(167, 9, 26, 22, '#f8f0dc'); [[170, 12, '#e04a3a'], [178, 12, '#f0a020'], [186, 12, '#58b858'], [170, 20, '#8a5ad9'], [178, 20, '#ffe066'], [186, 20, '#e0607a']].forEach(([x, y, c]) => { R(x, y, 5, 5, OUT); R(x + 1, y + 1, 3, 3, c); }); R(170, 27, 20, 1, '#8a8a98');
     R(204, 10, 14, 14, OUT); R(205, 11, 12, 12, '#f4f0e4'); R(210, 13, 1, 5, OUT); R(210, 17, 4, 1, OUT); R(205, 11, 12, 1, '#c8a060');
@@ -2430,6 +2445,16 @@ const World = (() => {
     } else if (a.act === 'tea') {
       P(x - 2, y - 15, 5, 4, OUT); P(x - 1, y - 14, 3, 2, '#f0e8f4'); P(x + 2, y - 14, 1, 1, '#f0e8f4');
       ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(x - (slow ? 0 : 1), y - 18, 1, 2); ctx.fillRect(x + (slow ? 1 : 0), y - 20, 1, 2);
+    } else if (a.act === 'notebook') {                               // Caleb no notebook: aberto sobre a mesinha (à direita dele), fones e notinhas
+      const yy = Math.round(a.y); P(114, 63, 9, 7, '#2a2a34'); P(115, 64, 7, 5, slow ? '#7ab0d8' : '#8ac0e0'); P(116, 65, 3, 1, '#d8ecf8'); P(113, 70, 11, 2, '#5a5a6a'); P(114, 70, 9, 1, '#8a8a98');
+      P(x - 6, yy - 23, 2, 3, '#2a2a34'); if (slow) { P(x + 3, yy - 35, 1, 3, '#3a2a40'); P(x + 3, yy - 36, 2, 1, '#3a2a40'); P(x + 2, yy - 33, 1, 1, '#3a2a40'); }
+    } else if (a.act === 'music') {                                  // ouvindo música: fones e uma notinha subindo
+      const yy = Math.round(a.y), k = Math.floor(t / 600) % 3; P(x - 7, yy - 23, 2, 3, '#2a2a34'); P(x + 5, yy - 23, 2, 3, '#2a2a34');
+      P(x + 4 + k, yy - 33 - k * 2, 1, 3, '#3a2a40'); P(x + 4 + k, yy - 34 - k * 2, 2, 1, '#3a2a40'); P(x + 3 + k, yy - 31 - k * 2, 1, 1, '#3a2a40');
+    } else if (a.act === 'boxes') {                                  // ajudando com as caixas
+      P(x - 5, y - 17, 10, 7, OUT); P(x - 4, y - 16, 8, 5, '#c89a62'); P(x - 4, y - 16, 8, 1, '#e0b878'); P(x - 1, y - 16, 2, 5, '#a87a48');
+    } else if (a.act === 'lunch') {                                  // almoçando com a avó: pratinho na mão
+      P(x - 4, y - 14, 8, 2, '#f0ecf4'); P(x - 3, y - 15, 3, 1, '#e8a050'); P(x + 1, y - 15, 2, 1, '#78b04c');
     } else if (a.act === 'read' || a.act === 'study') {
       P(x - 4, y - 15, 8, 5, OUT); P(x - 3, y - 14, 3, 3, a.act === 'study' ? '#3f86d0' : '#c8483a'); P(x + 1, y - 14, 3, 3, a.act === 'study' ? '#3f86d0' : '#c8483a'); P(x, y - 14, 1, 3, '#f8f4ea');
     }
