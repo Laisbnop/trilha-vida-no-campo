@@ -668,26 +668,19 @@ idade não é definida, e a relação é só de amizade (sem romance).
   ainda não há lista de favoritos) e a aba Amizades, com até 8 corações. Antes da
   chegada, não aparece na aba.
 - **Visual**: feito a partir da ficha aprovada ("CALEB — Trilha • Vida no
-  Campo"), não do gerador genérico de personagens. Os retratos de diálogo são as
-  quatro expressões da ficha (neutra, sorriso discreto, contente e
-  envergonhado/surpreso), recortadas sem o fundo de pergaminho e reduzidas para
-  128×128 sem desfoque (cada pixel fica com a cor mais frequente do bloco). Os
-  sprites de corpo inteiro vêm das quatro vistas aprovadas (frente, costas e os
-  dois perfis), com os passos da caminhada criados a partir delas (na frente e
-  nas costas, uma bota sobe de cada vez; de perfil, as pernas se abrem). No
-  mapa, ele tem o mesmo tamanho dos outros moradores (29 px do mundo de altura,
-  proporções mais alongadas, como na ficha), com os pés no chão, sombra e a
-  mesma ordem de frente/atrás dos objetos. Os arquivos ficam em
-  `js/caleb-art.js` (imagens geradas por script, uma resolução para cada escala
-  da tela) e `js/char-art.js` (quem desenha).
-- **Por que a cena mudou de resolução**: o mapa era desenhado na resolução do
-  mundo e ampliado pelo navegador, então qualquer personagem tinha só uns 28
-  pixels de altura de desenho, pouco para o rosto, a franja e as proporções da
-  ficha. Agora o canvas da cena tem a resolução da tela e o mundo é desenhado
-  com escala inteira (2×, 3× ou 4×, conforme a janela): cenário, interface e
-  os outros personagens ficam idênticos (os mesmos pixels, só que ampliados), e
-  só o Caleb usa os pixels extras para mostrar o detalhe da arte aprovada, no
-  mesmo tamanho na tela.
+  Campo"), não do gerador genérico de personagens, e na mesma densidade de pixels
+  dos outros personagens. Os sprites (14×30, um pixel do desenho para um pixel do
+  mundo) foram desenhados pixel a pixel seguindo as quatro vistas aprovadas
+  (frente, costas e os dois perfis): franja longa e diagonal cobrindo um olho,
+  mecha prateada, um olho visível, camisa vinho aberta sobre camiseta preta com
+  pingente, mangas dobradas, calça escura e botas, com as proporções mais
+  alongadas da ficha. Os passos da caminhada saem dessas vistas (na frente e nas
+  costas, uma bota sobe de cada vez; de perfil, as pernas se abrem). Os retratos
+  de diálogo são as quatro expressões da ficha (neutra, sorriso discreto,
+  contente e envergonhado/surpreso), sem o fundo de pergaminho, reduzidas para
+  64×64 como os retratos dos outros moradores, sem desfoque (cada pixel fica
+  com a cor mais frequente do bloco). Os arquivos ficam em `js/caleb-art.js`
+  (imagens geradas por script) e `js/char-art.js` (quem desenha).
 - **Armazém**: ganhou a porta da escada para o andar de cima, na parede do fundo
   ao lado do balcão (com a plaquinha "Particular"; o mural de avisos foi alguns
   pixels para a direita), e a mesinha com notebook do Caleb, ao lado do balcão,
