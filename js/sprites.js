@@ -44,7 +44,7 @@ const Sprites = (() => {
     { id: 'azul',     name: 'Azul',            c: ['#3f7fd8', '#2652a2', '#74acf4'] },
     { id: 'rosa',     name: 'Rosa',            c: ['#e870a8', '#b0467a', '#fcaad0'] },
   ];
-  /* 16 penteados, de estilos tradicionalmente masculinos a femininos — todos livres. */
+  /* 19 penteados, de estilos tradicionalmente masculinos a femininos — todos livres para qualquer gênero. */
   const HAIRS = [
     { id: 'careca',        name: 'Careca' },
     { id: 'raspado',       name: 'Raspado' },
@@ -62,8 +62,12 @@ const Sprites = (() => {
     { id: 'trancas',       name: 'Tranças' },
     { id: 'rabo',          name: 'Rabo de cavalo' },
     { id: 'coque',         name: 'Coque' },
+    { id: 'longoVolumoso', name: 'Longo em ondas' },
+    { id: 'medioLateral',  name: 'Médio com franja lateral' },
+    { id: 'emo',           name: 'Emo com franja longa' },
   ];
-  const GENDERS = [{ id: 'f', name: 'Feminino' }, { id: 'm', name: 'Masculino' }, { id: 'n', name: 'Não-binário' }];
+  /* Na criação: Feminino e Masculino. Jogos salvos com a base neutra ('n') continuam valendo (GENDER_PRESETS.n e body 'n'). */
+  const GENDERS = [{ id: 'f', name: 'Feminino' }, { id: 'm', name: 'Masculino' }];
   const TOPS = [
     { id: 'camiseta', name: 'Camiseta' }, { id: 'regata', name: 'Regata' }, { id: 'camisa', name: 'Camisa' },
     { id: 'blusa', name: 'Blusa' }, { id: 'moletom', name: 'Moletom' }, { id: 'jardineira', name: 'Jardineira' },
@@ -87,6 +91,23 @@ const Sprites = (() => {
   const toHex = a => '#' + a.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
   const shade = (h, k) => toHex(hex(h).map(v => v * k));
   const mix = (a, b, k) => { const A = hex(a), B = hex(b); return toHex(A.map((v, i) => v + (B[i] - v) * k)); };
+  /* Cor do cabelo por barras (HSL, valores de 0 a 100): uma paleta de base, sombra e luz gerada da cor escolhida.
+     Nos extremos (quase preto ou quase branco), a sombra e a luz se afastam mais da base, para o volume continuar legível. */
+  const hslHex = (h, s, l) => { const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); return toHex([f(0), f(8), f(4)].map(v => v * 255)); };
+  function hairPalette([H, S, L]) {
+    const h = (H % 100) * 3.6, s = Math.max(0, Math.min(1, S / 100)), l = Math.max(0.02, Math.min(0.98, L / 100));
+    const sh = l < 0.2 ? l * 0.42 : l > 0.85 ? l - 0.22 : l - Math.max(0.1, l * 0.32);
+    const li = l > 0.85 ? Math.min(0.99, l + 0.08) : l < 0.2 ? l + 0.16 : l + Math.max(0.1, (1 - l) * 0.3);
+    return [hslHex(h, s, l), hslHex(h, Math.min(1, s * 1.05), Math.max(0, sh)), hslHex(h, s * 0.85, li)];
+  }
+  function hexToHsl(hx) {
+    const [r, g, b] = hex(hx).map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    let h = 0, s = 0;
+    if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; }
+    return [Math.round(h / 3.6), Math.round(s * 100), Math.round(l * 100)];
+  }
+  /* Cor atual do cabelo em HSL (para as barras): a escolhida ou, em jogos antigos, a da cor de cabelo pronta. */
+  const hairHslOf = look => (Array.isArray(look.hairHsl) ? look.hairHsl.slice() : hexToHsl(byId(HAIR_COLORS.concat(EXTRA_HAIR), look.hairColor).c[0]));
   const ell = (x, y, cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
 
   function render(look, frame, dir, small) {
@@ -98,7 +119,7 @@ const Sprites = (() => {
     const get = (x, y) => (inb(x, y) ? grid[y][x] : null);
 
     const [S, Sd, Sl] = byId(SKINS, look.skin).c;
-    const [Hb, Hd, Hl] = byId(HAIR_COLORS.concat(EXTRA_HAIR), look.hairColor).c;
+    const [Hb, Hd, Hl] = Array.isArray(look.hairHsl) ? hairPalette(look.hairHsl) : byId(HAIR_COLORS.concat(EXTRA_HAIR), look.hairColor).c;   // barras (HSL) ou cor pronta (jogos antigos e moradores)
     const Hdd = shade(Hd, 0.75);
     const robe = look.top === 'manto';
     const leaves = look.top === 'folhas';                    // traje de Lúcio: camisa de mangas longas + manto de folhas
@@ -151,10 +172,19 @@ const Sprites = (() => {
           case 'trancas': crown(8, 0.3); for (const x of [4, 6, 17, 19]) addRect(x, 8, x, x === 4 || x === 19 ? 21 : 23); add(5, 8); add(18, 8); for (let y = 15; y <= 23; y++) for (let x = 6; x <= 17; x++) backLayer.add(x + ',' + y); break;
           case 'rabo': crown(8, 0.1); add(7, 9); add(16, 9); addRect(17, 8, 18, 16); add(19, 12); add(19, 13); add(18, 17); break;
           case 'coque': crown(8, 0.1); addEll(11.5, 2.4, 2.8, 2.2); add(7, 9); add(7, 10); add(16, 9); break;
-          case 'emo':                                   // Caleb: camadas lisas, franja longa varrida cobrindo um olho, pontas desfiadas
-            crown(8, 0.8); [[11, 2], [15, 3], [6, 6]].forEach(([x, y]) => add(x, y));
-            for (let y = 8; y <= 13; y++) addRect(6, y, y <= 9 ? 12 : y <= 11 ? 11 : 9 - (y - 12), y);
-            addRect(5, 8, 7, 15); addRect(16, 8, 18, 14); [[5, 16], [7, 16], [17, 15], [18, 15], [4, 12], [19, 11]].forEach(([x, y]) => add(x, y)); break;
+          case 'emo':                                   // camadas lisas e assimétricas; franja longa em diagonal cobrindo parte de um olho; pontas bem definidas
+            crown(8, 0.8); [[11, 2], [15, 3], [7, 4]].forEach(([x, y]) => add(x, y));
+            addRect(6, 8, 12, 9); addRect(6, 10, 10, 10); addRect(6, 11, 8, 11); addRect(6, 12, 7, 13); add(8, 12);
+            addRect(5, 8, 7, 15); addRect(16, 8, 18, 14); [[4, 12], [4, 14], [5, 16], [7, 16], [6, 17], [17, 15], [18, 15], [19, 11], [19, 13], [17, 16]].forEach(([x, y]) => add(x, y)); break;
+          case 'longoVolumoso':                         // longo, volumoso, ondas em camadas, mechas emoldurando o rosto e pontas viradas para fora
+            tex = HAIR.wavy; crown(8, 1.1);
+            for (let y = 8; y <= 23; y++) { const o = ((y + 1) >> 1) % 2; addRect(4 - o, y, 7, y); addRect(16, y, 19 + o, y); }
+            [[7, 10], [7, 11], [8, 9], [16, 10], [16, 11], [15, 9], [2, 23], [3, 24], [21, 23], [20, 24]].forEach(([x, y]) => add(x, y));
+            cut((x, y) => y >= 23 && (x === 7 || x === 16));
+            for (let y = 15; y <= 23; y++) for (let x = 6; x <= 17; x++) backLayer.add(x + ',' + y); break;
+          case 'medioLateral':                          // na altura do queixo, risca lateral, franja varrida para o lado e pontas em camadas
+            crown(8, 0.8); addRect(10, 8, 16, 8); addRect(11, 9, 16, 9); add(15, 10); add(16, 10);
+            addRect(5, 8, 7, 16); addRect(16, 8, 18, 17); [[6, 17], [4, 14], [17, 18], [19, 15], [19, 12]].forEach(([x, y]) => add(x, y)); cut((x, y) => x === 5 && y === 16); break;
           case 'juba': tex = HAIR.wavy; crown(8, 0.9); addRect(5, 8, 7, 15); addRect(16, 8, 18, 15); cut((x, y) => y >= 7 && y <= 8 && x >= 9 && x <= 14);
             [[4, 10], [19, 10], [4, 13], [19, 14], [6, 3], [17, 3], [9, 2], [14, 2], [8, 9], [10, 9], [13, 9], [15, 9], [5, 16], [18, 16]].forEach(([x, y]) => add(x, y)); break;
         }
@@ -177,6 +207,8 @@ const Sprites = (() => {
         if (hair === 'trancas') { for (const x of [6, 9, 14, 17]) addRect(x, 9, x + 1, 23); }
         if (hair === 'rabo') { addRect(10, 9, 13, 20); add(11, 21); add(12, 21); add(11, 22); }
         if (hair === 'coque') addEll(11.5, 2.4, 2.8, 2.2);
+        if (hair === 'longoVolumoso') { tex = HAIR.wavy; for (let y = 9; y <= 23; y++) { const o = ((y + 1) >> 1) % 2; addRect(4 - o, y, 19 + o, y); } [[2, 23], [21, 23], [3, 24], [20, 24]].forEach(([x, y]) => add(x, y)); cut((x, y) => y >= 23 && x >= 8 && x <= 15 && (x + y) % 3 === 0); }
+        if (hair === 'medioLateral') { addRect(6, 9, 17, 16); [[6, 17], [9, 17], [14, 17], [17, 17], [5, 13], [18, 14]].forEach(([x, y]) => add(x, y)); for (let y = 3; y <= 8; y++) add(13, y); }
         if (hair === 'emo') { addRect(6, 9, 17, 15); [[7, 16], [10, 16], [13, 16], [16, 16], [10, 2], [14, 2], [5, 12], [18, 12]].forEach(([x, y]) => add(x, y)); }
         if (hair === 'juba') { tex = HAIR.wavy; addEll(11.5, 9.5, 6.8, 7.2); addRect(6, 9, 17, 15); [[5, 12], [18, 13], [7, 16], [10, 16], [13, 16], [16, 16], [6, 3], [17, 4], [11, 2]].forEach(([x, y]) => add(x, y)); }
       } else {                                            // perfil, olhando para a esquerda
@@ -197,6 +229,8 @@ const Sprites = (() => {
           case 'trancas': sideCrown(0.3); for (const x of [13, 15, 17]) addRect(x, 9, x, 23); add(14, 22); add(16, 23); break;
           case 'rabo': sideCrown(0.1); cut((x, y) => y > 13); addRect(16, 9, 18, 18); add(19, 12); add(19, 13); add(17, 19); break;
           case 'coque': sideCrown(0.1); cut((x, y) => y > 13); addEll(15, 3.4, 2.6, 2.2); break;
+          case 'longoVolumoso': tex = HAIR.wavy; sideCrown(1.0); for (let y = 9; y <= 23; y++) addRect(12, y, 18 + (((y + 1) >> 1) % 2), y); [[7, 9], [7, 10], [8, 9], [19, 24], [20, 23]].forEach(([x, y]) => add(x, y)); cut((x, y) => y >= 23 && x === 12); break;
+          case 'medioLateral': sideCrown(0.8); addRect(12, 9, 17, 16); [[13, 17], [16, 17], [18, 14], [7, 8], [8, 8], [7, 9]].forEach(([x, y]) => add(x, y)); break;
           case 'emo': sideCrown(0.8); addRect(12, 9, 17, 15); [[6, 8], [7, 8], [6, 9], [7, 9], [8, 9], [14, 16], [17, 16], [18, 13], [10, 2], [15, 3]].forEach(([x, y]) => add(x, y)); break;
           case 'juba': tex = HAIR.wavy; sideCrown(0.9); addRect(12, 9, 17, 15); [[19, 12], [19, 15], [13, 18], [16, 18], [7, 8], [8, 9], [10, 2], [16, 3]].forEach(([x, y]) => add(x, y)); break;
         }
@@ -249,7 +283,8 @@ const Sprites = (() => {
         if (topEdge && x < 12 && tex !== HAIR.coily) c = Hl;
         if (leftEdge && !topEdge && tex === HAIR.straight && y > 9) c = Hb;
         if (hair === 'raspado') c = mix(c, S, 0.45);
-        if (hair === 'emo') {                              // mecha prateada discreta, na franja
+        if (hair === 'medioLateral' && down && x === 10 && y <= 8 && y >= 4) c = Hd;      // risca lateral
+        if (hair === 'emo' && look.streak) {               // mecha prateada (opcional), na franja
           const st = down ? (x === 8 && y >= 7 && y <= 12) || (x === 9 && y >= 5 && y <= 7) : up ? false : (x === 9 && y >= 5 && y <= 8) || (x === 8 && y === 9);
           if (st) c = topEdge || y < 7 ? '#e6e2ea' : '#b8b4c0';
         }
@@ -388,6 +423,12 @@ const Sprites = (() => {
 
     /* ---------- cabelo da frente ---------- */
     paintHair(k => !(down && backLayer.has(k) && !isFront(k)));
+    /* jogador: linha escura onde o cabelo encosta no rosto (separa franja, mechas e pele com nitidez); moradores ficam como estão */
+    if (look.crisp && !up) {
+      const skin = new Set([S, Sd, Sl]);
+      for (const k of mask) { const [x, y] = k.split(',').map(Number); if (grid[y][x] === null || !(get(x, y) === Hb || get(x, y) === Hl || get(x, y) === Hd)) continue;
+        if (skin.has(get(x, y + 1))) grid[y][x] = Hdd; else if (y >= 9 && (skin.has(get(x - 1, y)) || skin.has(get(x + 1, y)))) grid[y][x] = get(x, y) === Hl ? Hb : Hd; }
+    }
     function isFront(k) { const [x, y] = k.split(',').map(Number); return x <= 7 || x >= 16 || y < 15; }
     // detalhes por estilo
     if (down && hair === 'trancas') { [4, 6, 17, 19].forEach(x => { const yEnd = x === 4 || x === 19 ? 21 : 23; for (let y = 9; y <= yEnd; y++) p(x, y, y % 2 ? Hb : Hd); p(x, yEnd + 1, '#ffd75e'); }); for (let x = 8; x <= 15; x += 2) { p(x, 6, Hd); p(x, 7, Hd); } }
@@ -545,7 +586,7 @@ const Sprites = (() => {
   function randomLook(base) {
     const r = list => list[Math.floor(Math.random() * list.length)];
     const look = Object.assign({}, base, {
-      skin: r(SKINS).id, hair: r(HAIRS).id, hairColor: r(HAIR_COLORS.slice(0, 6)).id,
+      skin: r(SKINS).id, hair: r(HAIRS).id, hairColor: r(HAIR_COLORS.slice(0, 6)).id, hairHsl: null,   // a cor sorteada é uma das prontas (as barras partem dela)
       top: r(TOPS).id, topColor: r(CLOTH_COLORS), bottom: r(BOTTOMS).id, bottomColor: r(CLOTH_COLORS),
       shoeColor: r(SHOE_COLORS), accessory: Math.random() < 0.5 ? null : r(ACCESSORIES).id, accColor: r(CLOTH_COLORS),
     });
@@ -553,5 +594,5 @@ const Sprites = (() => {
     return look;
   }
 
-  return { WORLD, drawWorld, genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
+  return { hairPalette, hexToHsl, hairHslOf, WORLD, drawWorld, genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
 })();

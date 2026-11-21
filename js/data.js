@@ -498,11 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Caleb com a arte aprovada',
+  title: 'Cabelos e cores',
   items: [
-    'Caleb agora segue a ficha aprovada, na mesma densidade de pixels dos outros personagens.',
-    'Sprites desenhados pixel a pixel a partir das quatro vistas aprovadas: franja diagonal cobrindo um olho, mecha prateada, camisa vinho aberta e proporções mais alongadas, com passos de caminhada.',
-    'Retratos de diálogo com as quatro expressões da ficha, em 64×64 como os dos outros moradores.',
-    'Rotina, conversas, amizade, chegada e jogos salvos não mudaram.',
+    'Três penteados novos, para qualquer personagem: longo em ondas, médio com franja lateral e emo com franja longa.',
+    'Cor do cabelo em três barras (Cor, Intensidade e Luminosidade) na etapa do cabelo e no guarda-roupa, com prévia na hora e botão para restaurar a cor padrão.',
+    'Cada cor gera sombra e luz próprias, mantendo mechas e contornos, até em cabelos pretos, brancos ou cinzas.',
+    'Personagem mais nítido: contorno entre cabelo e rosto e painéis em escala inteira, sem distorcer os pixels.',
+    'A criação tem Feminino e Masculino. Jogos salvos antigos continuam com a mesma aparência.',
   ],
 };

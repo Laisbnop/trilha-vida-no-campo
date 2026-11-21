@@ -193,6 +193,39 @@
     box.append(grid);
   }
   const colorItems = list => list.map(c => ({ id: c, swatch: c }));
+  /* Cor do cabelo em três barras (HSL, 0–100): Cor (matiz), Intensidade (saturação) e Luminosidade.
+     Arrastar com o mouse ou o dedo, clicar em qualquer ponto ou usar as setas (Page Up/Down: de 10 em 10;
+     Home/End: extremos) com a barra selecionada. Enquanto arrasta, só a prévia muda (live); ao soltar, o resto
+     da tela acompanha (done). As barras de intensidade e luminosidade mostram a cor escolhida. */
+  function hairSliders(box, look, live, done) {
+    const vals = Sprites.hairHslOf(look), wrap = el('div', 'hsl'), rows = [];
+    const NAMES = [['Cor', 'cor'], ['Intensidade', 'intensidade'], ['Luminosidade', 'luminosidade']];
+    const paint = () => {
+      const [h, sat, l] = vals, H = h * 3.6;
+      rows[0].track.style.background = `linear-gradient(to right, ${[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].map(a => `hsl(${a} ${Math.max(45, sat)}% 50%)`).join(', ')})`;
+      rows[1].track.style.background = `linear-gradient(to right, hsl(${H} 0% ${l}%), hsl(${H} 100% ${l}%))`;
+      rows[2].track.style.background = `linear-gradient(to right, #000, hsl(${H} ${sat}% 50%), #fff)`;
+      rows.forEach((r, i) => { r.knob.style.left = vals[i] + '%'; r.val.textContent = vals[i]; r.track.setAttribute('aria-valuenow', vals[i]); });
+    };
+    const set = (i, v) => { v = Math.max(0, Math.min(100, Math.round(v))); if (vals[i] === v && Array.isArray(look.hairHsl)) return; vals[i] = v; look.hairHsl = vals.slice(); paint(); live(); };
+    NAMES.forEach(([label, id], i) => {
+      const row = el('div', 'hsl-row'), track = el('div', 'hsl-track'), knob = el('i', 'hsl-knob'), val = el('span', 'hsl-val');
+      track.tabIndex = 0; track.setAttribute('role', 'slider'); track.setAttribute('aria-label', label); track.setAttribute('aria-valuemin', '0'); track.setAttribute('aria-valuemax', '100'); track.dataset.hsl = id;
+      track.append(knob); row.append(el('span', 'hsl-label', label), track, val); wrap.append(row); rows.push({ track, knob, val });
+      const at = e => { const r = track.getBoundingClientRect(); set(i, (e.clientX - r.left) / r.width * 100); };
+      track.onpointerdown = e => { e.preventDefault(); track.focus({ preventScroll: true }); try { track.setPointerCapture(e.pointerId); } catch (_) {} at(e); track.onpointermove = at; };
+      track.onpointerup = track.onpointercancel = () => { if (!track.onpointermove) return; track.onpointermove = null; done(); };
+      track.onkeydown = e => {
+        const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -10, PageUp: 10 }[e.key];
+        if (step) set(i, vals[i] + step); else if (e.key === 'Home') set(i, 0); else if (e.key === 'End') set(i, 100); else return;
+        e.preventDefault(); e.stopPropagation();
+      };
+      track.onkeyup = e => { if (/Arrow|Page|Home|End/.test(e.key)) done(); };
+    });
+    const reset = btn('btn ghost hsl-reset', 'Restaurar cor padrão', () => { delete look.hairHsl; look.hairColor = Sprites.genderPreset(look.gender === 'm' ? 'm' : 'f').hairColor; const v = Sprites.hairHslOf(look); vals.splice(0, 3, ...v); paint(); live(); done(); });
+    reset.id = 'hair-reset';
+    box.append(el('p', 'hint', 'Cor do cabelo'), wrap, reset); paint();
+  }
   /* Seções de aparência. look = objeto editado; change = redesenha. */
   const LOOK_SECTIONS = {
     /* gênero: pronomes + base visual. Escolher OUTRO gênero aplica o ponto de partida (mantém a
@@ -200,8 +233,11 @@
     genero: (box, look, change) => optionGrid(box, Sprites.GENDERS.map(g => ({ id: g.id, label: g.name, canvas: Sprites.canvas(Object.assign(Sprites.genderPreset(g.id), { skin: look.skin, hat: null })) })), look.gender,
       id => { if (id === look.gender) return; Object.assign(look, Sprites.genderPreset(id)); change(); }, 'genders'),
     pele: (box, look, change) => optionGrid(box, Sprites.SKINS.map(s => ({ id: s.id, label: s.name, swatch: s.c[0] })), look.skin, id => { look.skin = id; change(); }, 'sw'),
-    cabelo: (box, look, change) => optionGrid(box, Sprites.HAIRS.map(h => ({ id: h.id, label: h.name, canvas: Sprites.canvas(Object.assign({}, look, { hair: h.id, hat: null })) })), look.hair, id => { look.hair = id; change(); }, 'many'),
-    corCabelo: (box, look, change) => optionGrid(box, Sprites.HAIR_COLORS.map(h => ({ id: h.id, label: h.name, swatch: h.c[0] })), look.hairColor, id => { look.hairColor = id; change(); }, 'sw'),
+    cabelo: (box, look, change, live, commit) => {                       // trocar o penteado mantém a cor
+      optionGrid(box, Sprites.HAIRS.map(h => ({ id: h.id, label: h.name, canvas: Sprites.canvas(Object.assign({}, look, { hair: h.id, hat: null })) })), look.hair, id => { look.hair = id; change(); }, 'many');
+      const grid = box.lastElementChild, thumbs = () => grid.querySelectorAll('.opt').forEach(b => b.querySelector('canvas').replaceWith(Sprites.canvas(Object.assign({}, look, { hair: b.dataset.id, hat: null }))));
+      hairSliders(box, look, live || (() => {}), () => { thumbs(); if (live) live(); if (commit) commit(); });   // ao soltar: miniaturas e salvamento (sem redesenhar as barras)
+    },
     cima: (box, look, change) => { optionGrid(box, Sprites.TOPS.map(o => ({ id: o.id, label: o.name, canvas: Sprites.canvas(Object.assign({}, look, { top: o.id })) })), look.top, id => { look.top = id; change(); }, 'many'); box.append(el('p', 'hint', 'Cor')); optionGrid(box, colorItems(Sprites.CLOTH_COLORS), look.topColor, id => { look.topColor = id; change(); }, 'colors'); },
     baixo: (box, look, change) => { optionGrid(box, Sprites.BOTTOMS.map(o => ({ id: o.id, label: o.name, canvas: Sprites.canvas(Object.assign({}, look, { bottom: o.id })) })), look.bottom, id => { look.bottom = id; change(); }); box.append(el('p', 'hint', 'Cor')); optionGrid(box, colorItems(Sprites.CLOTH_COLORS), look.bottomColor, id => { look.bottomColor = id; change(); }, 'colors'); },
     calcado: (box, look, change) => optionGrid(box, colorItems(Sprites.SHOE_COLORS), look.shoeColor, id => { look.shoeColor = id; change(); }, 'colors'),
@@ -229,10 +265,9 @@
   window.__creation = { get look() { return JSON.parse(JSON.stringify(draft.look || {})); } };   // para os testes
   let step = 0, previewTimer = 0, previewF = 0;
   const STEPS = [
-    { title: 'Gênero', hint: 'Define como a vila se refere a você nas falas (ele, ela ou formas neutras). Todos os cabelos, roupas e acessórios servem para qualquer gênero.', key: 'genero' },
+    { title: 'Gênero', hint: 'Define como a vila se refere a você nas falas (ele ou ela). Todos os cabelos, cores, roupas e acessórios servem para os dois.', key: 'genero' },
     { title: 'Cor da pele', hint: 'Escolha o tom de pele.', key: 'pele', look: true },
-    { title: 'Cabelo', hint: 'Curtos, médios e longos; lisos, ondulados, cacheados e crespos.', key: 'cabelo', look: true },
-    { title: 'Cor do cabelo', hint: () => (draft.look.hair === 'careca' ? 'Seu personagem é careca, então a cor quase não aparece.' : 'Escolha a cor do cabelo.'), key: 'corCabelo', look: true },
+    { title: 'Cabelo', hint: () => (draft.look.hair === 'careca' ? 'Penteado e cor. Careca: a cor quase não aparece.' : 'Penteado e cor: arraste as barras (ou clique e use as setas). Trocar de penteado mantém a cor.'), key: 'cabelo', look: true },
     { title: 'Roupa de cima', hint: 'Peça e cor.', key: 'cima', look: true },
     { title: 'Roupa de baixo', hint: 'Peça e cor. Combina com qualquer parte de cima.', key: 'baixo', look: true },
     { title: 'Calçado e acessório', hint: 'O acessório aparece de todos os lados, até com chapéu.', key: 'extras', look: true },
@@ -244,7 +279,7 @@
     optionGrid(box, Object.keys(PETS).map(k => ({ id: k, label: PETS[k].name, canvas: Object.assign(World.petCanvas(k), { className: 'pixel pet' }) })), cur, set, 'two');
   }
   function startCreation(pre) {
-    draft.look = Object.assign({}, DEFAULT_LOOK, Sprites.genderPreset(DEFAULT_LOOK.gender || 'f'), pre ? pre.look : null); draft.name = pre ? pre.name : ''; draft.farm = ''; draft.pet = 'gato';
+    draft.look = Object.assign({}, DEFAULT_LOOK, Sprites.genderPreset(DEFAULT_LOOK.gender || 'f'), pre ? pre.look : null, { crisp: true }); draft.name = pre ? pre.name : ''; draft.farm = ''; draft.pet = 'gato';
     if (pre && !draft.look.body) draft.look.body = draft.look.gender;      // personagem de versão antiga, recriado agora: base do gênero dele
     step = 0;
     const steps = $('steps'); steps.replaceChildren(); STEPS.forEach(() => steps.append(el('span')));
@@ -290,7 +325,7 @@
     $('step-title').textContent = `${step + 1}. ${st.title}`;
     $('step-hint').textContent = typeof st.hint === 'function' ? st.hint() : st.hint;
     const box = $('step-content'); box.replaceChildren();
-    if (LOOK_SECTIONS[st.key]) LOOK_SECTIONS[st.key](box, draft.look, renderStep);
+    if (LOOK_SECTIONS[st.key]) LOOK_SECTIONS[st.key](box, draft.look, renderStep, updatePreview);
     else if (st.key === 'pet') petOptions(box, draft.pet, id => { draft.pet = id; renderStep(); });
     else {
       const a = nameField('Seu nome', draft.name, 'name', 'Seu nome', v => { draft.name = v; updatePreview(); updateNav(); }, 'name-input');
@@ -559,7 +594,7 @@
   /* Campos criados depois (salvamentos anteriores continuam valendo). */
   function upgrade(s) {
     s.dmg = s.dmg || {};
-    s.look = Object.assign({ accessory: null, accColor: '#e04a3a' }, s.look);
+    s.look = Object.assign({ accessory: null, accColor: '#e04a3a' }, s.look, { crisp: true });   // crisp: separação nítida cabelo/rosto (só o jogador)
     if (!(s.age >= START_AGE)) s.age = START_AGE;                       // agora a história começa aos 22
     if (typeof s.farmName !== 'string') s.farmName = '';                 // pedido na tela de ajuste, sem recomeçar
     if (!s.pet) s.pet = { sp: null, state: 'pending', name: '', offered: 0 };
@@ -743,7 +778,8 @@
     if (screen === 'title') {
       const m = World.get('fora'), cx = 520 + Math.sin(t / 9000) * 380, cy = 250 + Math.cos(t / 7000) * 150;
       World.setView(256, 160);
-      World.render($('title-canvas').getContext('2d'), { map: m, cam: World.camera(m, cx, cy), t, state: DEMO, hens: [{ x: 190, y: 420, kind: 0 }, { x: 240, y: 432, kind: 1, flip: 1 }],
+      const tctx = $('title-canvas').getContext('2d'); tctx.imageSmoothingEnabled = false;
+      World.render(tctx, { map: m, cam: World.camera(m, cx, cy), t, state: DEMO, hens: [{ x: 190, y: 420, kind: 0 }, { x: 240, y: 432, kind: 1, flip: 1 }],
         actors: VILLAGERS.map(v => ({ v, p: villagerAt(v, 660) })).filter(o => o.p.where === 'fora').map(o => ({ look: o.v.look, x: o.p.x, y: o.p.y, dir: o.p.dir })) });
       return;
     }
@@ -2706,10 +2742,11 @@
     },
     roupa(body) {
       const top = el('div', 'sheet-top'), pv = el('div', 'wardrobe-pv');
-      ['down', 'left', 'up', 'right'].forEach(d => pv.append(Sprites.canvas(S.look, d)));
+      const drawPv = () => pv.replaceChildren(...['down', 'left', 'up', 'right'].map(d => Sprites.canvas(S.look, d)));
+      drawPv();
       top.append(pv, el('div', '', `${S.name}, ${S.age} anos`)); body.append(el('h3', '', 'Guarda-roupa e espelho'), top);
       const change = () => { save(); renderTab('roupa'); };
-      [['Cabelo', 'cabelo'], ['Cor do cabelo', 'corCabelo'], ['Roupa de cima', 'cima'], ['Roupa de baixo', 'baixo'], ['Calçado', 'calcado'], ['Acessório', 'acessorio']].forEach(([t, k]) => { body.append(el('h3', '', t)); LOOK_SECTIONS[k](body, S.look, change); });
+      [['Cabelo', 'cabelo'], ['Roupa de cima', 'cima'], ['Roupa de baixo', 'baixo'], ['Calçado', 'calcado'], ['Acessório', 'acessorio']].forEach(([t, k]) => { const sec = el('div', 'look-sec'); body.append(el('h3', '', t), sec); LOOK_SECTIONS[k](sec, S.look, change, drawPv, save); });
       body.append(el('h3', '', 'Chapéu'));
       const mine = Sprites.HATS.filter(h => owns(Object.keys(ITEMS).find(k => ITEMS[k].hat === h.id)));
       optionGrid(body, [{ id: 'none', label: 'Sem chapéu' }, ...mine.map(h => ({ id: h.id, label: h.name, canvas: Sprites.canvas(Object.assign({}, S.look, { hat: h.id })) }))], S.look.hat || 'none', id => { S.look.hat = id === 'none' ? null : id; change(); }, 'many');
