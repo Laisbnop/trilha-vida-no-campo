@@ -500,9 +500,9 @@ const ROD_LETTER = {
 const UPDATE_NOTES = {
   title: 'Caleb com a arte aprovada',
   items: [
-    'Caleb agora usa a arte da ficha aprovada: retratos de diálogo com as quatro expressões e sprites de corpo inteiro nas quatro vistas, com passos de caminhada.',
-    'No mapa, ele tem o mesmo tamanho dos outros moradores, mas mostra a franja diagonal, a mecha prateada, o rosto e as proporções da ficha.',
-    'A cena passou a ser desenhada na resolução da tela, com escala inteira. O cenário e os outros personagens continuam iguais.',
+    'Caleb agora segue a ficha aprovada, na mesma densidade de pixels dos outros personagens.',
+    'Sprites desenhados pixel a pixel a partir das quatro vistas aprovadas: franja diagonal cobrindo um olho, mecha prateada, camisa vinho aberta e proporções mais alongadas, com passos de caminhada.',
+    'Retratos de diálogo com as quatro expressões da ficha, em 64×64 como os dos outros moradores.',
     'Rotina, conversas, amizade, chegada e jogos salvos não mudaram.',
   ],
 };

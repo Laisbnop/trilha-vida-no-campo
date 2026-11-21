@@ -1,7 +1,6 @@
-/* Personagens com arte própria (imagens aprovadas), em vez do gerador de sprites.
-   A arte vem em várias resoluções (uma por escala inteira da tela: 2, 3 e 4) e é desenhada sempre com a
-   mesma altura no mundo, com os pés no chão, alinhada aos pixels da tela e sem suavização. Assim o
-   personagem tem o tamanho dos outros moradores, mas mostra o detalhe da arte. Retratos: 128x128.
+/* Personagens com arte própria (a partir de imagens aprovadas), em vez do gerador de sprites.
+   Os sprites estão na mesma grade dos outros personagens (um pixel do desenho = um pixel do mundo) e são
+   desenhados com os pés no chão, sem suavização. Retratos: 64x64, como os dos outros moradores.
    Uso: CharArt.draw(ctx, 'caleb', x, y, quadro, direção) → true se desenhou (senão, usa o sprite comum). */
 const CharArt = (() => {
   const sets = {};
@@ -12,7 +11,7 @@ const CharArt = (() => {
       Object.keys(data.frames[k]).forEach(d => { S.frames[k][d] = data.frames[k][d].map(src => { const im = new Image(); im.src = src; return im; }); });
     });
     Object.keys(data.portraits).forEach(e => {
-      const c = document.createElement('canvas'); c.width = c.height = 128; c.className = 'pixel';
+      const c = document.createElement('canvas'); c.width = c.height = 64; c.className = 'pixel';
       const im = new Image(); im.onload = () => c.getContext('2d').drawImage(im, 0, 0); im.src = data.portraits[e];
       S.portraits[e] = { c, im };
     });
