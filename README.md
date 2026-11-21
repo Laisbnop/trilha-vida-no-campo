@@ -102,9 +102,10 @@ Com um painel ou conversa aberta, cliques no cenário não fazem nada.
 
 ## Personagem
 
-Na criação: gênero, 6 tons de pele, 16 penteados (curtos, médios e longos; lisos,
-ondulados, cacheados e crespos; tranças, coque e rabo de cavalo), 8 cores de
-cabelo, 6 modelos de roupa de cima (camiseta, regata, camisa, blusa, moletom e
+Na criação: gênero (Feminino ou Masculino), 6 tons de pele, 19 penteados (curtos,
+médios e longos; lisos, ondulados, cacheados e crespos; tranças, coque, rabo de
+cavalo, longo em ondas, médio com franja lateral e emo com franja longa), cor do
+cabelo em três barras, 6 modelos de roupa de cima (camiseta, regata, camisa, blusa, moletom e
 jardineira), 4 de baixo (calça, short, saia e saia longa), calçado, 4 acessórios
 (óculos, laço, bandana e cachecol) com cor, animal favorito (gato ou cachorro),
 nome do personagem e nome da fazenda. Tudo vale para qualquer gênero. O botão
@@ -120,7 +121,9 @@ ferramentas, na pesca e na ficha do personagem:
 | --- | --- | --- |
 | Masculino | ombros e peito mais largos, maxilar quadrado com sombra, sobrancelhas mais marcadas, boca mais larga | cabelo curto liso, camisa verde e calça |
 | Feminino | ombros mais estreitos e cintura marcada, queixo mais fino, cílios, boca rosada e bochechas mais coradas | cabelo longo ondulado com laço, blusa rosa e saia |
-| Não binário | a base neutra (a mesma das versões anteriores) | chanel com franja, moletom verde e calça |
+
+A criação oferece Feminino e Masculino. Jogos salvos com a base neutra das
+versões anteriores continuam carregando normalmente, com a mesma aparência.
 
 O ponto de partida é aplicado só quando se escolhe **outro** gênero (o tom de pele
 fica). Voltar à etapa ou clicar de novo no mesmo gênero não apaga nada; depois,
@@ -136,6 +139,42 @@ costas e direita, andando, sobre um pequeno cenário de céu, cerca e grama, em
 escala inteira (3×, sem suavizar). Os controles ficam à direita; nas grades
 grandes, só a lista rola e os botões Voltar, Aparência aleatória e Avançar ficam
 sempre à vista.
+
+**Novos penteados** (para qualquer gênero, nas quatro direções e andando, sem
+perder formato nem volume):
+
+- **Longo em ondas**: longo e volumoso, com ondas em camadas, mechas emoldurando
+  o rosto e pontas viradas para fora.
+- **Médio com franja lateral**: na altura do queixo, com risca lateral, franja
+  varrida para um lado, volume e pontas em camadas.
+- **Emo com franja longa**: assimétrico e em camadas, com a franja em diagonal
+  cobrindo parte de um olho e pontas bem definidas.
+
+**Cor do cabelo em barras.** Na própria etapa do cabelo (e no guarda-roupa de
+casa), três barras horizontais combinam a cor em HSL: **Cor** (o espectro, de
+vermelho a laranja, amarelo, verde, azul, roxo e rosa), **Intensidade** (de
+acinzentado a cor viva) e **Luminosidade** (de escuro a claro), com valores de 0
+a 100 ao lado. Dá para arrastar o marcador, clicar em qualquer ponto da barra ou,
+com a barra selecionada, usar as setas (Page Up/Page Down de 10 em 10; Home e End
+nos extremos). As barras de intensidade e luminosidade mostram a cor escolhida,
+e a prévia muda na hora, enquanto se arrasta. **Restaurar cor padrão** volta ao
+castanho. Trocar de penteado mantém a cor. Dá para fazer cabelo preto, castanho,
+loiro, ruivo, branco, cinza e colorido (inclusive verde).
+
+A cor não pinta o cabelo inteiro de um tom só: de cada cor sai uma pequena
+paleta de base, sombra e luz, que mantém mechas, reflexos e contornos. Nos
+extremos (quase preto ou quase branco), a sombra e a luz se afastam mais, para o
+volume continuar legível. Só o cabelo (e as sobrancelhas, do mesmo tom) muda:
+pele, olhos, roupas e acessórios ficam iguais. O jogo salva o penteado e os três
+valores. Jogos salvos com uma das cores prontas de antes continuam exatamente
+com a mesma cor até o jogador mexer nas barras.
+
+**Nitidez.** O personagem do jogador ganhou uma linha escura onde o cabelo
+encosta no rosto, separando franja, mechas e pele. Os painéis mostram os
+personagens só em escala inteira (2× ou 3×), sem esticar, e todos os canvases de
+pixel art são exibidos sem suavização. O cenário e os personagens são desenhados
+em posições inteiras, também com a câmera em movimento. Os moradores usam o mesmo
+desenho e a mesma renderização, sem mudança na aparência.
 
 **Cabelos e roupas.** Cada tipo de fio tem textura própria: liso com mechas retas
 e um arco de brilho, ondulado com faixas que serpenteiam, cacheado com espirais e
