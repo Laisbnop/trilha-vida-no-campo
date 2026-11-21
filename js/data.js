@@ -498,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Cabelos e cores',
+  title: 'Personagens redesenhados',
   items: [
-    'Três penteados novos, para qualquer personagem: longo em ondas, médio com franja lateral e emo com franja longa.',
-    'Cor do cabelo em três barras (Cor, Intensidade e Luminosidade) na etapa do cabelo e no guarda-roupa, com prévia na hora e botão para restaurar a cor padrão.',
-    'Cada cor gera sombra e luz próprias, mantendo mechas e contornos, até em cabelos pretos, brancos ou cinzas.',
-    'Personagem mais nítido: contorno entre cabelo e rosto e painéis em escala inteira, sem distorcer os pixels.',
-    'A criação tem Feminino e Masculino. Jogos salvos antigos continuam com a mesma aparência.',
+    'Jogador e moradores redesenhados na mesma grade de pixels do cenário, com o mesmo tamanho no mapa.',
+    'Cabelo, rosto, pescoço, braços, roupas e calçados bem separados, com contorno e sombras em poucos tons.',
+    'Caminhada mais clara: o pé que dá o passo sobe, os braços balançam e o cabelo não muda de tamanho.',
+    'A prévia da criação, os painéis e o mapa mostram exatamente o mesmo desenho.',
+    'Opções de aparência, cores do cabelo e jogos salvos continuam valendo.',
   ],
 };
