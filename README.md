@@ -109,9 +109,8 @@ cabelo em três barras, 6 modelos de roupa de cima (camiseta, regata, camisa, bl
 jardineira), 4 de baixo (calça, short, saia e saia longa), calçado, 4 acessórios
 (óculos, laço, bandana e cachecol) com cor, animal favorito (gato ou cachorro),
 nome do personagem e nome da fazenda. Tudo vale para qualquer gênero. O botão
-**Aparência aleatória** sorteia só o visual. O personagem tem 24×32 pixels e não
-perde cabelo nem acessório em nenhuma direção, andando, usando ferramentas,
-pescando ou de chapéu.
+**Aparência aleatória** sorteia só o visual. O personagem não perde cabelo nem
+acessório em nenhuma direção, andando, usando ferramentas, pescando ou de chapéu.
 
 **Gênero e base visual.** O gênero define os pronomes nas falas e também a
 **base visual** do corpo, que aparece na prévia, no mapa, ao andar, nas
@@ -169,12 +168,30 @@ pele, olhos, roupas e acessórios ficam iguais. O jogo salva o penteado e os tr�
 valores. Jogos salvos com uma das cores prontas de antes continuam exatamente
 com a mesma cor até o jogador mexer nas barras.
 
-**Nitidez.** O personagem do jogador ganhou uma linha escura onde o cabelo
-encosta no rosto, separando franja, mechas e pele. Os painéis mostram os
-personagens só em escala inteira (2× ou 3×), sem esticar, e todos os canvases de
-pixel art são exibidos sem suavização. O cenário e os personagens são desenhados
-em posições inteiras, também com a câmera em movimento. Os moradores usam o mesmo
-desenho e a mesma renderização, sem mudança na aparência.
+**Sprites e nitidez.** Todos os personagens (jogador e moradores) são desenhados
+na mesma grade de pixels do cenário: um pixel do sprite é um pixel do mundo, com
+cerca de 14×23 pixels de corpo dentro de um quadro de 24×32 e os pés sempre no
+mesmo ponto. Corpo, rosto, roupas e calçados são desenhados direto nessa grade
+(antes, o mapa usava uma versão reduzida do desenho, cortando linhas e colunas);
+por isso a prévia da criação, os painéis e o mapa mostram exatamente o mesmo
+desenho, e o tamanho no mapa (em relação a portas, cercas e casas) não mudou.
+
+- **Separação das partes**: contorno escuro levemente tingido pela cor de cada
+  parte; linha escura onde o cabelo encosta no rosto; sombra no pescoço; vinco
+  entre braço e tronco (de frente) e dos dois lados do braço (de perfil); cós
+  separando blusa e calça; pernas separadas e calçados com sola mais escura.
+- **Volume**: luz vinda da esquerda e sombra à direita em rosto, roupas, braços e
+  pernas, com 2 ou 3 tons por parte; rosto com olhos de 2 pixels e brilho,
+  sobrancelhas, nariz, bochechas e boca.
+- **Caminhada**: de frente e de costas, o pé que dá o passo sobe (joelho dobrado)
+  e o braço do outro lado vai à frente; de perfil, as pernas abrem em passada
+  (perna de trás mais escura) e o antebraço balança. Cabelo, chapéu e acessórios
+  não mudam de tamanho nem de lugar entre os quadros.
+- Ferramentas, pesca, pontos de apoio dos pés, colisões e alcances continuam nos
+  mesmos pontos. O Caleb continua com a arte aprovada própria dele.
+- Todos os canvases de pixel art são exibidos sem suavização, em escala inteira
+  (2× ou 3× nos painéis), e o cenário e os personagens são desenhados em posições
+  inteiras, também com a câmera em movimento.
 
 **Cabelos e roupas.** Cada tipo de fio tem textura própria: liso com mechas retas
 e um arco de brilho, ondulado com faixas que serpenteiam, cacheado com espirais e
