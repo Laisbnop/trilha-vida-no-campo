@@ -498,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Personagens redesenhados',
+  title: 'Grama e caminhos da cidade',
   items: [
-    'Jogador e moradores redesenhados na mesma grade de pixels do cenário, com o mesmo tamanho no mapa.',
-    'Cabelo, rosto, pescoço, braços, roupas e calçados bem separados, com contorno e sombras em poucos tons.',
-    'Caminhada mais clara: o pé que dá o passo sobe, os braços balançam e o cabelo não muda de tamanho.',
-    'A prévia da criação, os painéis e o mapa mostram exatamente o mesmo desenho.',
-    'Opções de aparência, cores do cabelo e jogos salvos continuam valendo.',
+    'Grama nova, feita de folhinhas com luz e sombra, sem manchas chapadas nem grade aparente.',
+    'Mato alto em grupinhos irregulares nas margens dos caminhos e junto às casas, e arbustos com folhas e contorno.',
+    'Caminhos de terra em ocre quente, com pedrinhas e bordas recortadas onde a grama avança sobre a terra.',
+    'Flores pequenas e esparsas, de acordo com a estação.',
+    'O mapa, os caminhos dos moradores, os recursos e os cultivos continuam iguais.',
   ],
 };
