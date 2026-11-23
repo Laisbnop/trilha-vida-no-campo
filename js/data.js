@@ -498,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Grama e caminhos da cidade',
+  title: 'Árvores, arbustos e cercas',
   items: [
-    'Grama nova, feita de folhinhas com luz e sombra, sem manchas chapadas nem grade aparente.',
-    'Mato alto em grupinhos irregulares nas margens dos caminhos e junto às casas, e arbustos com folhas e contorno.',
-    'Caminhos de terra em ocre quente, com pedrinhas e bordas recortadas onde a grama avança sobre a terra.',
-    'Flores pequenas e esparsas, de acordo com a estação.',
-    'O mapa, os caminhos dos moradores, os recursos e os cultivos continuam iguais.',
+    'Árvores com copas cheias em cachos de folhas, troncos com casca e raízes, e um desenho diferente para cada uma.',
+    'Laranjeiras e goiabeiras redesenhadas, e arbustos com contorno irregular e folhas.',
+    'Cercas de madeira com postes grossos, travessas encaixadas, cantos e porteiras.',
+    'Dá para passar atrás das cercas, e a copa fica translúcida quando você passa atrás de uma árvore.',
+    'Corte, coleta, caminhos e colisões continuam iguais.',
   ],
 };

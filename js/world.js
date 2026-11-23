@@ -184,7 +184,7 @@ const World = (() => {
   /* Galhos nus de uma árvore de folhas caducas (inverno), com neve por cima. */
   function bareBranches(x, top, r) {
     const B = '#4a3020', BL = '#6a4a32';
-    R(x - 1, top, 2, r + 10, B); R(x - 1, top, 1, r + 10, BL);
+    R(x - 2, top + 3, 4, r + 7, OUT); R(x - 1, top + 3, 2, r + 7, B); R(x - 1, top + 3, 1, r + 7, BL); R(x - 1, top, 2, 3, B);   // galho principal mais grosso, saindo do tronco
     [[-1, 0.2, -1], [1, 0.35, 1], [-1, 0.55, -1], [1, 0.7, 1], [-1, 0.85, -1]].forEach(([dir, k, s2]) => {
       const by = top + Math.round(r * k), len = Math.round(r * (1.1 - k * 0.5));
       for (let i = 0; i < len; i++) { R(x + dir * (i + 1), by - Math.floor(i * 0.7), 1, 1, B); if (i % 3 === 2) R(x + dir * (i + 1), by - Math.floor(i * 0.7) - 1, 1, 1, '#f4f8fc'); }
@@ -193,37 +193,85 @@ const World = (() => {
     });
     R(x - 1, top - 1, 2, 1, '#f4f8fc');
   }
+  /* ================= árvores =================
+     Tronco: largura que varia (alarga na base), casca com sulcos e nós, luz à esquerda, sombra da copa no alto e raízes
+     discretas. Copa: cachos de folhas sobrepostos e assimétricos (cada exemplar diferente, pela posição), desenhados
+     de trás para a frente; cada cacho tem sombra profunda embaixo, meio-tom, luz no alto à esquerda e folhinhas
+     desenhadas (claras na luz, escuras na sombra). O contorno escuro fecha a silhueta, e entre os cachos fica a sombra. */
+  const tvar = (seed, i) => { let h = (seed * 2654435761 + i * 40503) | 0; h = Math.imul(h ^ (h >>> 15), 2246822519); h ^= h >>> 13; return ((h >>> 0) % 1000) / 1000; };
+  function trunk(x, y, h, seed, wide = 0) {
+    const B = '#6a4426', BL = '#8a5e36', BD = '#4a2c18', BDD = '#38200f';
+    for (let k = 0; k <= h; k++) {                                       // de baixo (k = 0) para cima
+      const yy = y - k, hw = (k < 2 ? 4 : k < 5 ? 3 : 3) + wide, l = x - hw + (k >= 5 && k % 4 === 1 && tvar(seed, 70) < 0.5 ? 1 : 0), r = x + hw - 1 - (k >= 6 && tvar(seed, 71 + (k >> 2)) < 0.3 ? 1 : 0);
+      R(l - 1, yy, r - l + 3, 1, OUT);
+      R(l, yy, r - l + 1, 1, B); R(l, yy, 1, 1, BL); if (r - l > 3) R(l + 1, yy, 1, 1, shade(BL, 0.94));
+      R(r, yy, 1, 1, BD); R(r - 1, yy, 1, 1, k % 3 ? BD : B);
+      const groove = l + 2 + Math.floor(tvar(seed, 80 + (k >> 2)) * Math.max(1, r - l - 3));   // sulcos da casca (verticais, com quebras)
+      if (k % 4 !== 3 && k > 1) R(groove, yy, 1, 1, BD);
+      if (k >= h - 2) R(l, yy, r - l + 1, 1, BDD);                       // sombra da copa no alto do tronco
+    }
+    if (tvar(seed, 90) < 0.6) { const ky = y - 4 - Math.floor(tvar(seed, 91) * 3); R(x, ky, 2, 1, BDD); R(x, ky - 1, 1, 1, BL); }   // nó
+    // raízes: saem da base para os lados, baixas, com contorno
+    const rootL = 2 + Math.floor(tvar(seed, 92) * 2), rootR = 2 + Math.floor(tvar(seed, 93) * 2), bw = 4 + wide;
+    R(x - bw - rootL - 1, y - 1, rootL + 1, 1, OUT); R(x - bw - rootL - 1, y, rootL + 2, 1, OUT); R(x - bw - rootL, y, rootL, 1, B); R(x - bw - rootL, y, 1, 1, BL);
+    R(x + bw, y - 1, rootR + 1, 1, OUT); R(x + bw - 1, y, rootR + 2, 1, OUT); R(x + bw - 1, y, rootR, 1, BD);
+    if (tvar(seed, 94) < 0.5) { R(x - 1, y + 1, 3, 1, OUT); R(x, y + 1, 1, 1, B); }
+  }
+  /* Copa: (cx, cy) centro, r raio, P = { out, deep, d, m, l, hi }. Os cachos ficam dentro de r + 2. */
+  function canopy(cx, cy, r, P, seed, opt = {}) {
+    const n = opt.n || (r >= 10 ? 8 : r >= 7 ? 6 : 4), sq = opt.squash || 1;
+    const lobes = [];
+    for (let i = 0; i < n; i++) {                                         // anel assimétrico + miolo e topo
+      const a = (i / n) * 6.283 + (tvar(seed, i) - 0.5) * 0.9, d = r * (0.38 + tvar(seed, i + 10) * 0.18), rr = Math.max(2, Math.round(r * (0.38 + tvar(seed, i + 20) * 0.18)));
+      lobes.push([cx + Math.cos(a) * d * 1.08, cy + Math.sin(a) * d * 0.88 * sq + (Math.sin(a) > 0 ? 1 : 0), rr]);
+    }
+    lobes.push([cx + (tvar(seed, 40) - 0.5) * r * 0.3, cy - r * 0.42 * sq, Math.round(r * 0.5)]);   // topo
+    lobes.push([cx + (tvar(seed, 41) - 0.5) * r * 0.2, cy + r * 0.05, Math.round(r * 0.55)]);       // miolo
+    const L = lobes.map(([x, y, rr]) => [Math.round(x), Math.round(y), Math.min(rr, r)]).sort((a, b) => a[1] - b[1]);   // de trás (alto) para a frente (baixo)
+    L.forEach(([x, y, rr]) => blob(x, y, rr + 2, P.out, sq));                                  // silhueta
+    L.forEach(([x, y, rr], i) => {
+      blob(x, y, rr + 1, P.deep, sq);                                                          // borda em sombra profunda: separa cada cacho do de trás
+      blob(x, y - 1, rr, P.d, sq);
+      blob(x - Math.round(rr * 0.2), y - Math.round(rr * 0.3) - 1, Math.max(1, Math.round(rr * 0.72)), P.m, sq);
+      blob(x - Math.round(rr * 0.38), y - Math.round(rr * 0.5) - 1, Math.max(1, Math.round(rr * 0.36)), P.l, sq);
+      // folhinhas: claras em cima e à esquerda, escuras embaixo e à direita
+      const k = Math.max(4, Math.round(rr * 2.2));
+      for (let j = 0; j < k; j++) {                                                            // folhas em "v": ponta, corpo e sombra
+        const a = tvar(seed, 100 + i * 17 + j) * 6.283, d = Math.sqrt(tvar(seed, 300 + i * 17 + j)) * (rr - 1), px = Math.round(x + Math.cos(a) * d), py = Math.round(y - 1 + Math.sin(a) * d * sq);
+        const lit = Math.sin(a) < 0.2 && Math.cos(a) < 0.6, f = tvar(seed, 500 + i * 17 + j) < 0.5;
+        if (lit) { R(px, py, 1, 1, P.hi); R(px + 2, py, 1, 1, f ? P.hi : P.l); R(px + 1, py + 1, 1, 1, P.l); R(px + 1, py + 2, 1, 1, P.m); }
+        else { R(px, py, 1, 1, P.m); R(px + 2, py, 1, 1, P.d); R(px + 1, py + 1, 1, 1, P.deep); }
+      }
+    });
+    return L;
+  }
+  /* Paleta de folhas de uma árvore, já com as cores da estação (o outono varia por exemplar). */
+  function leafPal(seed) {
+    const AUT = [{ '#267a3a': '#b8521c', '#369a48': '#d06e22', '#58b858': '#e89a34', '#84d470': '#f4c050', '#1c5c30': '#7a3214' },
+      { '#267a3a': '#9a2e1c', '#369a48': '#c0442a', '#58b858': '#de6a3a', '#84d470': '#f09060', '#1c5c30': '#62200f' },
+      { '#267a3a': '#b88a1c', '#369a48': '#d8a82a', '#58b858': '#f0c848', '#84d470': '#f8e080', '#1c5c30': '#7a5a14' }][Math.abs(seed) % 3];
+    const L = c => SC(paintSeason === 2 ? AUT[c] || c : c);
+    return { out: SC('#0f3020'), deep: L('#1c5c30'), d: L('#267a3a'), m: L('#369a48'), l: L('#58b858'), hi: L('#84d470') };
+  }
   function tree(x, y, r = 11) {            // (x, y) = base do tronco
-    shadowOval(x, y, r, 3);
-    R(x - 4, y - 10, 8, 10, OUT); R(x - 3, y - 10, 6, 9, '#6a4426'); R(x - 3, y - 10, 2, 9, '#8a5e36'); R(x + 1, y - 8, 1, 6, '#4a2c18');
-    R(x - 5, y - 2, 2, 2, OUT); R(x + 3, y - 2, 2, 2, OUT); R(x - 4, y - 2, 1, 1, '#6a4426'); R(x + 3, y - 2, 1, 1, '#6a4426');   // raízes
-    const cy = y - 8 - r;
+    const seed = treeSeed;
+    shadowOval(x + 2, y, r + 1, 3);                                       // sombra no chão (luz vinda da esquerda)
+    const th = 9 + Math.floor(tvar(seed, 1) * 3);
+    trunk(x, y, th, seed, paintSeason === 3 ? -1 : r >= 12 ? 1 : r <= 9 ? -1 : 0);
+    const cy = y - th - r + 2 + Math.floor(tvar(seed, 2) * 2);
     if (paintSeason === 3) {                                   // inverno: sem folhas
       bareBranches(x, cy - r + 2, r);
       for (let i = 0; i < r * 2; i++) { rand(); rand(); }
       return;
     }
-    // no outono, cada árvore tem um tom: laranja, vermelho ou amarelo
-    const AUT = [{ '#267a3a': '#b8521c', '#369a48': '#d06e22', '#58b858': '#e89a34' }, { '#267a3a': '#9a2e1c', '#369a48': '#c0442a', '#58b858': '#de6a3a' }, { '#267a3a': '#b88a1c', '#369a48': '#d8a82a', '#58b858': '#f0c848' }][Math.abs(treeSeed) % 3];
-    const L = c => (paintSeason === 2 ? AUT[c] || c : c);
-    // copa feita de cachos de folhas: contorno, base, luz no alto à esquerda e brilho
-    const tv = i => { let h = (treeSeed * 2654435761 + i * 40503) | 0; h = Math.imul(h ^ (h >>> 15), 2246822519); h ^= h >>> 13; return ((h >>> 0) % 1000) / 1000; };   // variação de cada exemplar
-    const lobes = [[0, -0.55, 0.6], [-0.58, -0.12, 0.56], [0.58, -0.12, 0.56], [-0.32, 0.42, 0.56], [0.34, 0.42, 0.56], [0, 0.05, 0.62], [tv(9) < 0.5 ? -0.7 : 0.7, 0.2, tv(8) < 0.5 ? 0.42 : 0]].filter(l => l[2] > 0).map(([a, b2, k], i) => [x + (a + (tv(i) - 0.5) * 0.24) * r, cy + (b2 + (tv(i + 20) - 0.5) * 0.2) * r, Math.max(3, Math.round(k * r * (0.9 + tv(i + 40) * 0.22)))]);
-    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx), Math.round(ly), rr + 1, '#143c24'));
-    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx), Math.round(ly), rr, L('#267a3a')));
-    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx - rr * 0.25), Math.round(ly - rr * 0.3), Math.max(1, Math.round(rr * 0.62)), L('#369a48')));
-    lobes.forEach(([lx, ly, rr]) => blob(Math.round(lx - rr * 0.42), Math.round(ly - rr * 0.48), Math.max(1, Math.round(rr * 0.28)), L('#58b858')));
-    lobes.forEach(([lx, ly, rr]) => { R(lx + rr * 0.2, ly + rr * 0.62, 3, 1, L('#1c5c30')); R(lx + rr * 0.5, ly + rr * 0.3, 1, 2, L('#1c5c30')); });
-    for (let i = 0; i < r * 2; i++) {
-      const a = rand() * 6.28, d = rand() * (r - 2), px = x + Math.cos(a) * d, py = cy + Math.sin(a) * d;
-      if (paintSeason === 0 && i % 3 === 0) { R(px, py, 2, 2, i % 2 ? '#ffc2d8' : '#fff4f8'); R(px + 1, py, 1, 1, '#f090b0'); }   // florada
-      else R(px, py, 2, 1, a > 2.4 && a < 5.2 ? '#84d470' : '#1c5c30');
+    const P = leafPal(seed);
+    if (paintSeason === 1) { P.d = SC('#2a8a2c'); P.l = SC('#6cc444'); P.hi = SC('#a2dc5a'); }   // verão: verde mais vivo e cheio
+    canopy(x + Math.round((tvar(seed, 3) - 0.5) * 2), cy, r, P, seed);
+    for (let i = 0; i < r * 2; i++) {                                    // (o sorteio é consumido como antes)
+      const a = rand() * 6.28, d = rand() * (r - 3), px = Math.round(x + Math.cos(a) * d), py = Math.round(cy + Math.sin(a) * d * 0.9);
+      if (paintSeason === 0 && i % 3 === 0) { R(px, py, 2, 2, '#ffc2d8'); R(px, py, 1, 1, '#fff4f8'); R(px + 1, py + 1, 1, 1, '#e07aa0'); }   // florada da primavera, no lado da luz
     }
-    if (paintSeason === 2) for (let i = 0; i < 5; i++) R(x - r + (i * 5) % (r * 2), y + 1 + (i % 2), 2, 1, ['#c8581e', '#e09030', '#8a3a18'][i % 3]);   // folhas no chão
-    if (paintSeason === 1) {                                                                                                         // verão: copa cheia e folhas vivas (sem flores)
-      blob(x + 3, cy + 3, Math.max(2, r - 5), '#2a8a2c');
-      for (let i = 0; i < r; i++) { const a = i * 2.4, d = (i * 7) % Math.max(2, r - 3); R(x + Math.cos(a) * d, cy + Math.sin(a) * d - 1, 2, 1, '#a2dc5a'); }
-    }
+    if (paintSeason === 2) for (let i = 0; i < 6; i++) R(x - r + 1 + Math.floor(tvar(seed, 60 + i) * r * 2), y + 1 + (i % 2), 2, 1, ['#c8581e', '#e09030', '#8a3a18'][i % 3]);   // folhas no chão
   }
   /* Pinheiro: ramos em camadas que caem para os lados, com pontas recortadas, luz à esquerda, sombra sob cada
      camada e tronco com casca. Cada exemplar varia (altura, largura, número de camadas, inclinação), pela posição. */
@@ -257,33 +305,84 @@ const World = (() => {
     }
     R(x + Math.round(lean * 2) - 1, top, 2, 2, OL); R(x + Math.round(lean * 2), top, 1, 2, snow ? '#ffffff' : TP);   // ponta
   }
-  /* Arbusto: massa de folhas em três lóbulos com contorno próprio, sombra embaixo à direita, luz no alto à esquerda
-     e cachos de folhinhas (posição fixa, pela posição no mundo: sem sorteio). */
+  /* Arbusto: menor que as árvores; contorno irregular (3 a 5 cachos de tamanhos diferentes), folhas reconhecíveis,
+     base mais escura e sombra no chão. Cada exemplar varia pela posição (sem sorteio). */
   function bush(x, y, r = 5, c = '#2f8a40') {
+    const seed = Math.round(x * 13 + y * 7), C = SC(c);
     shadowOval(x + 1, y + 1, r + 2, 2);
-    const C = SC(c), Dk = shade(C, 0.7), DD = SC('#143c24'), Lt = shade(C, 1.28), LL = shade(C, 1.55), hb = k => hash(x, y, 750 + k);
-    const lobes = [[x - Math.ceil(r * 0.55), y - r + 2, r - 1], [x + Math.ceil(r * 0.55), y - r + 2, r - 1], [x + (hb(0) < 0.5 ? -1 : 0), y - r - 1, r]];
-    lobes.forEach(([lx, ly, rr]) => blob(lx, ly, rr + 1, DD, 0.8));
-    lobes.forEach(([lx, ly, rr]) => blob(lx, ly, rr, Dk, 0.8));
-    lobes.forEach(([lx, ly, rr]) => blob(lx - 1, ly - 1, Math.max(1, rr - 1), C, 0.8));
-    lobes.forEach(([lx, ly, rr]) => blob(lx - Math.ceil(rr * 0.4), ly - Math.ceil(rr * 0.45), Math.max(1, Math.round(rr * 0.45)), Lt, 0.8));
-    if (paintSeason === 3) { lobes.forEach(([lx, ly, rr]) => blob(lx, ly - 2, Math.max(1, rr - 1), '#f4f8fc', 0.45)); R(x - r + 1, y - r + 1, r * 2 - 2, 1, '#d4e0ec'); return; }   // coberto de neve
-    // cachos de folhinhas: em "v", claros em cima e à esquerda, escuros embaixo e à direita
-    for (let k = 0; k < r * 3; k++) {
-      const a = hb(10 + k) * 6.283, d = Math.sqrt(hb(40 + k)) * (r - 1), px = Math.round(x + Math.cos(a) * d * 1.2), py = Math.round(y - r + Math.sin(a) * d * 0.8);
-      const lit = Math.sin(a) < 0.1 && Math.cos(a) < 0.5;
-      g.fillStyle = lit ? LL : DD; g.fillRect(px, py, 1, 1); g.fillRect(px + 2, py, 1, 1);
-      g.fillStyle = lit ? Lt : Dk; g.fillRect(px + 1, py + 1, 1, 1);
+    if (paintSeason === 3) {                                               // coberto de neve
+      canopy(x, y - r + 1, r, { out: SC('#143c24'), deep: shade(C, 0.6), d: shade(C, 0.75), m: shade(C, 0.75), l: shade(C, 0.9), hi: shade(C, 0.9) }, seed, { n: 3 + (seed % 3), squash: 0.8 });
+      blob(x, y - r - 1, Math.max(2, r - 1), '#f4f8fc', 0.5); R(x - r + 2, y - r, r * 2 - 4, 1, '#d4e0ec'); return;
     }
-    if (paintSeason === 2) { R(x + 1, y - r + 2, 1, 1, '#f0c050'); R(x - 3, y - r + 1, 1, 1, '#8a3a18'); R(x + 3, y - r - 1, 1, 1, '#e09030'); return; }
-    if (paintSeason === 0) { R(x - 1, y - r - 2, 1, 1, '#ffffff'); R(x + 3, y - r, 1, 1, '#ff9ec0'); R(x + 1, y - r + 2, 1, 1, '#ff9ec0'); }   // florzinhas só na primavera
-    else if (paintSeason === 1) R(x - 2, y - r + 1, 1, 1, '#ffe066');
+    const P = { out: SC('#143c24'), deep: shade(C, 0.55), d: shade(C, 0.75), m: C, l: shade(C, 1.3), hi: shade(C, 1.55) };
+    if (paintSeason === 2) { P.l = shade(C, 1.1); P.hi = '#d8a040'; }
+    canopy(x, y - r + 1, r, P, seed, { n: 3 + (seed % 3), squash: 0.82 });
+    R(x - r + 2, y, r * 2 - 3, 1, P.out); R(x - r + 3, y - 1, r * 2 - 5, 1, P.deep);    // base mais escura, rente ao chão
+    const fl = k => tvar(seed, 500 + k);
+    if (paintSeason === 2) { R(x + Math.round((fl(1) - 0.5) * r), y - r, 1, 1, '#e09030'); R(x - 2, y - r + 2, 1, 1, '#8a3a18'); return; }
+    if (paintSeason === 0) [0, 1, 2].forEach(k => R(x + Math.round((fl(k) - 0.5) * r * 1.4), y - r - 1 + Math.round(fl(k + 5) * r * 0.8), 1, 1, k % 2 ? '#ff9ec0' : '#ffffff'));   // florzinhas na primavera
+    else if (paintSeason === 1 && fl(9) < 0.5) R(x - 2, y - r + 1, 1, 1, '#ffe066');
   }
+  /* ================= cercas de madeira =================
+     Postes com espessura (4 px), topo arredondado e claro, veio discreto, luz à esquerda, sombra à direita e base escura;
+     duas travessas que entram nos postes, com sombra nas junções. Cada trecho horizontal é uma figura ordenada pela
+     base (quem está atrás da cerca fica atrás dela); nos trechos verticais cada poste é uma figura, e uma travessa
+     vertical liga um poste ao de baixo. Cantos usam o mesmo poste dos dois trechos. As colisões não mudam. */
+  const fencePal = c => { const C = SC(c); return { C, L: shade(C, 1.16), LL: shade(C, 1.34), D: shade(C, 0.76), DD: shade(C, 0.58) }; };
+  function fencePost(x, y, P, h = 12, k = 0) {               // (x, y): coluna da esquerda do miolo e pé do poste
+    R(x, y - h, 4, 1, OUT); R(x - 1, y - h + 1, 6, h, OUT);
+    R(x, y - h + 1, 4, h - 1, P.C); R(x, y - h + 2, 1, h - 3, P.L); R(x + 3, y - h + 2, 1, h - 2, P.D);
+    R(x, y - h + 1, 4, 1, P.LL); R(x + 1, y - h + 2, 2, 1, P.L);                        // topo arredondado e iluminado
+    R(x + 1 + (k & 1), y - h + 5 + (k % 3), 1, 2 + (k % 2), P.D);                         // veio da madeira
+    R(x, y - 1, 4, 1, P.DD);                                                              // base mais escura, junto ao chão
+    if (paintSeason === 3) { R(x, y - h - 1, 4, 1, '#f4f8fc'); R(x - 1, y - h, 6, 1, '#f4f8fc'); R(x + 1, y - h - 2, 2, 1, '#ffffff'); }
+  }
+  function fenceRails(xa, xb, y, P) {                         // travessas entre o poste de xa e o de xb
+    if (xb - xa < 6) return;
+    for (const top of [y - 10, y - 5]) {
+      R(xa + 4, top, xb - xa - 4, 1, OUT); R(xa + 4, top + 1, xb - xa - 4, 1, P.L); R(xa + 4, top + 2, xb - xa - 4, 1, P.C); R(xa + 4, top + 3, xb - xa - 4, 1, OUT);
+      for (let x = xa + 6; x < xb - 2; x += 5) if (((x * 7 + top) & 3) === 0) R(x, top + 2, 2, 1, P.D);   // veio
+      R(xa + 4, top + 1, 1, 2, P.DD); R(xb - 1, top + 1, 1, 2, P.D);                        // sombra nas junções
+      if (paintSeason === 3) R(xa + 5, top, xb - xa - 6, 1, '#eef3f8');
+    }
+  }
+  /* Trecho horizontal de x0 a x1 (postes nas duas pontas, espaçados por igual). */
   function fence(x0, x1, y, c = '#b88448') {
-    const C = SC(c), D = shade(C, 0.7), Lc = shade(C, 1.2);
-    R(x0, y - 5, x1 - x0 + 3, 3, OUT); R(x0, y - 4, x1 - x0 + 3, 1, Lc); R(x0, y - 3, x1 - x0 + 3, 1, D);       // travessa
-    for (let x = x0; x <= x1; x += 6) { R(x - 1, y - 8, 4, 10, OUT); R(x, y - 7, 2, 8, C); R(x, y - 7, 1, 8, Lc); R(x, y - 7, 2, 1, shade(C, 1.35)); R(x + 1, y, 1, 1, D); }
-    if (paintSeason === 3) for (let x = x0; x <= x1; x += 6) R(x - 1, y - 9, 4, 2, '#f4f8fc');
+    const P = fencePal(c), n = Math.max(1, Math.round((x1 - x0) / 12)), xs = [];
+    for (let i = 0; i <= n; i++) xs.push(Math.round(x0 + (x1 - x0) * i / n) - 1);
+    bldSprite(x0 - 4, y - 16, x1 - x0 + 10, 18, y, () => {
+      g.fillStyle = 'rgba(20,40,20,.22)'; g.fillRect(x0, y, x1 - x0 + 2, 1);               // sombra no chão
+      for (let i = 0; i < n; i++) fenceRails(xs[i], xs[i + 1], y, P);
+      xs.forEach((x, i) => fencePost(x, y, P, 12, i + x));
+    }, true);
+  }
+  /* Trecho vertical em x, de y0 a y1: um poste atrás do outro, ligados por uma travessa (cada poste ordenado pela base).
+     ends: false deixa os postes das pontas para os trechos horizontais (cantos). */
+  function fenceCol(x, y0, y1, c = '#b88448', ends = true) {
+    const P = fencePal(c), n = Math.max(1, Math.round((y1 - y0) / 9)), ys = [];
+    for (let i = 0; i <= n; i++) ys.push(Math.round(y0 + (y1 - y0) * i / n));
+    ys.forEach((y, i) => {
+      if (!ends && (i === 0 || i === n)) {                    // canto: só a travessa que chega ao poste do trecho horizontal
+        if (i === n) bldSprite(x - 3, ys[i - 1] - 12, 8, y - ys[i - 1] + 2, y - 1, () => { R(x - 2, ys[i - 1] - 9, 1, y - ys[i - 1] - 3, OUT); R(x + 1, ys[i - 1] - 9, 1, y - ys[i - 1] - 3, OUT); R(x - 1, ys[i - 1] - 9, 1, y - ys[i - 1] - 3, P.L); R(x, ys[i - 1] - 9, 1, y - ys[i - 1] - 3, P.D); }, true);
+        return;
+      }
+      bldSprite(x - 3, (i ? ys[i - 1] : y) - 14, 8, y - (i ? ys[i - 1] : y) + 16, y, () => {
+        if (i) { const ya = ys[i - 1]; R(x - 2, ya - 9, 1, y - ya - 2, OUT); R(x + 1, ya - 9, 1, y - ya - 2, OUT); R(x - 1, ya - 9, 1, y - ya - 2, P.L); R(x, ya - 9, 1, y - ya - 2, P.D); R(x - 1, y - 13, 2, 1, P.DD); }   // travessa vertical até este poste
+        g.fillStyle = 'rgba(20,40,20,.22)'; g.fillRect(x - 1, y, 5, 1);
+        fencePost(x - 1, y, P, 12, i + y);
+      }, true);
+    });
+  }
+  /* Poste de porteira: mais alto e grosso, com chapéu. */
+  function gatePost(x, y, c = '#8a5e36') {
+    const P = fencePal(c);
+    bldSprite(x - 4, y - 20, 12, 22, y, () => {
+      g.fillStyle = 'rgba(20,40,20,.25)'; g.fillRect(x - 1, y, 7, 1);
+      R(x - 1, y - 14, 7, 15, OUT); R(x, y - 13, 5, 13, P.C); R(x, y - 12, 1, 11, P.L); R(x + 4, y - 12, 1, 12, P.D); R(x, y - 1, 5, 1, P.DD);
+      R(x + 2, y - 9, 1, 4, P.D); R(x + 1, y - 4, 2, 1, P.D);                               // veio
+      R(x - 2, y - 17, 9, 4, OUT); R(x - 1, y - 16, 7, 2, P.LL); R(x - 1, y - 14, 7, 1, P.D);  // chapéu
+      if (paintSeason === 3) R(x - 2, y - 18, 9, 2, '#f4f8fc');
+    }, true);
   }
   function lamp(x, y) {
     R(x - 1, y - 20, 3, 20, OUT); R(x, y - 19, 1, 19, '#6a6a7a');
@@ -484,11 +583,11 @@ const World = (() => {
     for (let x = x0, i = 0; x <= x1; x += 4, i++) { const c = colors ? colors[i % colors.length] : '#f4f0e4'; R(x - 1, y - 9, 4, 10, OUT); R(x, y - 8, 2, 8, c); R(x, y - 9, 2, 1, OUT); R(x, y - 8, 1, 8, shade(c, 1.15)); if (paintSeason === 3) R(x - 1, y - 10, 4, 1, '#ffffff'); }
   }
   /* Sprite do prédio: desenha em coordenadas do mundo, num canvas próprio. */
-  function bldSprite(x0, y0, w, h, base, fn) {
+  function bldSprite(x0, y0, w, h, base, fn, fence) {
     const c = document.createElement('canvas'); c.width = w; c.height = h;
     const prev = g; g = c.getContext('2d'); g.translate(-x0, -y0);
     let out; try { out = fn(); } finally { g = prev; }
-    cur.sprites.push({ img: c, x: x0, y: y0, base });
+    cur.sprites.push(fence ? { img: c, x: x0, y: y0, base, fence: true } : { img: c, x: x0, y: y0, base });
     return out;
   }
 
@@ -1244,8 +1343,9 @@ const World = (() => {
     cur.sprites.push({ img: s.img, x: x - ox, y: y - h + 4, base: y });
     if (box) solid(x + box[0], y + box[1], box[2], box[3]);
   }
-  const addTree = (x, y, r = 11) => tall((a, b) => tree(a, b, r), x, y, r * 2 + 8, r * 2 + 20, r + 4, [-4, -6, 8, 6]);
-  const addPine = (x, y) => tall(pine, x, y, 26, 40, 13, [-4, -6, 8, 6]);
+  const leafy = () => { cur.sprites[cur.sprites.length - 1].leafy = true; };     // copa: fica translúcida quando o jogador passa atrás
+  const addTree = (x, y, r = 11) => { tall((a, b) => tree(a, b, r), x, y, r * 2 + 8, r * 2 + 20, r + 4, [-4, -6, 8, 6]); leafy(); };
+  const addPine = (x, y) => { tall(pine, x, y, 26, 40, 13, [-4, -6, 8, 6]); leafy(); };
   const addLamp = (x, y) => { tall(lamp, x, y, 12, 32, 6, [-2, -3, 5, 3]); cur.lights.push({ kind: 'lamp', x, y: y - 26, r: 40 }); };
 
   function building(id, label, o, enter) {
@@ -1375,17 +1475,17 @@ const World = (() => {
       R(X0, Y0 - 4, X1 - X0, Y1 - Y0 + 4, '#b89858'); for (let i = 0; i < 110; i++) R(X0 + 2 + rand() * (X1 - X0 - 4), Y0 - 2 + rand() * (Y1 - Y0), 2, 1, rand() < 0.5 ? '#a08448' : '#d0b470');
       for (let i = 0; i < 8; i++) { const hx = X0 + 10 + rand() * (X1 - X0 - 20), hy = Y0 + 4 + rand() * (Y1 - Y0 - 10); R(hx, hy, 3, 1, '#e8d070'); R(hx + 1, hy - 1, 1, 1, '#e8d070'); }
       box(X1 - 26, Y0 + 2, 12, 5, '#8a9aa8'); R(X1 - 25, Y0 + 3, 10, 2, '#6aacf0');                        // bebedouro
-      fence(X0, X1, Y0, '#d8b078'); fence(X0, 196, Y1, '#d8b078'); fence(226, X1, Y1, '#d8b078');
-      for (let y = Y0; y <= Y1; y += 6) { R(X0 - 1, y - 6, 3, 7, OUT); R(X0, y - 5, 1, 6, '#d8b078'); R(X1 + 1, y - 6, 3, 7, OUT); R(X1 + 2, y - 5, 1, 6, '#d8b078'); }
-      box(196, Y1 - 10, 3, 12, '#8a5e36'); box(224, Y1 - 10, 3, 12, '#8a5e36');                             // porteira aberta
+      fence(X0, X1, Y0, '#d8b078'); fence(X0, 190, Y1, '#d8b078'); fence(230, X1, Y1, '#d8b078');
+      fenceCol(X0, Y0, Y1, '#d8b078', false); fenceCol(X1, Y0, Y1, '#d8b078', false);
+      gatePost(194, Y1 + 1); gatePost(222, Y1 + 1);                                                       // porteira aberta
       solid(X0 - 2, Y0 - 8, X1 - X0 + 6, 8); solid(X0 - 2, Y1 - 6, 56, 8); solid(226, Y1 - 6, X1 - 222, 8); solid(X0 - 2, Y0, 6, Y1 - Y0); solid(X1 - 2, Y0, 6, Y1 - Y0);
       R(X0 + 6, Y0 - 16, 30, 9, OUT); R(X0 + 7, Y0 - 15, 28, 7, '#f0e6cc'); R(X0 + 10, Y0 - 13, 22, 1, '#8a5e36'); R(X0 + 10, Y0 - 11, 16, 1, '#8a5e36');
       obj({ id: 'cercado', kind: 'text', x: 211, y: 456, r: 14, hit: [X0 + 4, Y0 - 18, 34, 12], label: 'Cercado das galinhas', text: 'Cercado das galinhas. O comedouro e os ninhos ficam dentro do galinheiro: entre pela porta vermelha, à esquerda.' });
     }
     // cerca e porteira da fazenda
-    for (let y = 40; y < 500; y += 8) if (y < 144 || y > 180) { R(404, y, 3, 6, '#b88448'); R(404, y, 1, 6, '#d8a868'); }
+    fenceCol(405, 46, 142); fenceCol(405, 190, 502);                              // cerca da fazenda (postes e travessa vertical)
     solid(402, 30, 6, 116); solid(402, 182, 6, 320); keep(396, 30, 18, 470);
-    box(396, 140, 6, 12, '#8a5e36'); box(396, 176, 6, 12, '#8a5e36');
+    gatePost(397, 152); gatePost(397, 188);                                         // porteira (aberta)
     R(158, 124, 30, 16, OUT); R(159, 125, 28, 14, '#c89a62'); R(159, 125, 28, 2, '#e8c088'); R(162, 129, 22, 1, '#6a4426'); R(162, 132, 18, 1, '#6a4426'); R(162, 135, 20, 1, '#6a4426');
     R(161, 140, 3, 8, '#6a4426'); R(182, 140, 3, 8, '#6a4426'); solid(160, 140, 26, 8);
     obj({ id: 'placa', kind: 'sign', x: 173, y: 154, r: 14, hit: [156, 122, 34, 26], label: 'Placa da fazenda' });
@@ -1440,7 +1540,7 @@ const World = (() => {
       for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) { const bx = X0 + 8 + c * 25, by = Y0 + 8 + r * 18; R(bx - 1, by - 1, 19, 12, '#6a4426'); R(bx, by, 17, 10, '#7a5230');
         for (let k = 2; k < 16; k += 4) { if (paintSeason === 3) { R(bx + k, by + 3, 2, 1, '#eef3f8'); continue; } R(bx + k, by + 2, 1, 6, '#3f9648'); R(bx + k - 1, by + 3, 3, 1, (r + c) % 3 ? '#58b858' : '#e04a3a'); } }
       fence(X0, X1, Y0, '#d8b078'); fence(X0, 526, Y1, '#d8b078'); fence(548, X1, Y1, '#d8b078');
-      for (let y = Y0; y <= Y1; y += 6) { R(X0 - 1, y - 6, 3, 7, OUT); R(X0, y - 5, 1, 6, '#d8b078'); R(X1 + 1, y - 6, 3, 7, OUT); R(X1 + 2, y - 5, 1, 6, '#d8b078'); }
+      fenceCol(X0, Y0, Y1, '#d8b078', false); fenceCol(X1, Y0, Y1, '#d8b078', false);
       solid(X0 - 2, Y0 - 8, X1 - X0 + 6, 8); solid(X0 - 2, Y1 - 6, 532 - X0, 8); solid(546, Y1 - 6, X1 - 542, 8); solid(X0 - 2, Y0, 6, Y1 - Y0); solid(X1 - 2, Y0, 6, Y1 - Y0);
       keep(X0 - 6, Y0 - 12, X1 - X0 + 12, Y1 - Y0 + 24);
       obj({ id: 'horta', kind: 'text', x: 537, y: 716, r: 14, hit: [X0, Y0 - 10, X1 - X0, Y1 - Y0 + 10], label: 'Horta comunitária', text: 'Canteiros cuidados pelos moradores da vila. Cada um planta um pouco e todo mundo colhe.' });
@@ -1510,7 +1610,7 @@ const World = (() => {
         if (cx < 0 || cy < 0 || cx >= m.cols || cy >= m.rows || m.solid[cy * m.cols + cx]) return true;
       return false;
     };
-    const covered = (x, y) => m.sprites.some(sp => x > sp.x - 4 && x < sp.x + sp.img.width + 4 && y > sp.y - 4 && y < sp.base + 8)
+    const covered = (x, y) => m.sprites.some(sp => !sp.fence && x > sp.x - 4 && x < sp.x + sp.img.width + 4 && y > sp.y - 4 && y < sp.base + 8)
       || m.objs.some(o => { const r = o.hit || [o.x - 10, o.y - 20, 20, 22]; return x > r[0] - 10 && x < r[0] + r[2] + 10 && y > r[1] - 6 && y < r[1] + r[3] + 16; })
       || m.waters.some(w => ((x - w.cx) / (w.rx + 12)) ** 2 + ((y - w.cy) / (w.ry + 12)) ** 2 < 1)
       || (m.streams || []).some(st => st.pts.some(([px, py], i) => i % 4 === 0 && (x - px) ** 2 + (y - py) ** 2 < (st.hw + 10) ** 2));
@@ -1979,14 +2079,15 @@ const World = (() => {
   function fruitTree(sp, stage, fruit) {
     const [dark, mid, fr] = FRUIT[sp];
     if (stage === 0) return fig('ft0' + sp, 14, 18, 7, () => { R(-1, -8, 2, 8, '#6a4426'); box(-5, -11, 4, 3, mid); box(1, -13, 4, 3, mid); R(-3, 0, 6, 1, '#5a3a1e'); });
-    if (stage === 1) return fig('ft1' + sp, 22, 30, 11, () => { shadowOval(0, 0, 7, 2); R(-2, -10, 3, 10, OUT); R(-1, -10, 1, 10, '#8a5e36'); blob(0, -15, 8, OUT); blob(0, -15, 7, dark); blob(-2, -17, 4, mid); });
+    const FP = { out: OUT, deep: shade(dark, 0.6), d: dark, m: shade(mid, 0.9), l: mid, hi: shade(mid, 1.25) }, sd = sp === 'laranja' ? 41 : 73;
+    if (stage === 1) return fig('ft1' + sp, 22, 30, 11, () => { shadowOval(1, 0, 7, 2); trunk(0, 0, 7, sd, -2); canopy(0, -14, 6, FP, sd); });
     return fig('ft2' + sp + (fruit ? 'f' : ''), 34, 46, 17, () => {
-      shadowOval(0, 0, 11, 3); R(-3, -12, 6, 12, OUT); R(-2, -12, 4, 11, '#6a4426'); R(-2, -12, 1, 11, '#8a5e36');
-      blob(0, -24, 13, OUT); blob(0, -24, 12, dark); blob(-3, -27, 8, mid); blob(-5, -30, 4, shade(mid, 1.25));
-      if (fruit) [[-7, -22], [5, -28], [6, -18], [-2, -16], [-9, -30], [1, -33]].forEach(([x, y]) => { box(x, y, 3, 3, fr); R(x, y, 1, 1, shade(fr, 1.3)); });
+      shadowOval(2, 0, 12, 3); trunk(0, 0, 10, sd, -1);
+      canopy(0, -23, 11, FP, sd);
+      if (fruit) [[-7, -22], [5, -28], [6, -18], [-2, -16], [-9, -30], [1, -33]].forEach(([x, y]) => { box(x, y, 3, 3, fr); R(x, y, 1, 1, shade(fr, 1.3)); R(x + 2, y + 2, 1, 1, shade(fr, 0.8)); });
     });
   }
-  const wildTree = (i = 0) => fig('wild' + (i % 3), 34, 50, 17, () => { treeSeed = 9173 + (i % 3) * 131; shadowOval(0, 0, 11, 3); R(-3, -14, 6, 14, OUT); R(-2, -14, 4, 13, '#5a3a22'); R(-2, -14, 1, 13, '#7a5230'); if (paintSeason === 3) return bareBranches(0, -40, 13); return tree(0, 0, 13); blob(0, -28, 13, '#0f3020'); blob(0, -28, 12, '#1f6a34'); blob(-3, -31, 8, '#2a7e40'); blob(-5, -34, 4, '#3f9a52'); blob(5, -22, 4, '#175428'); });
+  const wildTree = (i = 0) => fig('wild' + i, 36, 52, 18, () => { treeSeed = 9173 + i * 131; tree(0, 0, 13); });   // cada árvore do bosque com o seu desenho (o corte continua igual)
   const stump = (i = 0) => fig('stump' + (i % 4), 22, 16, 11, () => stumpShape((a, b, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(a), Math.round(b), w, h); }, 0, 2, [11, 12, 11, 13][i % 4], [10, 9, 11, 9][i % 4], i % 4));
   const dummyFig = () => fig('dummy', 22, 34, 11, () => { R(-1, -22, 2, 22, '#6a4426'); box(-6, -22, 12, 12, '#d8b878'); R(-6, -22, 12, 2, '#f0d8a0'); R(-3, -18, 2, 2, OUT); R(2, -18, 2, 2, OUT); R(-9, -17, 18, 2, '#8a5e36'); blob(0, -26, 5, OUT); blob(0, -26, 4, '#e8c888'); blob(0, -16, 2, '#c8483a'); });
   const HEN = [['#f8f8f0', '#d8d8c8'], ['#c8843a', '#a06428'], ['#4a4a52', '#2e2e36'], ['#e8c878', '#c8a050']];
@@ -2394,8 +2495,8 @@ const World = (() => {
     ctx.save(); ctx.translate(-cam.x, -cam.y);
     const seen = (x, y, pad = 34) => x > cam.x - pad && x < cam.x + VW + pad && y > cam.y - pad && y < cam.y + VH + pad + 24;
     const list = [];
-    map.sprites.forEach(s => { if (s.x < cam.x + VW + 8 && s.x + s.img.width > cam.x - 8 && s.y < cam.y + VH + 8 && s.y + s.img.height > cam.y - 8) list.push({ base: s.base, img: s.img, x: s.x, y: s.y }); });
-    const put = (f, x, y) => list.push({ base: y, img: f.img, x: x - f.ox, y: y - f.h + 4 });
+    map.sprites.forEach(s => { if (s.x < cam.x + VW + 8 && s.x + s.img.width > cam.x - 8 && s.y < cam.y + VH + 8 && s.y + s.img.height > cam.y - 8) list.push({ base: s.base, img: s.img, x: s.x, y: s.y, leafy: s.leafy }); });
+    const put = (f, x, y, leafy) => list.push({ base: y, img: f.img, x: x - f.ox, y: y - f.h + 4, leafy });
     /* deslocamento de tremor do objeto que acabou de levar um golpe */
     const shk = key => (v.shake && v.shake.key === key && t - v.shake.t0 < 240 ? Math.round(Math.sin((t - v.shake.t0) / 20) * 2) : 0);
 
@@ -2413,7 +2514,7 @@ const World = (() => {
           const mask = (key0 >= GRID.cols && isSoil(key0 - GRID.cols) ? 1 : 0) | (col < GRID.cols - 1 && isSoil(key0 + 1) ? 2 : 0) | (isSoil(key0 + GRID.cols) ? 4 : 0) | (col > 0 && isSoil(key0 - 1) ? 8 : 0);
           ctx.drawImage(soilImg(!!o.w, mask, Math.floor(hsh(key0, 3, 91) * 4)), q.x - 1, q.y - 1);
           if (o.crop) { if (CROPS[o.crop].stages) staged(ctx, q.x, q.y, o); else { const st = cropState(o); crop(ctx, q.x, q.y, o.crop, st.ripe ? 3 : !o.g ? 0 : o.g * 2 > CROPS[o.crop].days ? 2 : 1); } }
-        } else if (o.k === 'tree') put(fruitTree(o.sp, o.age >= TREES[o.sp].grow ? 2 : o.age * 2 >= TREES[o.sp].grow ? 1 : 0, o.fruit), q.x + 8, q.y + 13);
+        } else if (o.k === 'tree') put(fruitTree(o.sp, o.age >= TREES[o.sp].grow ? 2 : o.age * 2 >= TREES[o.sp].grow ? 1 : 0, o.fruit), q.x + 8, q.y + 13, o.age >= TREES[o.sp].grow);
         else if (o.k === 'weed') {                                        // capim alto: entra na ordenação (folhas da frente cobrem os pés)
           const k0 = +key, col = k0 % GRID.cols, isW = n => !!(tiles[n] && tiles[n].k === 'weed');
           const mask = (k0 >= GRID.cols && isW(k0 - GRID.cols) ? 1 : 0) | (col < GRID.cols - 1 && isW(k0 + 1) ? 2 : 0) | (isW(k0 + GRID.cols) ? 4 : 0) | (col > 0 && isW(k0 - 1) ? 8 : 0);
@@ -2424,7 +2525,7 @@ const World = (() => {
       }
       // bosque
       const cleared = S.nature.cleared || {};
-      NTREES.forEach(([x, y], i) => { if (!cleared[i] && seen(x, y, 50)) put(S.nature.trees[i] ? stump(i) : wildTree(i), x + shk((S.nature.trees[i] ? 's' : 't') + i), y); });
+      NTREES.forEach(([x, y], i) => { if (!cleared[i] && seen(x, y, 50)) put(S.nature.trees[i] ? stump(i) : wildTree(i), x + shk((S.nature.trees[i] ? 's' : 't') + i), y, !S.nature.trees[i]); });
       NROCKS.forEach(([x, y], i) => { if (!S.nature.rocks[i] && seen(x, y)) rock(ctx, x + shk('r' + i), y, i); });
       FORAGE.forEach(([x, y], i) => { if (S.nature.forage[i] && seen(x, y)) forage(ctx, x, y, S.nature.forage[i]); });
       if (S.nature.hat) forage(ctx, SPOT.hat[0], SPOT.hat[1], 'chapeu_tome');
@@ -2471,8 +2572,12 @@ const World = (() => {
 
     v.actors.forEach(a => list.push({ base: a.y, a }));
     list.sort((p, q) => p.base - q.base);
+    /* copa sobre o jogador: quando ele está atrás de uma árvore (pés acima da base e dentro da copa), ela fica translúcida.
+       Só o desenho muda: a colisão continua no tronco. */
+    const me = v.actors.length ? v.actors[v.actors.length - 1] : null;
+    const behind = e => me && e.leafy && me.y < e.base - 1 && me.y > e.y + 6 && me.x > e.x + 3 && me.x < e.x + e.img.width - 3;
     list.forEach(e => {
-      if (e.img) return ctx.drawImage(e.img, Math.round(e.x), Math.round(e.y));
+      if (e.img) { if (behind(e)) { ctx.globalAlpha = 0.55; ctx.drawImage(e.img, Math.round(e.x), Math.round(e.y)); ctx.globalAlpha = 1; return; } return ctx.drawImage(e.img, Math.round(e.x), Math.round(e.y)); }
       if (e.fn) return e.fn();
       if (e.pet) return pet(ctx, e.pet, t);
       if (e.hen) { const h = e.hen; hen(ctx, Math.round(h.x), Math.round(h.y), h.kind, h.flip, h.peck, h.moving ? Math.floor(t / 150) % 2 : 0); if (h.heart) heart(ctx, Math.round(h.x) - 3, Math.round(h.y) - 20 - Math.floor(t / 250) % 2); return; }
@@ -2740,6 +2845,7 @@ const World = (() => {
 
   return {
     get VW() { return VW; }, get VH() { return VH; }, RW, RH, setView, setSeason, get SEASON() { return SEASON; }, SERRA, MPLACES,
+    __figs: () => [wildTree(0), wildTree(5), fruitTree('laranja', 2, true), fruitTree('goiaba', 2, false), fruitTree('laranja', 1)],   // (para testes e capturas)
     get, free, camera, render, icon, tileAt, tilePos, petCanvas, waterZone, solidAt, painting, GRID, YARD, SPOT, NTREES, NROCKS, FORAGE, PLACES, FORA,
   };
 })();
