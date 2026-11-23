@@ -112,6 +112,38 @@ nome do personagem e nome da fazenda. Tudo vale para qualquer gênero. O botão
 **Aparência aleatória** sorteia só o visual. O personagem não perde cabelo nem
 acessório em nenhuma direção, andando, usando ferramentas, pescando ou de chapéu.
 
+**Desenho do jogador em alta definição.** O jogador é desenhado em 48×64 pixels por
+quadro e mostrado no mapa com o mesmo tamanho de antes (24×32 pontos do mundo, dois
+pixels do desenho por ponto, como o Caleb). O código fica em `js/player-art.js`
+(`PlayerArt`) e usa as mesmas opções da criação: nenhum id, escolha ou salvamento mudou.
+
+- **Corpo e rosto:** contorno de 1 pixel levemente tingido pela cor vizinha, luz à
+  esquerda e sombra à direita; olhos com branco, íris, pupila e brilho (cílios na base
+  feminina); queixo, pescoço, roupa, braços, mãos (com polegar), pernas e calçados
+  separados por sombra. Na caminhada, a perna do passo sobe e a mão oposta vem à frente.
+- **Cabelos em mechas:** cada penteado mantém a sua silhueta (a mesma máscara de antes,
+  redesenhada no dobro da densidade com cantos arredondados), mas é pintado em mechas
+  que saem do alto da cabeça e descem em leque, com vão escuro entre elas, faixa de
+  brilho no topo, reflexos ao longo e pontas afinadas. O contorno acompanha as mechas
+  (tufos para fora, vãos para dentro). Lisos têm mechas longas; ondulados balançam;
+  cacheados têm espiral; crespos e black power têm molinhas fechadas em tufos. Tranças
+  ganham gomos e elásticos, coque é redondo com faixa, rabo tem prendedor e o emo cobre
+  um olho (com a mecha prateada opcional). O "Curto liso" tem franja desenhada à mão.
+  A cor das três barras gera base, sombra e luz, então preto, branco e verde mantêm o volume.
+- **Roupas:** camiseta (gola canelada, barra da manga), regata (alças, cava e decote),
+  camisa (gola, vista, botões, bolso e punhos), blusa (decote, manga bufante e babado),
+  moletom (capuz, cordões, bolso canguru, punhos e barra canelados) e jardineira (camisa
+  creme por baixo, peito, alças e fivelas na cor escolhida); calça com cinto e fivela,
+  short com a perna à mostra, saia com pregas e saia longa que balança ao andar.
+- **Acessórios e chapéus:** óculos redondos, laço (no cabelo ou na fita do chapéu),
+  bandana com bolinhas e nó atrás, cachecol de tricô com a ponta caindo na frente;
+  chapéu de palha trançado com fita e aba larga, boina inclinada e chapéu de pescador.
+  O cabelo continua aparecendo por baixo do chapéu, e de costas o cabelo comprido
+  fica por cima do cachecol.
+- **O que não muda:** apoio dos pés, colisão e pontos das ferramentas. Os cartões e
+  prévias da criação mostram os quadros de 48×64 em escala inteira. Moradores com
+  barba ou brinco continuam com o desenho anterior.
+
 **Gênero e base visual.** O gênero define os pronomes nas falas e também a
 **base visual** do corpo, que aparece na prévia, no mapa, ao andar, nas
 ferramentas, na pesca e na ficha do personagem:
@@ -771,13 +803,12 @@ mostram a fala e o rosto de quem pergunta. Narração aparece sem nome nem retra
 ### Caleb
 
 Neto da Dona Celeste. Chega para morar com a avó no andar de cima do Armazém
-CELESTE. Tem estilo gótico/emo: cabelo preto, liso e em camadas, com uma franja
-longa e diagonal que cobre um olho e uma mecha prateada fina, camiseta preta,
-camisa vinho aberta com mangas dobradas, calça escura, botas, brinco de argola e
-pingente de mariposa. É
-reservado e observador, gosta de computador e de música, fala pouco no começo e
-é educado; com a amizade, aparecem o humor e o carinho em pequenos gestos. A
-idade não é definida, e a relação é só de amizade (sem romance).
+CELESTE. Usa moletom preto de mangas compridas, com o capuz abaixado, calça
+preta e botas pretas; o cabelo é preto (com reflexo violeta), volumoso e em
+camadas, com uma franja lateral que cobre o olho direito dele. Não usa
+acessórios. É reservado e observador, gosta de computador e de música, fala pouco
+no começo e é educado; com a amizade, aparecem o humor e o carinho em pequenos
+gestos. A idade não é definida, e a relação é só de amizade (sem romance).
 
 - **Chegada**: numa partida nova, na primeira visita ao Armazém com Dona Celeste
   atendendo (6h às 18h). A apresentação acontece uma vez só; em jogos salvos de
@@ -803,20 +834,42 @@ idade não é definida, e a relação é só de amizade (sem romance).
   repetir as últimas. Usa o sistema de conversa diária, presentes (todos neutros:
   ainda não há lista de favoritos) e a aba Amizades, com até 8 corações. Antes da
   chegada, não aparece na aba.
-- **Visual**: feito a partir da ficha aprovada ("CALEB — Trilha • Vida no
-  Campo"), não do gerador genérico de personagens, e na mesma densidade de pixels
-  dos outros personagens. Os sprites (14×30, um pixel do desenho para um pixel do
-  mundo) foram desenhados pixel a pixel seguindo as quatro vistas aprovadas
-  (frente, costas e os dois perfis): franja longa e diagonal cobrindo um olho,
-  mecha prateada, um olho visível, camisa vinho aberta sobre camiseta preta com
-  pingente, mangas dobradas, calça escura e botas, com as proporções mais
-  alongadas da ficha. Os passos da caminhada saem dessas vistas (na frente e nas
-  costas, uma bota sobe de cada vez; de perfil, as pernas se abrem). Os retratos
-  de diálogo são as quatro expressões da ficha (neutra, sorriso discreto,
-  contente e envergonhado/surpreso), sem o fundo de pergaminho, reduzidas para
-  64×64 como os retratos dos outros moradores, sem desfoque (cada pixel fica
-  com a cor mais frequente do bloco). Os arquivos ficam em `js/caleb-art.js`
-  (imagens geradas por script) e `js/char-art.js` (quem desenha).
+- **Visual** (ficha aprovada, com o moletom preto; substitui o visual anterior de
+  camisa vinho, colar, brinco e mecha clara):
+  - **Sprites do mapa**: quadros de 32×68 com fundo transparente, com a figura de
+    24×68 e os pés na última linha. Saem da folha aprovada das quatro vistas
+    (frente, costas, perfil esquerdo e perfil direito), que é pixel art ampliada.
+  - **Leitura da folha**: cada vista é lida na grade nativa (um ponto no centro de
+    cada bloco, sem misturar cores), mantendo as cores e o acabamento aprovados.
+  - **Densidade**: dois pixels do desenho por pixel do mundo, o dobro dos outros
+    personagens. No mapa ele tem 34 de altura.
+  - **Exibição**: a cena é desenhada na resolução da tela, e cada pixel do mundo
+    vira k×k pixels, com k inteiro e sem suavização. O cenário e os outros
+    personagens ficam iguais. Com escala 2 ou 4, cada pixel do Caleb fica com 1
+    ou 2 pixels da tela; em telas com escala 3, fica com 1,5.
+  - **Perfis**: o perfil direito não é espelho do esquerdo.
+  - **Caminhada**: sai dessas vistas. De frente e de costas, um pé sobe de cada
+    vez e a mão do outro lado vem à frente. De perfil, as pernas abrem em "V" (a de
+    trás mais escura) e a mão balança. O cabelo e o corpo não mudam entre os
+    quadros.
+  - **Retratos de diálogo**: 128×128 com fundo transparente, nas quatro
+    expressões da ficha (neutra, sorriso, contente com uma piscadinha e
+    envergonhado/surpreso). São recortados da ficha e reduzidos sem desfoque
+    (cada pixel com a cor mais frequente do bloco) e aparecem no diálogo 1 para 1.
+  - **Atividades**: no notebook e ouvindo música, ele usa fones (arco e conchas);
+    no almoço, segura o prato à frente da mão; ajuda com as caixas carregando-as
+    à frente do corpo.
+  - **Arquivos**:
+    - `assets/caleb-sprites.png` é a folha de 96×272 (4 linhas de 3 quadros de
+      32×68), gerada por `tools/caleb_art32.py` a partir da folha aprovada das
+      quatro vistas.
+    - `assets/caleb-retratos.png` reúne os retratos, que também ficam separados
+      em `assets/caleb-retrato-*.png`; são gerados por `tools/caleb_portraits.py`.
+    - Os dois scripts, com `--embed`, copiam os quadros para `js/caleb-art.js`,
+      para o jogo funcionar aberto direto do arquivo.
+    - Quem desenha é `js/char-art.js`.
+  - **Preservado**: os pés, a colisão e o alcance das conversas continuam no mesmo
+    lugar.
 - **Armazém**: ganhou a porta da escada para o andar de cima, na parede do fundo
   ao lado do balcão (com a plaquinha "Particular"; o mural de avisos foi alguns
   pixels para a direita), e a mesinha com notebook do Caleb, ao lado do balcão,
@@ -1238,6 +1291,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `css/style.css` | Visual da interface |
 | `js/data.js` | Itens, cultivos, árvores, moradores, missões, loja e configuração da pesca |
 | `js/sprites.js` | Personagens em pixel art (cabelos, roupas, chapéus, 4 direções) |
+| `js/player-art.js` | Jogador em alta definição (48×64 por quadro): corpo, rosto, cabelos em mechas, roupas, acessórios e chapéus |
 | `js/portraits.js` | Retratos 64×64 dos moradores |
 | `js/iara-portrait.js` | Retratos de Iara (5 expressões, roupa normal e de inverno) |
 | `js/fishcore.js` | Física do minijogo de pesca (peixe, zona verde e progresso) |

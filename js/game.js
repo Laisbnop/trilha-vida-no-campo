@@ -307,7 +307,7 @@
   }
   function updatePreview() {
     const dirs = ['down', 'left', 'up', 'right'], frame = [0, 1, 0, 2][previewF];
-    [...$('preview-views').querySelectorAll('canvas')].forEach((c, i) => { const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(previewScene(), 0, 0); Sprites.draw(g, draft.look, 6, 9, frame, dirs[i]); });
+    [...$('preview-views').querySelectorAll('canvas')].forEach((c, i) => { const g = c.getContext('2d'), k = c.width / 36; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.imageSmoothingEnabled = false; g.setTransform(k, 0, 0, k, 0, 0); g.drawImage(previewScene(), 0, 0); Sprites.draw(g, draft.look, 6, 9, frame, dirs[i]); g.setTransform(1, 0, 0, 1, 0, 0); });   // prévia em 2x: o jogador redesenhado (48x64) aparece com todos os pixels
     $('preview-name').textContent = draft.name.trim() || '—';
     $('preview-farm').textContent = draft.farm.trim() ? draft.farm.trim() : '';
     $('preview-pet').replaceChildren(World.petCanvas(draft.pet));
@@ -742,8 +742,11 @@
     const c = $('scene'), W = window.innerWidth, H = window.innerHeight;
     const k = Math.max(2, Math.min(4, Math.round(H / 210), Math.round(W / 300)));   // escala inteira (pixels maiores, como num jogo de fazenda clássico)
     const cw = Math.ceil(W / k), ch = Math.ceil(H / k);
-    SCALE = 1;                                                            // um pixel do canvas = um pixel do mundo (todos os personagens na mesma grade)
-    if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+    /* A cena é desenhada na resolução da tela (cada pixel do mundo vira k x k pixels, sem suavização): o cenário fica
+       igual, e personagens com arte mais detalhada (o Caleb, em quadros de 32x64) aparecem com o dobro de pixels no
+       mesmo tamanho no mapa. */
+    SCALE = k;
+    if (c.width !== cw * k || c.height !== ch * k) { c.width = cw * k; c.height = ch * k; }
     c.style.width = cw * k + 'px'; c.style.height = ch * k + 'px';
     c.style.left = Math.floor((W - cw * k) / 2) + 'px'; c.style.top = Math.floor((H - ch * k) / 2) + 'px';
     World.setView(cw, ch);

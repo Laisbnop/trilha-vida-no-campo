@@ -265,6 +265,7 @@ const Sprites = (() => {
     for (const k of mask) { const k2 = conv(k); if (k2) hm.add(k2); }
     for (const k of backLayer) { const k2 = conv(k); if (k2 && hm.has(k2)) back2.add(k2); }
     const hh = (x, y) => hm.has(x + ',' + y);
+    if (look.__hairProbe) return { hm: [...hm], back: [...back2], tex: ['', 'straight', 'wavy', 'curly', 'coily'][tex] || 'straight' };   // só a máscara do cabelo (para o desenho em alta definição)
 
     /* pinta o cabelo com luz, sombra e textura do tipo de cabelo (mechas, ondas, cachos ou crespo) */
     function paintHair(only) {
@@ -615,8 +616,8 @@ const Sprites = (() => {
   function portrait(id, expr) { const src = PORTRAITS[id](expr), c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.className = 'pixel'; c.getContext('2d').drawImage(src, 0, 0); return c; }
 
   const flipped = img => {
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const g = c.getContext('2d'); g.translate(W, 0); g.scale(-1, 1); g.drawImage(img, 0, 0);
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d'); g.translate(img.width, 0); g.scale(-1, 1); g.drawImage(img, 0, 0);
     return c;
   };
   /* Quadros por direção: [parado, passo esquerdo, passo direito]. */
@@ -624,7 +625,8 @@ const Sprites = (() => {
   function frames(look) {                   // um só desenho para mapa, prévia, painéis e menus
     const key = JSON.stringify(look);
     if (!cache.has(key)) {
-      const set = dir => [0, 1, 2].map(f => render(look, f, dir));
+      const hi = typeof PlayerArt !== 'undefined' && PlayerArt.supports(look);        // jogador redesenhado em 48x64 (mostrado em 24x32)
+      const set = dir => [0, 1, 2].map(f => (hi ? PlayerArt.render(look, f, dir) : render(look, f, dir)));
       const down = set('down'), up = set('up'), left = set('side');
       cache.set(key, { down, up, left, right: left.map(flipped) });
       if (cache.size > 120) cache.delete(cache.keys().next().value);
@@ -635,8 +637,8 @@ const Sprites = (() => {
   const WALK = [1, 0, 2, 0];
   /* Desenha com o canto superior esquerdo em (x, y). dir: 'down' | 'up' | 'left' | 'right'. */
   function draw(ctx, look, x, y, frame = 0, dir = 'down') {
-    const fr = frames(look), set = fr[dir] || fr.down;
-    ctx.drawImage(set[Math.abs(frame) % 3 | 0], Math.round(x), Math.round(y));
+    const fr = frames(look), set = fr[dir] || fr.down, im = set[Math.abs(frame) % 3 | 0];
+    ctx.drawImage(im, Math.round(x), Math.round(y), W, H);                    // quadros 48x64 ocupam o mesmo 24x32 (dois pixels por pixel do mundo)
   }
   /* Desenha com os pés em (x, y) (drawWorld é o mesmo desenho; o nome fica para o mundo). */
   const drawAt = (ctx, look, x, y, frame = 0, dir = 'down') => draw(ctx, look, x - W / 2, y - H + 1, frame, dir);
@@ -644,8 +646,8 @@ const Sprites = (() => {
   const walk = t => WALK[Math.floor(t / 130) % 4];
   /* Pequeno canvas com o personagem, para painéis. */
   function canvas(look, dir = 'down', frame = 0) {
-    const c = document.createElement('canvas'); c.className = 'pixel'; c.width = W; c.height = H;
-    draw(c.getContext('2d'), look, 0, 0, frame, dir);
+    const im = frames(look)[dir][frame], c = document.createElement('canvas'); c.className = 'pixel'; c.width = W * 2; c.height = H * 2;   // painéis: sempre 48x64 (o desenho de 24x32 entra dobrado, sem suavizar)
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, W * 2, H * 2);
     return c;
   }
 
@@ -661,5 +663,7 @@ const Sprites = (() => {
     return look;
   }
 
-  return { hairPalette, hexToHsl, hairHslOf, WORLD, drawWorld, genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
+  const hairMask = (look, dir) => render(Object.assign({}, look, { __hairProbe: true }), 0, dir);   // máscara do penteado na grade do mundo
+  const hairPaletteOf = look => (Array.isArray(look.hairHsl) ? hairPalette(look.hairHsl) : byId(HAIR_COLORS.concat(EXTRA_HAIR), look.hairColor).c);
+  return { hairMask, hairPaletteOf, hairPalette, hexToHsl, hairHslOf, WORLD, drawWorld, genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
 })();

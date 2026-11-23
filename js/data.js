@@ -498,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Árvores, arbustos e cercas',
+  title: 'Jogador redesenhado e Caleb com a arte aprovada',
   items: [
-    'Árvores com copas cheias em cachos de folhas, troncos com casca e raízes, e um desenho diferente para cada uma.',
-    'Laranjeiras e goiabeiras redesenhadas, e arbustos com contorno irregular e folhas.',
-    'Cercas de madeira com postes grossos, travessas encaixadas, cantos e porteiras.',
-    'Dá para passar atrás das cercas, e a copa fica translúcida quando você passa atrás de uma árvore.',
-    'Corte, coleta, caminhos e colisões continuam iguais.',
+    'O jogador ganhou um desenho com o dobro de pixels, no mesmo tamanho no mapa: rosto, olhos, mãos, roupas e calçados mais definidos.',
+    'Os 19 penteados foram redesenhados em mechas, com brilho, sombra e pontas, mantendo o jeito de cada um; as cores do cabelo continuam livres.',
+    'Todas as roupas, acessórios e chapéus foram refeitos no novo estilo, nas quatro direções e andando.',
+    'Caleb no mapa segue a arte aprovada, com retratos de 128x128 nas quatro expressões.',
+    'Opções, salvamentos, ferramentas e colisões continuam iguais.',
   ],
 };
