@@ -581,6 +581,50 @@ nada é recortado de capturas.
   colisões, as rotas dos moradores, as árvores, os recursos, os cultivos e os
   coletáveis continuam exatamente iguais.
 
+### Árvores, arbustos e cercas
+
+Arte própria, na linguagem das referências (sem recortes de capturas).
+
+- **Árvores de folhas** (decorativas, do bosque e frutíferas):
+  - **Copa**: cachos de folhas sobrepostos e assimétricos, desenhados de trás para
+    a frente. Cada cacho tem uma borda em sombra profunda que o separa do de trás,
+    meio-tom, luz no alto à esquerda e folhinhas em "v" (claras na luz, escuras na
+    sombra). O contorno escuro fecha a silhueta.
+  - **Tronco**: largura que varia e alarga na base, casca com sulcos e nós, luz à
+    esquerda, sombra da copa no alto, raízes discretas e sombra no chão.
+  - **Variação**: cada exemplar varia pela posição (cachos, altura do tronco,
+    raízes); as 14 árvores do bosque têm desenhos diferentes entre si.
+  - **Estações**: florzinhas na primavera, verde mais vivo no verão, um tom por
+    árvore no outono (laranja, vermelho ou amarelo, com folhas no chão) e galhos
+    nus no inverno, com o galho principal saindo do tronco.
+  - **Frutíferas**: a laranjeira e a goiabeira usam a mesma copa em cachos, nas
+    fases de muda, árvore jovem e adulta, com as frutas por cima.
+  - **Preservado**: espécies, posições, corte, tocos, rebrota e coleta.
+- **Pinheiros**: mantêm o desenho em camadas.
+- **Arbustos**: menores que as árvores, com contorno irregular de 3 a 5 cachos de
+  tamanhos diferentes, folhas reconhecíveis, base mais escura e sombra no chão.
+  Cada um varia pela posição. Têm florzinhas na primavera, folhas secas no outono
+  e neve no inverno.
+- **Cercas de madeira** (cercado das galinhas, horta comunitária, pátio da
+  escola e cerca da fazenda):
+  - **Postes**: grossos, de topo arredondado e iluminado, com veio discreto, luz
+    à esquerda, sombra à direita e base escura.
+  - **Travessas**: duas, que entram nos postes, com sombra nas junções.
+  - **Trechos verticais**: os postes ficam um atrás do outro, ligados por uma
+    travessa.
+  - **Cantos e pontas**: os cantos usam o mesmo poste dos dois trechos; as
+    pontas, junto às aberturas, terminam num poste.
+  - **Porteiras**: as do cercado e da fazenda têm postes mais altos, com chapéu.
+  - **Preservado**: lugares, aberturas, porteiras abertas e colisões.
+- **Profundidade**:
+  - **Cercas**: cada trecho de cerca e cada poste é ordenado pela base no chão.
+    Quem está atrás da cerca fica atrás dela (a cerca cobre os pés); na frente,
+    fica por cima.
+  - **Árvores**: são ordenadas pela base do tronco. Quando o jogador passa atrás de
+    uma copa, ela fica translúcida para ele continuar visível.
+  - **Colisão**: continua só na base do tronco (a copa não vira obstáculo).
+  - **Coletáveis**: os pontos onde surgem continuam os mesmos.
+
 ### Visual da fazenda
 
 Pixel art de cores vivas, terra quente e vegetação volumosa, com detalhes bem
@@ -615,7 +659,7 @@ desenhados e sem ruído espalhado. Nada usa desfoque.
   ligam; a grade de plantio e a seleção não mudaram.
 - **Pinheiros**: camadas de folhagem com tufos de folhas iluminadas, sombra sob
   cada camada e contorno recortado; cada pinheiro varia em altura, largura,
-  número de camadas e inclinação, e as árvores redondas variam a copa.
+  número de camadas e inclinação (as árvores de folhas estão na seção acima).
 - **Pedras, galhos, tocos e matinhos**: silhuetas claras com luz e sombra em
   áreas agrupadas, poucos detalhes e sombra de contato. Quatro variações de cada
   tipo, pela posição (a aparência é a mesma ao mover a câmera, salvar e carregar).
