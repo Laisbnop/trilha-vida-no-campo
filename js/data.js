@@ -498,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Jogador redesenhado e Caleb com a arte aprovada',
+  title: 'Personagem principal redesenhado',
   items: [
-    'O jogador ganhou um desenho com o dobro de pixels, no mesmo tamanho no mapa: rosto, olhos, mãos, roupas e calçados mais definidos.',
-    'Os 19 penteados foram redesenhados em mechas, com brilho, sombra e pontas, mantendo o jeito de cada um; as cores do cabelo continuam livres.',
-    'Todas as roupas, acessórios e chapéus foram refeitos no novo estilo, nas quatro direções e andando.',
-    'Caleb no mapa segue a arte aprovada, com retratos de 128x128 nas quatro expressões.',
-    'Opções, salvamentos, ferramentas e colisões continuam iguais.',
+    'O personagem ganhou novas proporções e agora tem a mesma altura do Caleb no mapa, com os pés no mesmo lugar.',
+    'Rosto mais suave, ombros arredondados, pernas mais longas e calçados redesenhados nas bases feminina e masculina.',
+    'Os penteados ganharam formas próprias em todas as direções: mechas lisas, ondas, cachos, crespos, tranças e a franja do emo.',
+    'Os chapéus assentam na cabeça sem deformar o rosto; roupas, acessórios e cores continuam os mesmos.',
+    'Saves, ferramentas e colisões não mudaram.',
   ],
 };

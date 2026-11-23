@@ -112,37 +112,44 @@ nome do personagem e nome da fazenda. Tudo vale para qualquer gênero. O botão
 **Aparência aleatória** sorteia só o visual. O personagem não perde cabelo nem
 acessório em nenhuma direção, andando, usando ferramentas, pescando ou de chapéu.
 
-**Desenho do jogador em alta definição.** O jogador é desenhado em 48×64 pixels por
-quadro e mostrado no mapa com o mesmo tamanho de antes (24×32 pontos do mundo, dois
-pixels do desenho por ponto, como o Caleb). O código fica em `js/player-art.js`
-(`PlayerArt`) e usa as mesmas opções da criação: nenhum id, escolha ou salvamento mudou.
+**Desenho do jogador em alta definição.** O jogador é desenhado em `js/player-art.js`
+(`PlayerArt`) com dois pixels do desenho por ponto do mundo, como o Caleb, e tem a
+**mesma altura do Caleb no mapa** (quadro de 48×78, mostrado em 24×39 pontos, com os
+pés no mesmo ponto de antes). Usa as mesmas opções da criação: nenhum id, escolha ou
+salvamento mudou.
 
-- **Corpo e rosto:** contorno de 1 pixel levemente tingido pela cor vizinha, luz à
-  esquerda e sombra à direita; olhos com branco, íris, pupila e brilho (cílios na base
-  feminina); queixo, pescoço, roupa, braços, mãos (com polegar), pernas e calçados
-  separados por sombra. Na caminhada, a perna do passo sobe e a mão oposta vem à frente.
-- **Cabelos em mechas:** cada penteado mantém a sua silhueta (a mesma máscara de antes,
-  redesenhada no dobro da densidade com cantos arredondados), mas é pintado em mechas
-  que saem do alto da cabeça e descem em leque, com vão escuro entre elas, faixa de
-  brilho no topo, reflexos ao longo e pontas afinadas. O contorno acompanha as mechas
-  (tufos para fora, vãos para dentro). Lisos têm mechas longas; ondulados balançam;
-  cacheados têm espiral; crespos e black power têm molinhas fechadas em tufos. Tranças
-  ganham gomos e elásticos, coque é redondo com faixa, rabo tem prendedor e o emo cobre
-  um olho (com a mecha prateada opcional). O "Curto liso" tem franja desenhada à mão.
-  A cor das três barras gera base, sombra e luz, então preto, branco e verde mantêm o volume.
-- **Roupas:** camiseta (gola canelada, barra da manga), regata (alças, cava e decote),
-  camisa (gola, vista, botões, bolso e punhos), blusa (decote, manga bufante e babado),
-  moletom (capuz, cordões, bolso canguru, punhos e barra canelados) e jardineira (camisa
-  creme por baixo, peito, alças e fivelas na cor escolhida); calça com cinto e fivela,
-  short com a perna à mostra, saia com pregas e saia longa que balança ao andar.
-- **Acessórios e chapéus:** óculos redondos, laço (no cabelo ou na fita do chapéu),
-  bandana com bolinhas e nó atrás, cachecol de tricô com a ponta caindo na frente;
-  chapéu de palha trançado com fita e aba larga, boina inclinada e chapéu de pescador.
-  O cabelo continua aparecendo por baixo do chapéu, e de costas o cabelo comprido
-  fica por cima do cachecol.
-- **O que não muda:** apoio dos pés, colisão e pontos das ferramentas. Os cartões e
-  prévias da criação mostram os quadros de 48×64 em escala inteira. Moradores com
-  barba ou brinco continuam com o desenho anterior.
+- **Base (corpo e rosto):** a cabeça ocupa cerca de um terço da altura, com rosto oval,
+  queixo definido e pescoço curto; ombros arredondados (sem "barra"), braços finos,
+  mãos na altura do quadril, pernas compridas e calçados de bico arredondado. As
+  sombras do rosto são leves (um ponto no nariz, a borda direita do rosto), para não
+  envelhecer. Os olhos têm pálpebra, íris e brilho do mesmo lado. As bases feminina e
+  masculina diferem de leve: ombros, queixo, sobrancelhas, cílios e boca.
+- **Como a altura é feita:** o desenho é montado numa grade de 64 linhas e, na saída,
+  algumas linhas dos trechos lisos (pescoço, meio do tronco e pernas) são repetidas.
+  O rosto e os detalhes não são esticados.
+- **Cabelos com forma própria:** cada penteado tem a sua silhueta desenhada em cada
+  vista (frente, costas e os dois perfis), a partir de parâmetros de forma (volume,
+  tipo de franja, laterais, nuca e comprimento). O perfil direito é desenhado à
+  parte, então franjas assimétricas (curto liso, médio com franja lateral e emo)
+  mostram o lado certo. Texturas:
+  - **liso:** mechas largas e contínuas, uma linha de separação por mecha e pontas em bico;
+  - **ondulado:** as mechas seguem uma onda legível;
+  - **cacheado:** cachos redondos agrupados, com luz no alto e sombra embaixo;
+  - **crespo:** molinhas pequenas e fechadas, com contorno orgânico e volume;
+  - **tranças:** duas tranças em gomos com elástico na ponta;
+  - **emo:** franja diagonal que cobre só um olho, mechas espetadas em pequenos
+    triângulos e a mecha prateada opcional.
+
+  Todos têm uma faixa de brilho contínua no alto. A cor das três barras gera base,
+  sombra e luz, então preto, branco e verde mantêm o volume.
+- **Chapéus:** palha, boina e pescador assentam na cabeça, acima da linha das
+  sobrancelhas; o cabelo acima da aba some e o resto aparece por baixo, sem alargar o rosto.
+- **Roupas e acessórios:** todas as opções foram encaixadas na nova grade
+  (camiseta, regata, camisa, blusa, moletom e jardineira; calça, short, saia e saia
+  longa; óculos, laço, bandana e cachecol).
+- **O que não muda:** colisão, apoio dos pés, ferramentas, animações e saves. Os
+  cartões e prévias da criação usam o mesmo quadro do mapa, em escala inteira (48×80).
+  Os moradores e o cenário não mudaram.
 
 **Gênero e base visual.** O gênero define os pronomes nas falas e também a
 **base visual** do corpo, que aparece na prévia, no mapa, ao andar, nas
@@ -1291,7 +1298,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `css/style.css` | Visual da interface |
 | `js/data.js` | Itens, cultivos, árvores, moradores, missões, loja e configuração da pesca |
 | `js/sprites.js` | Personagens em pixel art (cabelos, roupas, chapéus, 4 direções) |
-| `js/player-art.js` | Jogador em alta definição (48×64 por quadro): corpo, rosto, cabelos em mechas, roupas, acessórios e chapéus |
+| `js/player-art.js` | Jogador em alta definição (48×78 por quadro, altura do Caleb): corpo, rosto, formas dos 19 penteados, roupas, acessórios e chapéus |
 | `js/portraits.js` | Retratos 64×64 dos moradores |
 | `js/iara-portrait.js` | Retratos de Iara (5 expressões, roupa normal e de inverno) |
 | `js/fishcore.js` | Física do minijogo de pesca (peixe, zona verde e progresso) |
