@@ -498,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Árvores, arbustos e cercas',
+  title: 'Caleb de moletom',
   items: [
-    'Árvores com copas cheias em cachos de folhas, troncos com casca e raízes, e um desenho diferente para cada uma.',
-    'Laranjeiras e goiabeiras redesenhadas, e arbustos com contorno irregular e folhas.',
-    'Cercas de madeira com postes grossos, travessas encaixadas, cantos e porteiras.',
-    'Dá para passar atrás das cercas, e a copa fica translúcida quando você passa atrás de uma árvore.',
-    'Corte, coleta, caminhos e colisões continuam iguais.',
+    'Caleb ganhou visual novo: moletom preto com capuz abaixado, calça e botas pretas e cabelo preto com franja lateral.',
+    'Sprites redesenhados à mão em 16x32, nas quatro direções, com caminhada e a franja sempre do mesmo lado.',
+    'Retratos novos de 128x128, nas quatro expressões, combinando com o sprite.',
+    'Fones no notebook e na música, e o prato do almoço na mão (sem cobrir o corpo).',
+    'Rotina, conversas, amizade, eventos e jogos salvos continuam iguais.',
   ],
 };

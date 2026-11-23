@@ -10,8 +10,8 @@ const CharArt = (() => {
       S.frames[k] = {};
       Object.keys(data.frames[k]).forEach(d => { S.frames[k][d] = data.frames[k][d].map(src => { const im = new Image(); im.src = src; return im; }); });
     });
-    Object.keys(data.portraits).forEach(e => {
-      const c = document.createElement('canvas'); c.width = c.height = 64; c.className = 'pixel';
+    Object.keys(data.portraits || {}).forEach(e => {
+      const c = document.createElement('canvas'); c.width = c.height = data.portraitSize || 64; c.className = 'pixel';   // tamanho real do retrato (o do Caleb tem 128x128)
       const im = new Image(); im.onload = () => c.getContext('2d').drawImage(im, 0, 0); im.src = data.portraits[e];
       S.portraits[e] = { c, im };
     });
@@ -33,7 +33,8 @@ const CharArt = (() => {
   return { load, draw, portrait, ready, has: id => !!sets[id] };
 })();
 
-/* Caleb: arte da ficha aprovada (js/caleb-art.js). Expressões: neutro, sorriso, contente, envergonhado. */
+/* Caleb: sprites do mapa desenhados à mão (16x32, folha em assets/caleb-sprites.png) e retratos de 128x128 das quatro
+   expressões da ficha aprovada (assets/caleb-retratos.png). Expressões: neutro, sorriso, contente, envergonhado. */
 if (typeof CALEB_ART !== 'undefined') {
   CharArt.load('caleb', CALEB_ART);
   const MAP = { emocionado: 'contente', desconfiado: 'neutro', triste: 'neutro', surpresa: 'envergonhado', concentrada: 'neutro' };

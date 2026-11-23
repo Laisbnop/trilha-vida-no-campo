@@ -771,13 +771,12 @@ mostram a fala e o rosto de quem pergunta. Narração aparece sem nome nem retra
 ### Caleb
 
 Neto da Dona Celeste. Chega para morar com a avó no andar de cima do Armazém
-CELESTE. Tem estilo gótico/emo: cabelo preto, liso e em camadas, com uma franja
-longa e diagonal que cobre um olho e uma mecha prateada fina, camiseta preta,
-camisa vinho aberta com mangas dobradas, calça escura, botas, brinco de argola e
-pingente de mariposa. É
-reservado e observador, gosta de computador e de música, fala pouco no começo e
-é educado; com a amizade, aparecem o humor e o carinho em pequenos gestos. A
-idade não é definida, e a relação é só de amizade (sem romance).
+CELESTE. Usa moletom preto de mangas compridas, com o capuz abaixado, calça
+preta e botas pretas; o cabelo é preto (com reflexo violeta), volumoso e em
+camadas, com uma franja lateral que cobre o olho direito dele. Não usa
+acessórios. É reservado e observador, gosta de computador e de música, fala pouco
+no começo e é educado; com a amizade, aparecem o humor e o carinho em pequenos
+gestos. A idade não é definida, e a relação é só de amizade (sem romance).
 
 - **Chegada**: numa partida nova, na primeira visita ao Armazém com Dona Celeste
   atendendo (6h às 18h). A apresentação acontece uma vez só; em jogos salvos de
@@ -803,20 +802,41 @@ idade não é definida, e a relação é só de amizade (sem romance).
   repetir as últimas. Usa o sistema de conversa diária, presentes (todos neutros:
   ainda não há lista de favoritos) e a aba Amizades, com até 8 corações. Antes da
   chegada, não aparece na aba.
-- **Visual**: feito a partir da ficha aprovada ("CALEB — Trilha • Vida no
-  Campo"), não do gerador genérico de personagens, e na mesma densidade de pixels
-  dos outros personagens. Os sprites (14×30, um pixel do desenho para um pixel do
-  mundo) foram desenhados pixel a pixel seguindo as quatro vistas aprovadas
-  (frente, costas e os dois perfis): franja longa e diagonal cobrindo um olho,
-  mecha prateada, um olho visível, camisa vinho aberta sobre camiseta preta com
-  pingente, mangas dobradas, calça escura e botas, com as proporções mais
-  alongadas da ficha. Os passos da caminhada saem dessas vistas (na frente e nas
-  costas, uma bota sobe de cada vez; de perfil, as pernas se abrem). Os retratos
-  de diálogo são as quatro expressões da ficha (neutra, sorriso discreto,
-  contente e envergonhado/surpreso), sem o fundo de pergaminho, reduzidas para
-  64×64 como os retratos dos outros moradores, sem desfoque (cada pixel fica
-  com a cor mais frequente do bloco). Os arquivos ficam em `js/caleb-art.js`
-  (imagens geradas por script) e `js/char-art.js` (quem desenha).
+- **Visual** (ficha aprovada, com o moletom preto; substitui o visual anterior de
+  camisa vinho, colar, brinco e mecha clara):
+  - **Sprites do mapa**: desenhados à mão, pixel a pixel, em quadros de exatamente
+    16×32 com fundo transparente, na mesma grade dos outros personagens (um pixel
+    do desenho para um pixel do mundo). A tela amplia por vizinho mais próximo,
+    em escala inteira e sem suavização.
+  - **Vistas e quadros**: quatro vistas (frente, costas e os dois perfis) com três
+    quadros cada (parado e dois passos). Os pés ficam sempre na última linha.
+  - **Detalhes**: cabelo volumoso e espetado, com mechas em diagonal; franja sobre
+    o olho direito dele; olho verde e orelhas à mostra; gola do capuz e sombra no
+    pescoço; cordões; bolso canguru; punhos e barra; calça com reflexos; botas.
+  - **Cores**: tons de grafite separam braços, tronco, pernas e botas, também em
+    interiores e à noite.
+  - **Perfis**: o perfil direito não é espelho do esquerdo, porque a franja cai
+    sobre o lado direito dele.
+  - **Caminhada**: de frente e de costas, uma bota sobe de cada vez e a mão do
+    outro lado vem à frente; de perfil, as pernas abrem em passada. A cabeça e o
+    cabelo não mudam entre os quadros.
+  - **Retratos de diálogo**: 128×128 com fundo transparente, nas quatro
+    expressões da ficha (neutra, sorriso, contente com uma piscadinha e
+    envergonhado/surpreso). São recortados da ficha e reduzidos sem desfoque
+    (cada pixel com a cor mais frequente do bloco) e aparecem no diálogo 1 para 1.
+  - **Atividades**: no notebook e ouvindo música, ele usa fones (arco e conchas);
+    no almoço, segura o prato à frente da mão; ajuda com as caixas carregando-as
+    à frente do corpo.
+  - **Arquivos**:
+    - `assets/caleb-sprites.png` é a folha de 48×128 (4 linhas de 3 quadros),
+      gerada por `tools/caleb_sprite.py`.
+    - `assets/caleb-retratos.png` reúne os retratos, que também ficam separados
+      em `assets/caleb-retrato-*.png`; são gerados por `tools/caleb_portraits.py`.
+    - Os dois scripts, com `--embed`, copiam os quadros para `js/caleb-art.js`,
+      para o jogo funcionar aberto direto do arquivo.
+    - Quem desenha é `js/char-art.js`.
+  - **Preservado**: os pés, a colisão e o alcance das conversas continuam no mesmo
+    lugar.
 - **Armazém**: ganhou a porta da escada para o andar de cima, na parede do fundo
   ao lado do balcão (com a plaquinha "Particular"; o mural de avisos foi alguns
   pixels para a direita), e a mesinha com notebook do Caleb, ao lado do balcão,
