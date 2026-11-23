@@ -365,11 +365,14 @@ da diferença entre os dois.
 A área rural e o centrinho têm pisos diferentes:
 
 - **Terra batida** (saída da fazenda, ruas da vila sul, bairro leste, trilhas e
-  serra): terra compactada em tons de ocre e marrom claro, com variações pequenas
-  e suaves (sem manchas grandes), pedrinhas ocasionais e pouquíssimos grãos
-  claros. As bordas fazem curvas discretas, com a grama entrando em ondas largas e
-  alguns tufinhos, sem contorno escuro; a faixa central fica livre para andar. Em
-  frente à casa, a terra se abre um pouco e chega até o degrau da varanda.
+  serra): ocre quente, com variações bem próximas da cor de base, marquinhas
+  delicadas de 1 a 2 pixels em grupos espaçados (sem manchas geométricas) e
+  pedrinhas ocasionais em grupinhos de 1 a 3, com luz em cima e sombra embaixo.
+  Nas bordas, a grama entra em recortes irregulares (ondas largas com dentes
+  menores) e pontas de folha de 1 a 3 pixels avançam sobre a terra, com uma sombra
+  suave logo abaixo da grama; nenhuma borda fica em linha reta. A faixa central
+  fica livre para andar. Em frente à casa, a terra se abre um pouco e chega até o
+  degrau da varanda.
 - **Calçamento antigo do centrinho**: da frente do Armazém CELESTE, passando
   pela rua até a casa de Seu Honório, até a praça da fonte, num piso contínuo.
   São pedras pequenas, arredondadas ou levemente retangulares e de cantos gastos,
@@ -387,6 +390,8 @@ A área rural e o centrinho têm pisos diferentes:
   continuam no mesmo lugar.
 - **Calçamento de pedras irregulares** na praça do coreto (vila sul), com
   meio-fio nas bordas.
+- Nas bordas das pedras com a grama, pontas de folha curtas passam por cima do
+  meio-fio aqui e ali, integrando o piso aos gramados e canteiros.
 - **Areia** nas margens do rio.
 
 As ruas não são mais pintadas retângulo por retângulo: cada trecho marca uma
@@ -544,6 +549,37 @@ galinheiro mantêm o desenho próprio. O mapa (M) mostra as fachadas e as árvor
   para dar nome, fazer carinho (uma vez por dia) e ver o bem-estar.
 - **Bosque**: a árvore cortada deixa um toco, que também pode ser removido;
   ela volta em 4 dias e as rochas em 3. Os itens de coleta mudam de lugar todo dia.
+
+### Grama, mato e arbustos da cidade
+
+Desenhos próprios, orientados por referências de jogos de fazenda em pixel art;
+nada é recortado de capturas.
+
+- **Grama baixa**: cobertura contínua feita de folhinhas de 3 a 5 pixels (sombra
+  embaixo, corpo e ponta iluminada), em verdes claros nas áreas de luz e verdes
+  mais profundos nas de sombra. As áreas de luz e sombra são manchas irregulares e
+  suaves, sem elipses nem blocos chapados. As folhas ficam numa grade desencontrada,
+  com deslocamentos e falhas, então não aparecem fileiras, emendas nem a grade dos
+  tiles.
+- **Mato alto**: moitinhas com altura (8 a 12 pixels), topo recortado em pontas de
+  folhas sobrepostas, contorno escuro, folhas claras saindo do centro para as
+  pontas, luz pela esquerda e base sombreada. Aparecem em grupinhos irregulares de 2
+  a 4, com espaços livres entre os grupos, rente às margens dos caminhos, junto às
+  construções e cercas e, mais raros, no meio dos gramados. São só enfeite: não
+  bloqueiam, não são coletáveis e nunca ficam sobre caminhos, rotas dos moradores,
+  portas, pontes, placas ou pontos de interação.
+- **Arbustos**: massa de folhas em três lóbulos com contorno próprio, sombra
+  embaixo e à direita, luz no alto à esquerda e cachos de folhinhas; flores só na
+  primavera e no verão, folhas secas no outono e neve no inverno.
+- **Flores**: pequenas e esparsas, conforme a estação.
+- **Estações**: a grama, o mato e os arbustos trocam de cor em cada estação, como o
+  resto do cenário (verde vivo, verde quente, oliva com folhas caídas, neve). Não
+  há vagalumes.
+- **Estabilidade e desempenho**: tudo é calculado pela posição no mundo e pintado
+  uma única vez por estação no fundo do mapa; cada quadro só copia o fundo pronto.
+  A textura não muda com a câmera nem entre os quadros. O traçado do mapa, as
+  colisões, as rotas dos moradores, as árvores, os recursos, os cultivos e os
+  coletáveis continuam exatamente iguais.
 
 ### Visual da fazenda
 
@@ -1166,8 +1202,8 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 
 ## Visual
 
-Pixel art de fazenda em cores vivas e quentes: grama verde-folha com tufos em
-"v", caminhos de terra dourada com pedrinhas, lagos turquesa com margem clara e
+Pixel art de fazenda em cores vivas e quentes: grama feita de folhinhas, mato
+alto em grupinhos, caminhos de terra ocre com pedrinhas, lagos turquesa com margem clara e
 vitórias-régias, árvores de copa em cachos de folhas (floridas na primavera,
 coloridas no outono, nuas e com neve no inverno), cercas de troncos, paredes de
 tábuas e contornos marrom-escuros. Os pixels aparecem maiores em telas grandes
