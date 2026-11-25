@@ -634,7 +634,8 @@ const Sprites = (() => {
   function frames(look) {                   // um só desenho para mapa, prévia, painéis e menus
     const key = JSON.stringify(look);
     if (!cache.has(key)) {
-      const set = dir => [0, 1, 2].map(f => render(look, f, dir));               // jogador e moradores: o mesmo gerador, 1 pixel por ponto do mundo
+      const draw = look.sprite === 'iara' && typeof IaraArt !== 'undefined' ? IaraArt.render : render;   // Iara: desenho próprio de criança (js/iara-art.js)
+      const set = dir => [0, 1, 2].map(f => draw(look, f, dir));                 // jogador e moradores: 1 pixel por ponto do mundo
       const down = set('down'), up = set('up'), left = set('side');
       cache.set(key, { down, up, left, right: left.map(flipped) });
       if (cache.size > 120) cache.delete(cache.keys().next().value);
