@@ -208,7 +208,7 @@ const VILLAGERS = [
     gift: { love: 'Isso é... do que eu mais gosto. Obrigado.', like: 'Bom. Obrigado.', neutral: 'Obrigado.', dislike: 'Hum. Não sou muito de tomate.' },
     scene: { lines: ['Fiz isto nas noites de chuva.', 'Protege do sol na beira do rio. É seu.'], item: 'chapeu_pescador' } },
   /* Iara: 13 anos, sexta série. Pinta paisagens da vila e inventa nomes para as cores que mistura.
-     Rotina, falas, presentes e acontecimentos próprios (ver IARA e game.js). Sem romance. */
+     Rotina, falas, presentes e acontecimentos próprios (ver IARA e js/game/iara.js). Sem romance. */
   { id: 'iara', portrait: 'iara', name: 'Iara', routine: 'iara',
     place: 'na escola de manhã nos dias úteis; à tarde, pintando junto à fonte ou desenhando na praça; à noite, em casa',
     bio: 'Tem 13 anos e está na sexta série. Gentil e distraída, pinta paisagens da vila e inventa nomes para as cores que mistura. Toma chá de maçã com canela toda manhã e sempre tem um pinguinho de tinta nos dedos.',
@@ -223,14 +223,14 @@ const VILLAGERS = [
       dislike: { ids: ['rabanete', 'espinafre'], cats: ['leite'] },
     },
     love: [], like: ['narciso', 'flor', 'ervilha_cheiro', 'acafrao'], dislike: ['rabanete'],
-    sched: [[360, [[725, 312]]]],                                           // a rotina de verdade vem de iaraSchedule (game.js)
+    sched: [[360, [[725, 312]]]],                                           // a rotina de verdade vem de iaraSchedule (js/game/state.js)
     talk: [
       ['Oi! Você é de {fazenda}, né? Eu sou a Iara. Desculpa a mão suja de tinta.', 'Estou fazendo um desenho da vila inteira. Ainda faltam umas oitenta casas... brincadeira, são menos.', 'Você sabia que a fonte muda de cor conforme a hora? Quase ninguém repara.', 'Eu pinto os mesmos lugares em épocas diferentes, para ver como eles mudam.'],
       ['Hoje misturei um verde e chamei de "verde de folha depois da chuva". Gostou do nome?', 'Meu projeto é pintar a fonte nas quatro estações. Já pensou ver tudo junto?', 'O Leo diz que eu desenho devagar. Eu digo que eu desenho com atenção.', 'Você pode usar meus pincéis, se quiser. Só não esqueça de limpar depois.'],
       ['Quer ver meu caderno? Ainda tem desenhos tortos, mas esses também ficam.', 'Quando eu fico sem ideia, venho ver você trabalhar na roça. Sempre volto com uma.', 'Inventei um amarelo chamado "manhã preguiçosa". É o da sua janela quando você acorda tarde.', 'O Leo e eu combinamos de desenhar a serra um dia. Ele só quer ir por causa do lanche.'],
       ['Você virou alguém que eu conto as coisas antes de contar para os outros. É estranho falar isso em voz alta.', 'Guardei um cantinho do caderno só para desenhos da sua fazenda.', 'Se um dia eu tiver uma exposição na escola, você vai ser a primeira pessoa a ver. Prometido.', 'Obrigada por olhar as coisas comigo. Quase ninguém tem paciência.'],
     ],
-    /* falas por lugar, hora, estação e situação (game.js escolhe sem repetir a anterior) */
+    /* falas por lugar, hora, estação e situação (js/game/ escolhe sem repetir a anterior) */
     ctx: {
       escola: ['Eu estava prestando atenção... só desenhei a janela porque a luz ficou bonita.', 'A professora pediu um desenho do bairro. Eu fiz a fonte. De novo.', 'No intervalo eu fico no cantinho dos desenhos. É o lugar mais quieto da escola.'],
       fonte: ['A água não é só azul. Olha ali: tem um pedacinho de verde e outro quase dourado.', 'Eu chamo essa cor de "azul de fonte gelada". Combina, né?', 'Se você ficar parado um pouco, a fonte faz um barulho que parece conversa.'],
@@ -254,20 +254,20 @@ const VILLAGERS = [
 
   /* Caleb: neto da Dona Celeste. Chega à vila na primeira visita ao Armazém em horário de atendimento (uma vez só).
      Gótico/emo, reservado e observador; gosta de computador e de música. Amizade sem romance, até 8 corações.
-     Rotina própria (calebSchedule, game.js); presentes sem preferências cadastradas (todos neutros). */
+     Rotina própria (calebSchedule, js/game/state.js); presentes sem preferências cadastradas (todos neutros). */
   { id: 'caleb', portrait: 'caleb', name: 'Caleb', routine: 'caleb', maxHearts: 8, arrives: true,
     place: 'no Armazém CELESTE (mora com a avó no andar de cima): à tarde no cantinho do notebook, no fim da tarde no bosque e, à noite, perto da lagoa; às sextas, na praça',
     bio: 'Neto da Dona Celeste, chegou para morar com a avó em cima do Armazém. Reservado e observador, gosta de computador e de música. Fala pouco no começo, mas é educado; com o tempo, aparecem o humor e o carinho nos pequenos gestos.',
     look: mkLook('s2', 'emo', 'roxoEscuro', 'moletom', '#34303c', 'calca', '#2e2b36', { gender: 'm', body: 'm', shoeColor: '#141016', sprite: 'caleb' }),   // desenho à mão (js/hand-art.js): alto e magro, franja longa de lado, moletom com capuz
     love: [], like: [], dislike: [],
-    sched: [[360, 'residencia']],                                          // a rotina de verdade vem de calebSchedule (game.js)
+    sched: [[360, 'residencia']],                                          // a rotina de verdade vem de calebSchedule (js/game/state.js)
     talk: [
       ['[neutro]Minha avó conhece todo mundo. Eu ainda confundo os caminhos.', '[neutro]Não tô bravo. Só tava pensando.', '[neutro]Oi. Se precisar de alguma coisa da loja, a vó é que sabe onde fica tudo.', '[neutro]Ainda não sei o nome de metade das ruas. A vila tem rua?'],
       ['[sorriso]Descobri que o sinal de internet aqui só pega perto da janela. Virou esporte.', '[neutro]A vó acorda antes do sol. Ainda tô tentando entender como.', '[sorriso]Tô montando uma playlist com barulho de chuva por baixo. Fica melhor do que parece.', '[neutro]Você trabalha na roça o dia inteiro? Respeito.'],
       ['[sorriso]Você sempre chega quando eu tô no meio de uma música. Virou piada interna. Comigo mesmo.', '[contente]Carreguei as caixas da vó hoje. Ela disse que eu carrego tudo torto. Mas carreguei.', '[sorriso]Se quiser, um dia te mostro umas músicas. Só não ri das letras.', '[sorriso]Comecei a gostar do silêncio daqui. Não conta pra ninguém.'],
       ['[contente]É estranho: na cidade eu conhecia mais gente e conversava menos.', '[sorriso]Guardei a última fatia do bolo da vó. Era pra mim... mas pode ficar com ela.', '[contente]Valeu por sempre parar pra falar comigo. Mesmo quando eu respondo pouco.', '[sorriso]Se um dia você quiser companhia pra caminhar no bosque, é só chamar.'],
     ],
-    /* falas por lugar e situação (game.js escolhe sem repetir a anterior) */
+    /* falas por lugar e situação (js/game/ escolhe sem repetir a anterior) */
     ctx: {
       almoco: ['[neutro]Hora do almoço. A vó diz que ninguém carrega caixa de barriga vazia.', '[sorriso]Ela me deixou mexer no estoque. Acho que é um teste.'],
       notebook: ['[neutro]Tô organizando umas músicas. Pode falar, eu tiro um fone.', '[neutro]A internet daqui é lenta, mas é honesta.', '[sorriso]Esse canto virou meu. A vó jura que a ideia foi dela.'],
@@ -284,7 +284,7 @@ const VILLAGERS = [
     arrival: [['celeste', '[contente]Meu neto chegou para morar comigo! Este é o Caleb.'], ['caleb', '[neutro]Oi. Ainda tô conhecendo o lugar.'], ['celeste', '[contente]Você pode mostrar a vila para ele qualquer dia!'], ['caleb', '[envergonhado]Vó… deixa a pessoa fazer as compras primeiro.']] },
 
   /* Lúcio vive na serra. As falas começam com [expressão] do retrato: neutro, desconfiado, contente, emocionado.
-     talk tem quatro faixas: 0 coração, 1–2, 3–4 e 5. Presentes e aniversário têm regras próprias (ver game.js). */
+     talk tem quatro faixas: 0 coração, 1–2, 3–4 e 5. Presentes e aniversário têm regras próprias (ver js/game/villagers.js). */
   { id: 'lucio', name: 'Lúcio', map: 'montanha', portrait: 'lucio', hidden: true,
     place: 'na serra, ao norte da vila: perto da tenda de manhã, na mata ou na nascente à tarde, e junto à fogueira à noite',
     bio: 'Vive numa tenda na serra. Conhece plantas, o jeito do tempo e trilhas que pouca gente usa. Fala pouco e escolhe bem as palavras.',

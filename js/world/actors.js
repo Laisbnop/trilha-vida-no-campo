@@ -201,7 +201,7 @@ function petFig(ctx, x, y, sp, frame, flip, sit) {
   else { P(hx - 2, hy + 1, 3, 5, OUT); P(hx - 1, hy + 1, 1, 4, d); P(hx + 6, hy + 1, 3, 5, OUT); P(hx + 7, hy + 1, 1, 4, d); P(hx + 2, hy + 3, 1, 1, OUT); P(hx + 5, hy + 3, 1, 1, OUT); P(hx + 3, hy + 5, 2, 1, OUT); }
   if (sp === 'gato') P(hx + 3, hy + 5, 1, 1, '#f08fb0');
 }
-function petDraw(ctx, p, t) {                    // (era "pet": o nome agora é global e "pet" já existe em game.js)
+function petDraw(ctx, p, t) {                    // (era "pet": o nome agora é global e "pet" já existe em js/game/state.js)
   petFig(ctx, Math.round(p.x), Math.round(p.y), p.sp, p.moving ? Math.floor(t / 160) : 0, p.flip, !p.moving);
   if (p.heart) heart(ctx, Math.round(p.x) - 3, Math.round(p.y) - 26 - Math.floor(t / 250) % 2);
 }
