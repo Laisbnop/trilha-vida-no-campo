@@ -498,12 +498,12 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Personagem principal redesenhado',
+  title: 'Personagens na escala certa',
   items: [
-    'O personagem ganhou novas proporções e agora tem a mesma altura do Caleb no mapa, com os pés no mesmo lugar.',
-    'Rosto mais suave, ombros arredondados, pernas mais longas e calçados redesenhados nas bases feminina e masculina.',
-    'Os penteados ganharam formas próprias em todas as direções: mechas lisas, ondas, cachos, crespos, tranças e a franja do emo.',
-    'Os chapéus assentam na cabeça sem deformar o rosto; roupas, acessórios e cores continuam os mesmos.',
-    'Saves, ferramentas e colisões não mudaram.',
+    'Todos os personagens seguem a mesma escala: adultos com cerca de um ladrilho de largura por menos de dois de altura.',
+    'O personagem principal e o Caleb ficaram mais baixos, com o mesmo desenho e acabamento.',
+    'Celeste, Bia, Tomé, Honório e Lúcio ganharam pernas um pouco mais longas, com proporções mais equilibradas.',
+    'Iara ficou visivelmente menor que os adultos, com silhueta de criança.',
+    'Ferramentas, vara de pesca, fones e objetos acompanham as mãos e a cabeça; saves, rotinas e amizades continuam iguais.',
   ],
 };

@@ -2694,17 +2694,17 @@ const World = (() => {
   }
   /* O que um morador está fazendo: cavalete pintando (mão mexe o pincel devagar), caderno de
      desenho, xícara de chá com vapor ou livro. Discreto: não muda a câmera nem abre nada. */
-  /* Fones de ouvido (objeto da ação do Caleb): arco por cima do cabelo e conchas nas orelhas, em grafite com brilho
+  /* Fones de ouvido (objeto da ação do Caleb, de 29 pontos de altura): arco por cima do cabelo e conchas nas orelhas, em grafite com brilho
      discreto, para aparecer sobre o cabelo preto. De perfil, só a concha do lado de quem olha. */
   function phones(P, x, yy, dir) {
     const B = '#5a5664', D = '#2a2730', L = '#8a8698';
     if (dir === 'left' || dir === 'right') {
       const cx = dir === 'left' ? x + 1 : x - 2;
-      P(cx - 1, yy - 31, 4, 1, B); P(cx, yy - 30, 2, 8, B); P(cx - 1, yy - 23, 4, 4, D); P(cx - 1, yy - 23, 1, 3, L); return;
+      P(cx - 1, yy - 26, 4, 1, B); P(cx, yy - 25, 2, 8, B); P(cx - 1, yy - 18, 4, 4, D); P(cx - 1, yy - 18, 1, 3, L); return;
     }
-    P(x - 4, yy - 32, 8, 1, B); P(x - 5, yy - 31, 1, 2, B); P(x + 4, yy - 31, 1, 2, B);           // arco
-    P(x - 6, yy - 29, 1, 6, B); P(x + 5, yy - 29, 1, 6, B);
-    P(x - 7, yy - 23, 2, 4, D); P(x + 5, yy - 23, 2, 4, D); P(x - 7, yy - 23, 1, 3, L); P(x + 6, yy - 23, 1, 3, L);   // conchas
+    P(x - 4, yy - 27, 8, 1, B); P(x - 5, yy - 26, 1, 2, B); P(x + 4, yy - 26, 1, 2, B);           // arco
+    P(x - 6, yy - 24, 1, 6, B); P(x + 5, yy - 24, 1, 6, B);
+    P(x - 7, yy - 18, 2, 4, D); P(x + 5, yy - 18, 2, 4, D); P(x - 7, yy - 18, 1, 3, L); P(x + 6, yy - 18, 1, 3, L);   // conchas
   }
   function actFx(ctx, a, t) {
     // objetos na mão acompanham o tamanho do personagem do mundo (as mãos ficam um pouco mais baixas)
@@ -2726,15 +2726,15 @@ const World = (() => {
       ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(x - (slow ? 0 : 1), y - 18, 1, 2); ctx.fillRect(x + (slow ? 1 : 0), y - 20, 1, 2);
     } else if (a.act === 'notebook') {                               // Caleb no notebook: aberto sobre a mesinha (à direita dele), fones e notinhas
       const yy = Math.round(a.y); P(114, 63, 9, 7, '#2a2a34'); P(115, 64, 7, 5, slow ? '#7ab0d8' : '#8ac0e0'); P(116, 65, 3, 1, '#d8ecf8'); P(113, 70, 11, 2, '#5a5a6a'); P(114, 70, 9, 1, '#8a8a98');
-      phones(P, x, yy, a.dir); if (slow) { P(x + 4, yy - 37, 1, 3, '#d8d0e8'); P(x + 4, yy - 38, 2, 1, '#d8d0e8'); P(x + 3, yy - 35, 1, 1, '#d8d0e8'); }
+      phones(P, x, yy, a.dir); if (slow) { P(x + 4, yy - 32, 1, 3, '#d8d0e8'); P(x + 4, yy - 33, 2, 1, '#d8d0e8'); P(x + 3, yy - 30, 1, 1, '#d8d0e8'); }
     } else if (a.act === 'music') {                                  // ouvindo música: fones e uma notinha subindo
       const yy = Math.round(a.y), k = Math.floor(t / 600) % 3; phones(P, x, yy, a.dir);
-      P(x + 5 + k, yy - 35 - k * 2, 1, 3, '#d8d0e8'); P(x + 5 + k, yy - 36 - k * 2, 2, 1, '#d8d0e8'); P(x + 4 + k, yy - 33 - k * 2, 1, 1, '#d8d0e8');
+      P(x + 5 + k, yy - 30 - k * 2, 1, 3, '#d8d0e8'); P(x + 5 + k, yy - 31 - k * 2, 2, 1, '#d8d0e8'); P(x + 4 + k, yy - 28 - k * 2, 1, 1, '#d8d0e8');
     } else if (a.act === 'boxes') {                                  // ajudando com as caixas
       P(x - 5, y - 17, 10, 7, OUT); P(x - 4, y - 16, 8, 5, '#c89a62'); P(x - 4, y - 16, 8, 1, '#e0b878'); P(x - 1, y - 16, 2, 5, '#a87a48');
     } else if (a.act === 'lunch') {                                  // almoçando com a avó: pratinho na mão (à frente da mão, sem cobrir o corpo)
       const yy = Math.round(a.y), d = a.dir, px0 = d === 'left' ? x - 9 : d === 'right' ? x + 3 : x - 3;
-      if (d !== 'up') { P(px0 - 1, yy - 11, 8, 3, OUT); P(px0, yy - 11, 6, 2, '#f0ecf4'); P(px0, yy - 10, 6, 1, '#c8c2d0'); P(px0 + 1, yy - 12, 2, 1, '#e8a050'); P(px0 + 3, yy - 12, 2, 1, '#78b04c'); }
+      if (d !== 'up') { P(px0 - 1, yy - 9, 8, 3, OUT); P(px0, yy - 9, 6, 2, '#f0ecf4'); P(px0, yy - 8, 6, 1, '#c8c2d0'); P(px0 + 1, yy - 10, 2, 1, '#e8a050'); P(px0 + 3, yy - 10, 2, 1, '#78b04c'); }
     } else if (a.act === 'read' || a.act === 'study') {
       P(x - 4, y - 15, 8, 5, OUT); P(x - 3, y - 14, 3, 3, a.act === 'study' ? '#3f86d0' : '#c8483a'); P(x + 1, y - 14, 3, 3, a.act === 'study' ? '#3f86d0' : '#c8483a'); P(x, y - 14, 1, 3, '#f8f4ea');
     }
