@@ -503,7 +503,7 @@ galinheiro mantêm o desenho próprio. O mapa (M) mostra as fachadas e as árvor
 ## Fazenda
 
 - **Ferramentas** (gastam energia a cada uso ou golpe): enxada ara, regador rega
-  (10 usos por carga), machado corta galhos, tocos e árvores comuns, picareta
+  (20 usos por carga), machado corta galhos, tocos e árvores comuns, picareta
   quebra pedras, foice corta o mato. A espada simples serve para treinar no boneco.
 - **Cultivos**: escolha a semente na barra e clique na terra arada; regue com o
   regador; colha clicando perto da planta pronta. Cada noite depois de um dia
@@ -1402,6 +1402,5 @@ há versão nova (`Cache-Control: no-cache`), e o `index.html` carrega os arquiv
 com `?v=` (troque o número a cada versão). Assim, quem já jogou recebe a
 atualização sem precisar limpar o cache.
 
-Versão atual: `?v=sep1` (separação de `game.js` e `world.js` em `js/game/` e
-`js/world/`, sem mudança para quem joga). Todos os `<script>` e o CSS usam o
-mesmo número.
+Versão atual: `?v=regador20` (regador com 20 usos por carga). Todos os
+`<script>` e o CSS usam o mesmo número.

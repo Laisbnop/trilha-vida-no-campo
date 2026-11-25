@@ -33,7 +33,7 @@ function newState(look, name, farmName = '', petSp = null) {
     pos: { map: 'fora', x: 100, y: 164, dir: 'down' },
     pet: { sp: petSp, state: 'pending', name: '', offered: 0 }, letterSeen: false, track: null,
     lastNight: 0, seasonal: [], spawnDay: 0, row: 0,
-    inv: Array(INV_SIZE).fill(null), sel: 0, chest: Array(CHEST_SIZE).fill(null), can: 10,
+    inv: Array(INV_SIZE).fill(null), sel: 0, chest: Array(CHEST_SIZE).fill(null), can: CAN_MAX,
     farm: { tiles: {} }, coop: { feed: 0, eggs: 0, hens: [] },
     nature: { trees: {}, rocks: {}, forage: {}, hat: false, cleared: {} }, dmg: {}, stumps: true,
     friends: {}, daily: { talk: {}, gift: {} }, known: {}, scenes: {},
