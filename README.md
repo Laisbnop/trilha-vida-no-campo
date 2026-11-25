@@ -1064,8 +1064,8 @@ mostra o que veio: **Guardar** ou **Descartar**. Com a mochila cheia, o item esp
 enquanto você abre espaço ou o descarta. A **alga** é comestível ("Comer alga?",
 recupera 3 de energia) e pode ser vendida (2 moedas) ou dada de presente. O **musgo** e o **lixo** (uma bota
 velha) não têm utilidade por enquanto: não se comem, não se vendem, não entram em
-missões nem em presentes; podem ser guardados no baú ou jogados fora na mochila
-("Jogar fora", com confirmação).
+missões nem em presentes; podem ser guardados no baú ou jogados fora na lixeira do
+Inventário (com confirmação).
 
 **Configuração central.** Os números da pesca ficam juntos em `FISHING`, no
 `js/data.js`: progresso (início 30, +10/s dentro, −8/s fora, 0,75 s de tolerância),
@@ -1308,6 +1308,13 @@ vez; os botões 1, 2 e 3 ao lado dela trocam a linha mostrada) e baú com 20. Sa
 vazias. Itens iguais empilham até 99. Se a mochila estiver cheia, o item fica onde
 está e o jogo avisa. Três chapéus equipáveis: de palha, boina e de pescador.
 
+**Lixeira.** No Inventário, ao lado da mochila, fica uma lixeira, como nos jogos de
+fazenda: escolha um item e clique nela (ou use "🗑 Jogar fora" embaixo da descrição
+do item). A tampa abre quando há um item escolhido. O jogo pede confirmação, avisa
+que não dá para desfazer e quanto o item valeria no Armazém, e oferece "Jogar fora
+tudo", "Só 1" (em pilhas) e "Cancelar". Ferramentas e itens de missão não vão para
+o lixo. Chapéu em uso que for jogado fora sai da cabeça.
+
 ## Salvamento
 
 O progresso fica no navegador (`localStorage`): personagem e aparência, posição,
@@ -1465,5 +1472,5 @@ há versão nova (`Cache-Control: no-cache`), e o `index.html` carrega os arquiv
 com `?v=` (troque o número a cada versão). Assim, quem já jogou recebe a
 atualização sem precisar limpar o cache.
 
-Versão atual: `?v=quadro1` (quadro de pedidos da praça). Todos os
+Versão atual: `?v=lixeira1` (lixeira no Inventário). Todos os
 `<script>` e o CSS usam o mesmo número.

@@ -632,3 +632,10 @@ body:has(#screen-create:not([hidden])) { background: #2e1c10 repeating-linear-gr
 .board-ask { font-style: italic; line-height: 1.45; }
 .board-want { display: flex; align-items: center; gap: 8px; font-weight: bold; padding: 6px 8px; background: #efe2c0; border: 1px dashed #a8784a; border-radius: 4px; width: fit-content; }
 .board-want canvas { width: 32px; height: 32px; image-rendering: pixelated; }
+
+/* Lixeira da mochila */
+.inv-with-trash { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.inv-trash { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 6px 4px; background: #ead2a0; border: 3px solid #a87038; border-radius: 6px; color: #5a3414; font: inherit; font-size: 11px; cursor: pointer; flex: none; }
+.inv-trash canvas { width: 48px; height: 48px; image-rendering: pixelated; }
+.inv-trash.open { background: #f8d8c8; border-color: #c0503a; }
+.inv-trash:hover, .inv-trash:focus-visible { background: #fff0c8; }

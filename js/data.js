@@ -499,11 +499,10 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Quadro de pedidos na praça',
+  title: 'Lixeira no Inventário',
   items: [
-    'Um quadro de avisos apareceu na praça, ao lado do Armazém. Todo dia de manhã tem um pedido novo de algum morador.',
-    'Leia o pedido, aceite e leve os itens (ou o peixe pedido) até quem pediu. A recompensa é em moedas e amizade.',
-    'O pedido aceito fica no Diário, em "Pedidos do quadro", com o progresso e o prazo de dois dias.',
-    'O quadro abre depois das boas-vindas no Armazém e aparece no Mapa.',
+    'Agora dá para jogar fora qualquer item: no Inventário, escolha o item e clique na lixeira ao lado da mochila.',
+    'O jogo pede confirmação e mostra quanto o item valeria no Armazém. Em pilhas, dá para jogar fora tudo ou só 1.',
+    'Ferramentas e itens de missão ficam protegidos e não vão para o lixo.',
   ],
 };

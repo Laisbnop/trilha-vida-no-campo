@@ -136,6 +136,26 @@ test('quadro de pedidos: sortear, aceitar, entregar e receber', async ({ page })
   expect(errs).toEqual([]);
 });
 
+/* Lixeira do Inventário: joga fora só 1, depois o resto; ferramenta não vai para o lixo. */
+test('lixeira: jogar fora itens da mochila', async ({ page }) => {
+  const errs = watch(page), wait = waiter(page, false);
+  await page.goto(URL);
+  await newGame(page, wait);
+  await page.evaluate(() => { const S = window.__trilha.S; S.inv[12] = { id: 'pedra', n: 10 }; });
+  await page.keyboard.press('e'); await wait(300);
+  await page.click('.inv-row .slot[data-i="12"]'); await page.click('#inv-trash'); await wait(100);
+  await expect(page.locator('.item-info')).toContainText('Jogar fora Pedra × 10?');
+  await page.click('#btn-trash-one'); await wait(100);
+  expect(await page.evaluate(() => window.__trilha.S.inv[12])).toEqual({ id: 'pedra', n: 9 });
+  await page.click('#inv-trash'); await page.click('#btn-trash-all'); await wait(100);
+  expect(await page.evaluate(() => window.__trilha.S.inv[12])).toBeNull();
+  await page.click('.inv-row .slot[data-i="0"]'); await page.click('#inv-trash'); await wait(100);
+  expect(await page.evaluate(() => window.__trilha.S.inv[0] && window.__trilha.S.inv[0].id), 'ferramenta continua na mochila').toBe('enxada');
+  expect(await page.locator('#btn-trash-all').count()).toBe(0);
+  await page.keyboard.press('Escape'); await wait(200);
+  expect(errs).toEqual([]);
+});
+
 /* Capturas da cena com relógio parado e sorteios fixos: mesmas a cada execução. */
 test('capturas: fazenda, vila e interior iguais às de referência', async ({ page }) => {
   const errs = watch(page), wait = waiter(page, true);
