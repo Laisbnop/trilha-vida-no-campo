@@ -212,8 +212,8 @@ const VILLAGERS = [
   { id: 'iara', portrait: 'iara', name: 'Iara', routine: 'iara',
     place: 'na escola de manhã nos dias úteis; à tarde, pintando junto à fonte ou desenhando na praça; à noite, em casa',
     bio: 'Tem 13 anos e está na sexta série. Gentil e distraída, pinta paisagens da vila e inventa nomes para as cores que mistura. Toma chá de maçã com canela toda manhã e sempre tem um pinguinho de tinta nos dedos.',
-    look: mkLook('s6', 'longoCacheado', 'preto', 'jardineira', '#9a74d8', 'short', '#8a64c8', { gender: 'f', body: 'f', kid: true, paint: true, shoeColor: '#f4f4f4', accessory: 'laco', accColor: '#f2c84a' }),
-    lookWinter: mkLook('s6', 'longoCacheado', 'preto', 'moletom', '#8a64d0', 'calca', '#4a3a7a', { gender: 'f', body: 'f', kid: true, paint: true, shoeColor: '#5a3a24', hat: 'gorro', hatColor: '#5a58b8', accessory: 'cachecol', accColor: '#e0a23a' }),
+    look: mkLook('s6', 'longoCacheado', 'preto', 'jardineira', '#9a74d8', 'short', '#8a64c8', { gender: 'f', body: 'f', kid: true, paint: true, shoeColor: '#f4f4f4', accessory: 'laco', accColor: '#f2c84a', sprite: 'iara' }),
+    lookWinter: mkLook('s6', 'longoCacheado', 'preto', 'moletom', '#8a64d0', 'calca', '#4a3a7a', { sprite: 'iara', gender: 'f', body: 'f', kid: true, paint: true, shoeColor: '#5a3a24', hat: 'gorro', hatColor: '#5a58b8', accessory: 'cachecol', accColor: '#e0a23a' }),
     birthday: { season: 1, day: 4 },                                        // 4 do Verão
     /* preferências: itens individuais têm prioridade sobre as categorias (cat dos itens) */
     prefs: {
@@ -502,6 +502,7 @@ const UPDATE_NOTES = {
   items: [
     'O personagem principal e o Caleb agora têm a mesma definição de pixel dos outros moradores, no padrão de Stardew Valley.',
     'Todos os adultos ficam com cerca de 14 a 16 pontos de largura e 27 a 30 de altura (um ladrilho de largura por menos de dois de altura).',
+    'Iara foi redesenhada como criança: cabeça grande, corpo curto e o cabelo cacheado arredondado em volta da cabeça.',
     'Todos os penteados, roupas, acessórios e chapéus da criação continuam disponíveis.',
     'Ferramentas, vara de pesca, fones e objetos acompanham as mãos e a cabeça; saves, rotinas e amizades continuam iguais.',
   ],

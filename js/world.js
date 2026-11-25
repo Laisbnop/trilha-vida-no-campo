@@ -2707,8 +2707,9 @@ const World = (() => {
     P(x - 7, yy - 22, 2, 4, D); P(x + 5, yy - 22, 2, 4, D); P(x - 7, yy - 22, 1, 3, L); P(x + 6, yy - 22, 1, 3, L);   // conchas
   }
   function actFx(ctx, a, t) {
-    // objetos na mão acompanham o tamanho do personagem do mundo (as mãos ficam um pouco mais baixas)
-    const x = Math.round(a.x), y = Math.round(a.y) + OY(-15) + 15, P = (px, py, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(px, py, w, h); }, slow = Math.floor(t / 450) % 2;
+    // objetos na mão acompanham o tamanho do personagem do mundo (as mãos ficam um pouco mais baixas; na Iara, desenhada como
+    // criança, as mãos ficam na altura da cintura e os objetos descem 6 pontos para não cobrir o rosto)
+    const kidArt = a.look && a.look.sprite === 'iara', x = Math.round(a.x), y = Math.round(a.y) + OY(-15) + 15 + (kidArt ? 6 : 0), P = (px, py, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(px, py, w, h); }, slow = Math.floor(t / 450) % 2;
     if (a.act === 'paint') {
       const s = a.dir === 'right' ? 1 : -1, ex = x + s * 13, yd = y; { const y = Math.round(a.y);    // o cavalete fica no chão; só a mão segue o personagem
       P(ex - 5, y - 6, 1, 7, '#5a3a22'); P(ex + 4, y - 6, 1, 7, '#5a3a22'); P(ex, y - 20, 1, 21, '#6a4426');
