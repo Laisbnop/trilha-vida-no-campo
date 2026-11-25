@@ -2694,17 +2694,17 @@ const World = (() => {
   }
   /* O que um morador está fazendo: cavalete pintando (mão mexe o pincel devagar), caderno de
      desenho, xícara de chá com vapor ou livro. Discreto: não muda a câmera nem abre nada. */
-  /* Fones de ouvido (objeto da ação do Caleb, de 29 pontos de altura): arco por cima do cabelo e conchas nas orelhas, em grafite com brilho
-     discreto, para aparecer sobre o cabelo preto. De perfil, só a concha do lado de quem olha. */
+  /* Fones de ouvido (objeto da ação do Caleb, no gerador de 1 pixel por ponto): arco por cima do cabelo e conchas nas orelhas
+     (linhas 12–13 da cabeça), em grafite com brilho discreto, para aparecer sobre o cabelo preto. De perfil, só a concha do lado de quem olha. */
   function phones(P, x, yy, dir) {
     const B = '#5a5664', D = '#2a2730', L = '#8a8698';
     if (dir === 'left' || dir === 'right') {
       const cx = dir === 'left' ? x + 1 : x - 2;
-      P(cx - 1, yy - 26, 4, 1, B); P(cx, yy - 25, 2, 8, B); P(cx - 1, yy - 18, 4, 4, D); P(cx - 1, yy - 18, 1, 3, L); return;
+      P(cx - 1, yy - 26, 4, 1, B); P(cx, yy - 25, 2, 4, B); P(cx - 1, yy - 22, 4, 4, D); P(cx - 1, yy - 22, 1, 3, L); return;
     }
     P(x - 4, yy - 27, 8, 1, B); P(x - 5, yy - 26, 1, 2, B); P(x + 4, yy - 26, 1, 2, B);           // arco
-    P(x - 6, yy - 24, 1, 6, B); P(x + 5, yy - 24, 1, 6, B);
-    P(x - 7, yy - 18, 2, 4, D); P(x + 5, yy - 18, 2, 4, D); P(x - 7, yy - 18, 1, 3, L); P(x + 6, yy - 18, 1, 3, L);   // conchas
+    P(x - 6, yy - 24, 1, 2, B); P(x + 5, yy - 24, 1, 2, B);
+    P(x - 7, yy - 22, 2, 4, D); P(x + 5, yy - 22, 2, 4, D); P(x - 7, yy - 22, 1, 3, L); P(x + 6, yy - 22, 1, 3, L);   // conchas
   }
   function actFx(ctx, a, t) {
     // objetos na mão acompanham o tamanho do personagem do mundo (as mãos ficam um pouco mais baixas)

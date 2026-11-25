@@ -33,7 +33,7 @@ const Sprites = (() => {
   ];
   /* [base, sombra, luz] */
   /* Cores de cabelo só de moradores (não aparecem na criação). */
-  const EXTRA_HAIR = [{ id: 'cinzaQuente', name: 'Grisalho quente', c: ['#c4bab4', '#8d7f7a', '#eee8e2'] }, { id: 'pretoQuente', name: 'Preto quente', c: ['#2e2428', '#170f13', '#4e4048'] }];
+  const EXTRA_HAIR = [{ id: 'cinzaQuente', name: 'Grisalho quente', c: ['#c4bab4', '#8d7f7a', '#eee8e2'] }, { id: 'pretoQuente', name: 'Preto quente', c: ['#3c3238', '#1c1418', '#625660'] }];
   const HAIR_COLORS = [
     { id: 'preto',    name: 'Preto',           c: ['#2e2836', '#17131c', '#504862'] },
     { id: 'castanho', name: 'Castanho escuro', c: ['#5a3a24', '#3a2212', '#80583a'] },
@@ -602,7 +602,7 @@ const Sprites = (() => {
     }
     /* ---------- adultos: pernas com duas linhas a mais (linha lisa da canela repetida), pés no mesmo ponto; tudo acima
        sobe junto. Proporção mais próxima da do jogador e do Caleb, cerca de 27 a 30 pontos de altura. ---------- */
-    if (!look.kid && !look.crisp) {
+    if (!look.kid) {
       const rows = []; grid.forEach((r, y) => { rows.push(r); if (y === (/^saia/.test(look.bottom || '') ? 28 : LEGDUP)) { rows.push(r.slice()); rows.push(r.slice()); } });
       rows.splice(0, rows.length - H); for (let y = 0; y < H; y++) grid[y] = rows[y];
     }
@@ -634,10 +634,9 @@ const Sprites = (() => {
   function frames(look) {                   // um só desenho para mapa, prévia, painéis e menus
     const key = JSON.stringify(look);
     if (!cache.has(key)) {
-      const hi = typeof PlayerArt !== 'undefined' && PlayerArt.supports(look);        // jogador redesenhado em 48x64 (mostrado em 24x32)
-      const set = dir => [0, 1, 2].map(f => (hi ? PlayerArt.render(look, f, dir) : render(look, f, dir)));
-      const down = set('down'), up = set('up'), left = set(hi ? 'left' : 'side');
-      cache.set(key, { down, up, left, right: hi ? set('right') : left.map(flipped) });   // em alta definição o perfil direito é desenhado (franjas assimétricas trocam de lado)
+      const set = dir => [0, 1, 2].map(f => render(look, f, dir));               // jogador e moradores: o mesmo gerador, 1 pixel por ponto do mundo
+      const down = set('down'), up = set('up'), left = set('side');
+      cache.set(key, { down, up, left, right: left.map(flipped) });
       if (cache.size > 120) cache.delete(cache.keys().next().value);
     }
     return cache.get(key);
@@ -647,7 +646,6 @@ const Sprites = (() => {
   /* Desenha com o canto superior esquerdo em (x, y). dir: 'down' | 'up' | 'left' | 'right'. */
   function draw(ctx, look, x, y, frame = 0, dir = 'down') {
     const fr = frames(look), set = fr[dir] || fr.down, im = set[Math.abs(frame) % 3 | 0];
-    if (im.width === W * 2) { const h = im.height / 2; ctx.drawImage(im, Math.round(x), Math.round(y) - (h - H), W, h); return; }   // alta definição: dois pixels por ponto do mundo; mais alto, com os pés no mesmo ponto
     ctx.drawImage(im, Math.round(x), Math.round(y), W, H);
   }
   /* Desenha com os pés em (x, y) (drawWorld é o mesmo desenho; o nome fica para o mundo). */
@@ -656,10 +654,10 @@ const Sprites = (() => {
   const walk = t => WALK[Math.floor(t / 130) % 4];
   /* Pequeno canvas com o personagem, para painéis. */
   function canvas(look, dir = 'down', frame = 0) {
-    const im = frames(look)[dir][frame], tall = im.width === W * 2 && im.height > H * 2, c = document.createElement('canvas'); c.className = 'pixel';
-    c.width = W * 2; c.height = tall ? im.height + 2 : H * 2;                 // painéis: 48x64 (jogador: 48x68), sempre em escala inteira
+    const im = frames(look)[dir][frame], c = document.createElement('canvas'); c.className = 'pixel';
+    c.width = W * 2; c.height = H * 2;                                       // painéis: 48x64, sempre em escala inteira
     const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
-    if (tall) g.drawImage(im, 0, c.height - im.height - 1); else g.drawImage(im, 0, 0, W * 2, H * 2);
+    g.drawImage(im, 0, 0, W * 2, H * 2);
     return c;
   }
 
