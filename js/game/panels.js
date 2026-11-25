@@ -8,10 +8,29 @@
    PAINÉIS
    ===================================================== */
 let shopLock = { key: '', until: 0 }, tab = 'mochila', picked = null, friendSel = null, menuClosedT = 0, fiberArm = false;
+let trashArm = -1;                                   // lixeira da mochila: espaço do item esperando confirmação (-1 = nenhum)
+/* Lixeira: ferramentas e itens de missão não podem ir para o lixo (o resto pode, com confirmação). */
+const trashOk = s => !!s && !['tool', 'quest'].includes(ITEMS[s.id].kind);
+/* Joga fora n itens do espaço i (com o chapéu: se não sobrar nenhum, ele sai da cabeça). */
+function trashItem(i, n) {
+  const s = S.inv[i]; if (!s || !trashOk(s)) return;
+  const k = Math.min(n, s.n), it = ITEMS[s.id], nm = `${it.name}${k > 1 ? ' × ' + k : ''}`;
+  s.n -= k; if (!s.n) S.inv[i] = null;
+  if (it.kind === 'hat' && S.look.hat === it.hat && !owns(s.id)) S.look.hat = null;
+  trashArm = -1; if (!S.inv[i]) picked = null;
+  save(); renderHotbar(); toast(`Você jogou fora ${nm}.`); renderTab('mochila');
+}
+/* Ícone da lixeira (16x16): lata de metal; com um item escolhido, a tampa levanta. */
+function trashIcon(open) {
+  const c = el('canvas', 'pixel'); c.width = 16; c.height = 16; const g = c.getContext('2d'), R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  R(3, 5, 10, 11, '#2a2430'); R(4, 6, 8, 9, '#8a96a4'); R(4, 6, 2, 9, '#b4c0cc'); R(10, 6, 2, 9, '#6a7684'); [6, 8].forEach(x => R(x, 7, 1, 7, '#6a7684'));
+  if (open) { R(1, 1, 9, 3, '#2a2430'); R(2, 2, 7, 1, '#b4c0cc'); R(4, 0, 3, 1, '#2a2430'); } else { R(2, 3, 12, 3, '#2a2430'); R(3, 4, 10, 1, '#b4c0cc'); R(6, 1, 4, 2, '#2a2430'); R(7, 2, 2, 1, '#8a96a4'); }
+  return c;
+}
 let modalT = 0;
 const MENU_TABS = ['mochila', 'amizades', 'mapa', 'diario', 'habilidades', 'personagem', 'config'];
 const TAB_TITLE = { mochila: 'Inventário', amizades: 'Amizades', mapa: 'Mapa', diario: 'Diário', habilidades: 'Habilidades', personagem: 'Personagem', config: 'Configurações', bau: 'Baú', roupa: 'Guarda-roupa e espelho', loja: 'Armazém', ajuste: 'Sua fazenda' };
-function openModal(t) { if (busy) return; $('modal').hidden = false; modalT = performance.now(); picked = null; renderTab(t); }
+function openModal(t) { if (busy) return; $('modal').hidden = false; modalT = performance.now(); picked = null; trashArm = -1; renderTab(t); }
 /* Menu principal: só abre com o jogo livre (sem conversa, carta, resumo ou pausa). */
 function openMenu(t = 'mochila') { if (screen !== 'game' || !S || busy || paused || !$('letter').hidden || !$('summary').hidden) return; if (fishing) return tip('Termine a pesca ou recolha a linha (Esc) antes de abrir o menu.'); openModal(t); }
 /* Atalho de aba: abre nela; se já está nela, fecha; se está em outra, troca. */
@@ -76,6 +95,14 @@ const TABS = {
       const s2 = S.inv[i]; info.replaceChildren();
       if (!s2) { info.append(el('span', 'dim', picked !== null ? 'Clique num espaço para colocar o item ali.' : 'Clique num item para ver, mover ou usar na barra.')); return; }
       const it = ITEMS[s2.id];
+      if (trashArm === i) {                                          // confirmação da lixeira
+        const val = (it.sell || 0) * s2.n;
+        info.append(el('b', '', `Jogar fora ${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}?`), el('span', 'dim', `Não dá para desfazer.${val ? ` No Armazém, isto vale ${val} moedas.` : ''}`));
+        const all = btn('btn danger', s2.n > 1 ? `Jogar fora tudo (${s2.n})` : 'Jogar fora', () => trashItem(i, s2.n)); all.id = 'btn-trash-all'; info.append(all);
+        if (s2.n > 1) { const one = btn('btn', 'Só 1', () => trashItem(i, 1)); one.id = 'btn-trash-one'; info.append(one); }
+        const no = btn('btn', 'Cancelar', () => { trashArm = -1; describe(i); }); no.id = 'btn-trash-cancel'; info.append(no);
+        return;
+      }
       info.append(el('b', '', `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}${s2.cm ? ` · ${s2.cm} cm` : ''}`), el('span', 'dim', it.desc + (isFood(s2.id) ? ' Para comer: escolha na barra e clique numa área livre do cenário.' : '') + (it.sell ? ` Vende por ${it.sell} moedas.` : '') + (s2.cm ? ` Tamanho: ${s2.cm} cm. Vende por ${fishValue(s2.id, s2.cm)} moedas no Armazém.` : '')));
       if (i === picked) {
         const use = btn('btn', i === S.sel ? 'Na mão ✔' : 'Usar na barra', () => { S.row = Math.floor(i / HOTBAR); S.sel = i; picked = null; save(); renderTab('mochila'); }); use.dataset.use = i; info.append(use);
@@ -85,14 +112,7 @@ const TABS = {
           if (S.fish.bait) { const ub = btn('btn', 'Tirar a isca', () => { unloadBait(); renderTab('mochila'); }); ub.id = 'btn-unload-bait'; info.append(ub); }
         }
         if (s2.id === 'minhoca') info.append(el('span', 'dim', ownsFiber() ? 'Escolha a vara de fibra de vidro e use "Carregar minhocas".' : 'Só a vara de fibra de vidro aceita isca.'));
-        if (it.kind === 'refugo' || s2.id === 'alga') {             // resultados da pesca: dá para jogar fora (com confirmação)
-          const nm = `${it.name}${s2.n > 1 ? ' × ' + s2.n : ''}`;
-          const db = btn('btn danger', discardArm ? `Confirmar: jogar fora ${nm}` : `Jogar fora ${nm}`, () => {
-            if (!discardArm) { discardArm = true; return describe(i); }
-            discardArm = false; if (S.inv[i] !== s2) return; S.inv[i] = null; picked = null; save(); renderHotbar(); toast(`Você jogou fora ${nm}.`); renderTab('mochila');
-          });
-          db.id = 'btn-discard'; info.append(db);
-        }
+        if (trashOk(s2)) { const tb = btn('btn danger', '🗑 Jogar fora', () => { trashArm = i; describe(i); }); tb.id = 'btn-discard'; info.append(tb); }
         if (it.kind === 'decor') {
           const hb = btn('btn', S.house.quadro ? 'Já tem um quadro na parede de casa' : 'Pendurar na parede de casa', () => { if (S.house.quadro || !count('quadro_fonte')) return; removeItem('quadro_fonte', 1); S.house.quadro = { si: S.iara.copySi != null ? S.iara.copySi : 0 }; toast('Quadro pendurado na parede de casa'); save(); renderTab('mochila'); });
           hb.id = 'btn-hang'; hb.disabled = !!S.house.quadro; info.append(hb);
@@ -107,7 +127,7 @@ const TABS = {
         const i = r * HOTBAR + c, b2 = slotNode(S.inv[i], [i === picked ? 'sel' : '', i === S.sel ? 'equip' : ''].join(' ')); b2.dataset.i = i;
         b2.onmouseenter = () => describe(i); b2.onfocus = () => describe(i);
         b2.onclick = () => {
-          discardArm = false;
+          trashArm = -1;
           if (picked === null) { if (S.inv[i]) picked = i; }
           else if (picked === i) picked = null;
           else { [S.inv[picked], S.inv[i]] = [S.inv[i], S.inv[picked]]; if (S.sel === picked) S.sel = i; else if (S.sel === i) S.sel = picked; S.row = Math.floor(S.sel / HOTBAR); picked = null; save(); }
@@ -117,7 +137,17 @@ const TABS = {
       }
       wrap.append(line);
     }
-    body.append(wrap);
+    /* lixeira, como nos jogos de fazenda: escolha um item e clique nela (pede confirmação) */
+    const trash = el('button', 'inv-trash' + (picked !== null ? ' open' : '')); trash.type = 'button'; trash.id = 'inv-trash';
+    trash.title = 'Lixeira: escolha um item da mochila e clique aqui para jogar fora'; trash.setAttribute('aria-label', 'Lixeira');
+    trash.append(trashIcon(picked !== null), el('span', '', 'Lixeira'));
+    trash.onclick = () => {
+      const s2 = picked !== null ? S.inv[picked] : null;
+      if (!s2) return tip('Escolha um item da mochila e depois clique na lixeira.');
+      if (!trashOk(s2)) return tip('Ferramentas e itens de missão não podem ir para o lixo.');
+      trashArm = picked; describe(picked);
+    };
+    const holder = el('div', 'inv-with-trash'); holder.append(wrap, trash); body.append(holder);
     info = el('div', 'item-info'); body.append(info); describe(picked !== null ? picked : S.sel);
     // personagem, fazenda, moedas e equipamentos
     const foot = el('div', 'inv-foot'), pv = el('div', 'inv-pv'); pv.append(Sprites.canvas(S.look, 'down'));
