@@ -62,6 +62,7 @@ function upgrade(s) {
   /* Iara: acontecimentos, cor nomeada, pinturas da fonte (por estação e ano) e presentes */
   s.iara = Object.assign({ lastLine: '', again: 0, colorName: null, ev3: 0, ev5: false, paintings: {}, gifts: { week: -1, n: 0 }, bday: 0, missingTold: 0 }, s.iara);
   s.house = Object.assign({ quadro: null }, s.house);
+  s.board = Object.assign({ today: null, seen: true, active: null, done: 0 }, s.board);   // quadro de pedidos: jogos antigos começam vazios (sorteia na próxima manhã)
   /* Sorte do dia: lista da estação (com o ano), condição de hoje, mensagem da manhã,
      peixes capturados hoje e aviso de limite. Jogos antigos ganham uma lista nova que
      preserva a condição de hoje, se já houver uma. */
@@ -282,7 +283,7 @@ function draw(t, list) {
   if (fishing) { me.fish = fishView(t); me.tool = null; me.moving = false; if (me.fish.hold) me.dir = 'down'; if (fishing.phase === 'game') { drawBar(t); placeBar(t); } if (fishing.phase === 'show') $('catch').classList.toggle('at-top', screenOf(P.x, P.y)[1] > window.innerHeight * 0.52); }
   const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
   const lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
-  World.render(ctx, { map, cam, t, state: S, rain: isRaining() && outdoor(), actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
+  World.render(ctx, { map, cam, t, state: S, boardNew: boardNewMark(), rain: isRaining() && outdoor(), actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
 }
 /* Barras de resistência dos objetos com dano parcial (o dano fica salvo). */
 function bars() {

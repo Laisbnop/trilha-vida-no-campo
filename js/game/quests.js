@@ -58,6 +58,7 @@ function completeQuest(id) {
 }
 /* O morador tem algo a tratar: missão nova, ou entrega pronta. */
 function questMark(v) {
+  if (boardReady(v)) return true;                                        // pedido do quadro pronto para entregar
   return Object.keys(QUESTS).some(id => { const q = QUESTS[id]; if (q.auto && !S.quests[id]) return false;
     if (S.quests[id] && S.quests[id].state === 'active') return !q.selfDone && (q.to || q.giver) === v.id && qReady(id);
     return q.giver === v.id && !q.auto && qUnlocked(id); });

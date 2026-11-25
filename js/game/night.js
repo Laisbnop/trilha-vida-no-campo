@@ -41,6 +41,7 @@ function processNight() {
   const spawned = spawnSeasonal();
   const rained = rainWater();
   World.setSeason(calendar().si);
+  const boardNotes = []; boardMorning(boardNotes);                 // quadro de pedidos: prazo vencido e pedido novo
   const b = World.get('casa').objs.find(o => o.kind === 'bed');
   enterMap('casa', b.x + 20, b.y + 10, 'down');
   save();
@@ -53,6 +54,7 @@ function processNight() {
   if (newSeason) notes.push(`Chegou ${calendar().season === 'Verão' ? 'o' : 'a'} ${calendar().season}! A paisagem mudou${spawned ? ' e há coisas novas para colher na vila' : ''}.`);
   else if (spawned) notes.push(`${spawned} coisa(s) nova(s) para colher apareceram pela vila.`);
   if (isRaining()) notes.push(`Amanheceu chovendo! ${rained ? 'A chuva já regou os canteiros: hoje não precisa usar o regador.' : 'Os canteiros que você arar hoje ficam regados pela chuva.'}`);
+  notes.push(...boardNotes);
   if (!notes.length) notes.push('Uma noite tranquila no sítio.');
   renderTabsBadge();
   return { notes, finished, skillUps };
