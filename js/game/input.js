@@ -167,7 +167,7 @@ function tileTarget(i) {
   if (id === 'enxada') return o ? T('Terra já preparada', () => tip('Esta terra já está preparada.'))
     : T('Arar a terra', () => { if (!useTool(id, 2)) return; S.farm.tiles[i] = { k: 'soil' }; bang(cx, cy, 'soil'); qEvent('till'); save(); });
   if (id === 'regador' && o && o.k === 'soil') return o.w ? T(o.crop ? cropText(o) : 'Já regado', () => tip('Esta terra já está regada hoje.'))
-    : T(`Regar (água: ${S.can}/10)`, () => { if (!S.can) return tip('Regador vazio: encha no lago.'); if (!useTool(id, 1)) return; S.can--; o.w = 1; bang(cx, cy, 'water'); if (o.crop) qEvent('water'); renderHotbar(); save(); });
+    : T(`Regar (água: ${S.can}/${CAN_MAX})`, () => { if (!S.can) return tip('Regador vazio: encha no lago.'); if (!useTool(id, 1)) return; S.can--; o.w = 1; bang(cx, cy, 'water'); if (o.crop) qEvent('water'); renderHotbar(); save(); });
   if (kind === 'seed') {
     if (o && o.k === 'soil' && !o.crop) {
       const C = CROPS[ITEMS[id].crop], si = calendar().si;
@@ -206,7 +206,7 @@ function objAction(o) {
     case 'chest': return { label: 'Abrir o baú', act: () => openModal('bau') };
     case 'wardrobe': return { label: 'Guarda-roupa e espelho', act: () => openModal('roupa') };
     case 'counter': return { label: 'Balcão do Armazém', reach: 20, act: shop };
-    case 'water': return id === 'regador' ? { label: `Encher o regador (${S.can}/10)`, reach: 18, act: () => { useTool('regador', 0); S.can = 10; bang(P.x, P.y - 16, 'water'); toast('Regador cheio'); renderHotbar(); save(); } }
+    case 'water': return id === 'regador' ? { label: `Encher o regador (${S.can}/${CAN_MAX})`, reach: 18, act: () => { useTool('regador', 0); S.can = CAN_MAX; bang(P.x, P.y - 16, 'water'); toast('Regador cheio'); renderHotbar(); save(); } }
       : { label: 'Lago', reach: 18, act: () => run(() => say('narr', 'Água limpa do lago. Com o regador na mão, clique na água para enchê-lo.')) };
     case 'dummy': return id === 'espada' ? { label: 'Golpear o boneco', act: () => {
       if (S.energy < 1) return tip('Sem energia para outro golpe. Coma algo ou durma para recuperar.');

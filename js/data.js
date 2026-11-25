@@ -10,6 +10,7 @@ const MS_PER_GAME_MIN = 900;       // 54 s reais por hora de jogo (9 s a cada 10
 const EDIBLE = ['laranja', 'goiaba', 'amora', 'fruta_cristal', 'narciso', 'ovo', 'sardinha', 'tucunare', 'morango', 'alga', 'milho', 'melao', 'repolho_roxo'];
 const MAX_ENERGY = 100;
 const INV_SIZE = 30, HOTBAR = 10, CHEST_SIZE = 20, STACK = 99;
+const CAN_MAX = 20;                         // usos do regador por carga (encher no lago)
 
 /* kind: tool | seed | sapling | hat | quest | item.  sell = preço de venda.  food = energia que recupera ao comer. */
 const ITEMS = {
@@ -498,11 +499,9 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Chegou a chuva',
+  title: 'Regador maior',
   items: [
-    'Alguns dias amanhecem chovendo na primavera, no verão e no outono (no inverno, não chove).',
-    'Em dia de chuva, todos os canteiros ficam regados sozinhos, até os que você arar durante o dia.',
-    'O céu fica cinza, caem gotas e respingos nas áreas externas, e o relógio mostra uma nuvem.',
-    'Iara e Caleb mudam a rotina quando chove.',
+    'O regador agora rega 20 vezes por carga (antes eram 10).',
+    'Encha no lago como antes: ele volta a ficar com 20 de água.',
   ],
 };
