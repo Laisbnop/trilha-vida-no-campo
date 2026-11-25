@@ -431,7 +431,7 @@ Três medidas diferentes, para cada personagem:
 | Bia | 24×32 | 1 | 15 × 28 |
 | Tomé | 24×32 | 1 | 14 × 28 |
 | Honório | 24×32 | 1 | 14 × 27 |
-| Iara (13 anos) | 24×32 (desenho próprio, `js/iara-art.js`) | 1 | 16 × 24 |
+| Iara (13 anos) | 24×32 (desenho próprio, `js/iara-art.js`) | 1 | 16 × 22 (com as chuquinhas) |
 
 Na tela, cada ponto do mundo vira k×k pixels (k inteiro de 2 a 4, conforme a
 janela), sem suavização; o zoom, o mapa e as construções não mudaram.
@@ -445,13 +445,13 @@ janela), sem suavização; o zoom, o mapa e as construções não mudaram.
   dobro de pixels (traço mais fino e corpo mais estreito, com 12 de largura) e
   pareciam de outro jogo ao lado dos moradores.
 - **Iara:** desenhada à mão como criança (`js/iara-art.js`), no estilo das crianças dos
-  jogos de fazenda em pixel art, como a Jas de Stardew Valley, com arte própria: cabeça
-  grande, corpo e pernas curtos, cerca de 24 pontos (perto de 85% da altura dos
-  adultos). O cabelo cacheado fica arredondado em volta da cabeça, sem cobrir o corpo
-  e os braços; laço amarelo no alto, jardineira lilás com manchinhas de tinta e tênis
-  brancos. No inverno: gorro com pompom, cachecol, moletom e calça. Quatro direções
-  (a direita é o espelho da esquerda) e caminhada. Cavalete, pincel, caderno, xícara e
-  livro ficam na altura das mãos dela.
+  jogos de fazenda em pixel art, como a Jas de Stardew Valley, com arte própria: cerca
+  de 22 pontos de altura, cabeça um pouco maior que o corpo, sem exagero. Cabelo preto
+  rente à cabeça, com franja reta e duas chuquinhas baixas (marias-chiquinhas) presas
+  com elástico amarelo, e laço amarelo no alto; jardineira lilás com manchinhas de
+  tinta e tênis brancos. No inverno: gorro com pompom, cachecol, moletom e calça.
+  Quatro direções (a direita é o espelho da esquerda) e caminhada. Cavalete, pincel,
+  caderno, xícara e livro ficam na altura das mãos dela.
 - **O que acompanha:** os pés ficam no mesmo ponto (contato com o chão, profundidade e
   colisão iguais). Fones, notinhas e prato do Caleb ficam na cabeça e nas mãos
   do desenho dele; ferramentas, vara e linha seguem as mãos do jogador. Retratos, prévias,

@@ -502,7 +502,7 @@ const UPDATE_NOTES = {
   items: [
     'O personagem principal e o Caleb agora têm a mesma definição de pixel dos outros moradores, no padrão de Stardew Valley.',
     'Todos os adultos ficam com cerca de 14 a 16 pontos de largura e 27 a 30 de altura (um ladrilho de largura por menos de dois de altura).',
-    'Iara foi redesenhada como criança: cabeça grande, corpo curto e o cabelo cacheado arredondado em volta da cabeça.',
+    'Iara foi redesenhada como criança, com franja, duas chuquinhas e laço amarelo no alto.',
     'Todos os penteados, roupas, acessórios e chapéus da criação continuam disponíveis.',
     'Ferramentas, vara de pesca, fones e objetos acompanham as mãos e a cabeça; saves, rotinas e amizades continuam iguais.',
   ],
