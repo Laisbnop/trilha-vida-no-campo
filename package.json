@@ -1,0 +1,12 @@
+{
+  "name": "trilha-vida-no-campo",
+  "private": true,
+  "description": "Trilha — uma vida no campo. O jogo não tem dependências: este arquivo só serve para o teste de fumaça (Playwright).",
+  "scripts": {
+    "test": "playwright test",
+    "test:ref": "UPDATE_REF=1 playwright test -g capturas"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}
