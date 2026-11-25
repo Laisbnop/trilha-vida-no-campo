@@ -6,7 +6,7 @@ const CharArt = (() => {
   const sets = {};
   function load(id, data) {
     const S = { h: data.h, frames: {}, portraits: {} };
-    Object.keys(data.frames).forEach(k => {
+    Object.keys(data.frames || {}).forEach(k => {
       S.frames[k] = {};
       Object.keys(data.frames[k]).forEach(d => { S.frames[k][d] = data.frames[k][d].map(src => { const im = new Image(); im.src = src; return im; }); });
     });
@@ -18,7 +18,7 @@ const CharArt = (() => {
     sets[id] = S;
   }
   function draw(ctx, id, x, y, frame, dir) {
-    const S = sets[id]; if (!S) return false;
+    const S = sets[id]; if (!S || !Object.keys(S.frames).length) return false;   // sem quadros de mapa: usa o gerador
     const k = Math.max(1, Math.round(ctx.getTransform ? ctx.getTransform().a : 1)), ks = Object.keys(S.frames).map(Number);
     const kk = ks.reduce((a, b) => (Math.abs(b - k) < Math.abs(a - k) ? b : a), ks[0]);
     const set = S.frames[kk][dir] || S.frames[kk].down, im = set[Math.abs(frame | 0) % 3];
@@ -33,8 +33,8 @@ const CharArt = (() => {
   return { load, draw, portrait, ready, has: id => !!sets[id] };
 })();
 
-/* Caleb: sprites do mapa desenhados à mão (16x32, folha em assets/caleb-sprites.png) e retratos de 128x128 das quatro
-   expressões da ficha aprovada (assets/caleb-retratos.png). Expressões: neutro, sorriso, contente, envergonhado. */
+/* Caleb: retratos de 128x128 das quatro expressões da ficha aprovada (assets/caleb-retratos.png). No mapa, ele usa o
+   gerador de sprites, como os outros moradores. Expressões: neutro, sorriso, contente, envergonhado. */
 if (typeof CALEB_ART !== 'undefined') {
   CharArt.load('caleb', CALEB_ART);
   const MAP = { emocionado: 'contente', desconfiado: 'neutro', triste: 'neutro', surpresa: 'envergonhado', concentrada: 'neutro' };

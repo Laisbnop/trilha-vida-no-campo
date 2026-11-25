@@ -255,10 +255,10 @@ const VILLAGERS = [
   /* Caleb: neto da Dona Celeste. Chega à vila na primeira visita ao Armazém em horário de atendimento (uma vez só).
      Gótico/emo, reservado e observador; gosta de computador e de música. Amizade sem romance, até 8 corações.
      Rotina própria (calebSchedule, game.js); presentes sem preferências cadastradas (todos neutros). */
-  { id: 'caleb', portrait: 'caleb', art: 'caleb', name: 'Caleb', routine: 'caleb', maxHearts: 8, arrives: true,
+  { id: 'caleb', portrait: 'caleb', name: 'Caleb', routine: 'caleb', maxHearts: 8, arrives: true,
     place: 'no Armazém CELESTE (mora com a avó no andar de cima): à tarde no cantinho do notebook, no fim da tarde no bosque e, à noite, perto da lagoa; às sextas, na praça',
     bio: 'Neto da Dona Celeste, chegou para morar com a avó em cima do Armazém. Reservado e observador, gosta de computador e de música. Fala pouco no começo, mas é educado; com o tempo, aparecem o humor e o carinho nos pequenos gestos.',
-    look: mkLook('s2', 'emo', 'pretoQuente', 'camisaAberta', '#6a2430', 'calca', '#3a3238', { gender: 'm', body: 'm', shoeColor: '#221c22', earring: true, innerColor: '#1e1a22' }),
+    look: mkLook('s2', 'emo', 'pretoQuente', 'moletom', '#2a2630', 'calca', '#26222a', { gender: 'm', body: 'm', shoeColor: '#141016', earring: true }),   // moletom preto, calça e botas pretas (no gerador, 1 pixel por ponto, como os outros)
     love: [], like: [], dislike: [],
     sched: [[360, 'residencia']],                                          // a rotina de verdade vem de calebSchedule (game.js)
     talk: [
@@ -498,12 +498,11 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Personagens na escala certa',
+  title: 'Todos os personagens no mesmo estilo',
   items: [
-    'Todos os personagens seguem a mesma escala: adultos com cerca de um ladrilho de largura por menos de dois de altura.',
-    'O personagem principal e o Caleb ficaram mais baixos, com o mesmo desenho e acabamento.',
-    'Celeste, Bia, Tomé, Honório e Lúcio ganharam pernas um pouco mais longas, com proporções mais equilibradas.',
-    'Iara ficou visivelmente menor que os adultos, com silhueta de criança.',
+    'O personagem principal e o Caleb agora têm a mesma definição de pixel dos outros moradores, no padrão de Stardew Valley.',
+    'Todos os adultos ficam com cerca de 14 a 16 pontos de largura e 27 a 30 de altura (um ladrilho de largura por menos de dois de altura).',
+    'Todos os penteados, roupas, acessórios e chapéus da criação continuam disponíveis.',
     'Ferramentas, vara de pesca, fones e objetos acompanham as mãos e a cabeça; saves, rotinas e amizades continuam iguais.',
   ],
 };

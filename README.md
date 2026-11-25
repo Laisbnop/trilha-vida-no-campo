@@ -112,43 +112,12 @@ nome do personagem e nome da fazenda. Tudo vale para qualquer gênero. O botão
 **Aparência aleatória** sorteia só o visual. O personagem não perde cabelo nem
 acessório em nenhuma direção, andando, usando ferramentas, pescando ou de chapéu.
 
-**Desenho do jogador em alta definição.** O jogador é desenhado em `js/player-art.js`
-(`PlayerArt`) com dois pixels do desenho por ponto do mundo, como o Caleb, com
-**altura de adulto** (quadro de 48×66, mostrado em 24×33 pontos; figura de cerca de 28
-pontos de altura, com os pés no mesmo ponto de antes; veja "Tamanho dos personagens"). Usa as mesmas opções da criação: nenhum id, escolha ou
-salvamento mudou.
-
-- **Base (corpo e rosto):** a cabeça ocupa cerca de um terço da altura, com rosto oval,
-  queixo definido e pescoço curto; ombros arredondados (sem "barra"), braços finos,
-  mãos na altura do quadril, pernas compridas e calçados de bico arredondado. As
-  sombras do rosto são leves (um ponto no nariz, a borda direita do rosto), para não
-  envelhecer. Os olhos têm pálpebra, íris e brilho do mesmo lado. As bases feminina e
-  masculina diferem de leve: ombros, queixo, sobrancelhas, cílios e boca.
-- **Como a altura é feita:** o desenho é montado numa grade de 64 linhas e, na saída,
-  duas linhas lisas das pernas são repetidas. O rosto e os detalhes não são esticados.
-- **Cabelos com forma própria:** cada penteado tem a sua silhueta desenhada em cada
-  vista (frente, costas e os dois perfis), a partir de parâmetros de forma (volume,
-  tipo de franja, laterais, nuca e comprimento). O perfil direito é desenhado à
-  parte, então franjas assimétricas (curto liso, médio com franja lateral e emo)
-  mostram o lado certo. Texturas:
-  - **liso:** mechas largas e contínuas, uma linha de separação por mecha e pontas em bico;
-  - **ondulado:** as mechas seguem uma onda legível;
-  - **cacheado:** cachos redondos agrupados, com luz no alto e sombra embaixo;
-  - **crespo:** molinhas pequenas e fechadas, com contorno orgânico e volume;
-  - **tranças:** duas tranças em gomos com elástico na ponta;
-  - **emo:** franja diagonal que cobre só um olho, mechas espetadas em pequenos
-    triângulos e a mecha prateada opcional.
-
-  Todos têm uma faixa de brilho contínua no alto. A cor das três barras gera base,
-  sombra e luz, então preto, branco e verde mantêm o volume.
-- **Chapéus:** palha, boina e pescador assentam na cabeça, acima da linha das
-  sobrancelhas; o cabelo acima da aba some e o resto aparece por baixo, sem alargar o rosto.
-- **Roupas e acessórios:** todas as opções foram encaixadas na nova grade
-  (camiseta, regata, camisa, blusa, moletom e jardineira; calça, short, saia e saia
-  longa; óculos, laço, bandana e cachecol).
-- **O que não muda:** colisão, apoio dos pés, ferramentas, animações e saves. Os
-  cartões e prévias da criação usam o mesmo quadro do mapa, em escala inteira (48×68).
-  Os moradores e o cenário não mudaram.
+**Mesma definição dos moradores (padrão Stardew Valley).** O jogador é desenhado pelo
+mesmo gerador de sprites dos moradores (`js/sprites.js`): **1 pixel do desenho por
+ponto do mundo**, figura de cerca de 16 × 28 a 29 pontos, com os pés no mesmo ponto
+de sempre (veja "Tamanho dos personagens"). Todas as opções da criação continuam:
+nenhum id, escolha ou salvamento mudou. O perfil direito é o espelho do esquerdo,
+como nos moradores (franjas assimétricas trocam de lado ao virar).
 
 **Gênero e base visual.** O gênero define os pronomes nas falas e também a
 **base visual** do corpo, que aparece na prévia, no mapa, ao andar, nas
@@ -226,7 +195,7 @@ desenho, e o tamanho no mapa (em relação a portas, cercas e casas) não mudou.
   (perna de trás mais escura) e o antebraço balança. Cabelo, chapéu e acessórios
   não mudam de tamanho nem de lugar entre os quadros.
 - Ferramentas, pesca, pontos de apoio dos pés, colisões e alcances continuam nos
-  mesmos pontos. O Caleb continua com a arte aprovada própria dele.
+  mesmos pontos. O Caleb também usa o gerador (só os retratos dele são arte própria).
 - Todos os canvases de pixel art são exibidos sem suavização, em escala inteira
   (2× ou 3× nos painéis), e o cenário e os personagens são desenhados em posições
   inteiras, também com a câmera em movimento.
@@ -454,9 +423,9 @@ Três medidas diferentes, para cada personagem:
 
 | Personagem | Arte de origem (quadro) | Densidade | Figura visível no mundo (largura × altura) |
 | --- | --- | --- | --- |
-| Jogador (base masculina, curto liso) | 48×66 (`js/player-art.js`) | 2 pixels por ponto | 12 × 28 |
-| Jogadora (base feminina, longo ondulado) | 48×66 | 2 pixels por ponto | 13,5 × 28,5 |
-| Caleb | 32×58 (`assets/caleb-sprites.png`) | 2 pixels por ponto | 12 × 29 |
+| Jogador (base masculina, curto liso) | 24×32 (gerador de sprites) | 1 pixel por ponto | 16 × 28 |
+| Jogadora (base feminina, longo ondulado) | 24×32 | 1 | 16 × 29 |
+| Caleb | 24×32 | 1 | 16 × 29 |
 | Celeste | 24×32 (gerador de sprites) | 1 pixel por ponto | 16 × 30 |
 | Lúcio | 24×32 | 1 | 16 × 29 |
 | Bia | 24×32 | 1 | 15 × 28 |
@@ -468,25 +437,21 @@ Na tela, cada ponto do mundo vira k×k pixels (k inteiro de 2 a 4, conforme a
 janela), sem suavização; o zoom, o mapa e as construções não mudaram.
 
 - **Adultos:** de 27 a 30 pontos, com pequenas diferenças individuais (Celeste tem o
-  coque alto; Honório é o mais baixo). O jogador perdeu as linhas repetidas que o
-  deixavam com 34 e ficou com 28; o Caleb passou de 34 para 29. Os moradores do
-  gerador ganharam duas linhas de perna (uma linha lisa da canela, ou da perna logo
-  acima do calçado nas saias), que estavam curtas demais (3 pontos): o corpo ficou
-  mais parecido com o do jogador e do Caleb, sem tocar no rosto.
+  coque alto; Honório é o mais baixo). Todos os adultos, jogador e Caleb incluídos,
+  ganham duas linhas de perna (uma linha lisa da canela, ou da perna logo acima do
+  calçado nas saias), sem tocar no rosto.
+- **Mesma definição para todos:** jogador, Caleb e moradores usam 1 pixel do desenho
+  por ponto do mundo, como em Stardew Valley. Antes, o jogador e o Caleb tinham o
+  dobro de pixels (traço mais fino e corpo mais estreito, com 12 de largura) e
+  pareciam de outro jogo ao lado dos moradores.
 - **Iara:** visivelmente menor (cerca de 22 pontos, perto de três quartos da altura dos
   adultos), com cabeça do mesmo tamanho e tronco, braços e pernas mais curtos, como
   uma criança, sem encolher a adulta inteira. A altura exata da Jas não foi usada
   como medida: a wiki não tem o sprite do mapa dela, só retratos.
 - **O que acompanha:** os pés ficam no mesmo ponto (contato com o chão, profundidade e
-  colisão iguais). Fones, notinhas e prato do Caleb descem junto com a cabeça e as
-  mãos dele; ferramentas, vara e linha seguem as mãos do jogador. Retratos, prévias,
+  colisão iguais). Fones, notinhas e prato do Caleb ficam na cabeça e nas mãos
+  do desenho dele; ferramentas, vara e linha seguem as mãos do jogador. Retratos, prévias,
   ícones e menus não diminuem.
-- **Limitação conhecida:** o jogador e o Caleb têm dois pixels de desenho por ponto do
-  mundo. Com escala 2 ou 4 cada um vira 1 ou 2 pixels da tela; com escala 3 (janelas
-  de altura entre cerca de 525 e 735 pixels) vira 1,5, então os pixels do desenho
-  alternam entre 1 e 2 pixels da tela. O padrão é fixo (não tremula ao andar, porque
-  as posições são inteiras), mas fica um pouco irregular.
-
 Os moradores do gerador de sprites usam uma configuração só, `Sprites.WORLD` (em
 `js/sprites.js`), que converte cabelos, chapéus e acessórios da grade de criação e
 as posições presas ao corpo (sombra, mãos, vara, balões e corações). A área de
@@ -875,25 +840,10 @@ gestos. A idade não é definida, e a relação é só de amizade (sem romance).
   chegada, não aparece na aba.
 - **Visual** (ficha aprovada, com o moletom preto; substitui o visual anterior de
   camisa vinho, colar, brinco e mecha clara):
-  - **Sprites do mapa**: quadros de 32×58 com fundo transparente, com a figura de
-    24×58 e os pés na última linha. Saem da folha aprovada das quatro vistas
-    (frente, costas, perfil esquerdo e perfil direito), que é pixel art ampliada.
-  - **Leitura da folha**: cada vista é lida na grade nativa (um ponto no centro de
-    cada bloco, sem misturar cores), mantendo as cores e o acabamento aprovados.
-  - **Densidade**: dois pixels do desenho por pixel do mundo, o dobro dos outros
-    personagens. No mapa ele tem 29 de altura (a folha é lida em 68 linhas, do
-    tamanho da folha aprovada, e no fim saem 10 linhas que repetem a de cima, no
-    meio do moletom e nas pernas, as mesmas em todos os quadros; cabeça, rosto,
-    mãos e pés ficam intactos).
-  - **Exibição**: a cena é desenhada na resolução da tela, e cada pixel do mundo
-    vira k×k pixels, com k inteiro e sem suavização. O cenário e os outros
-    personagens ficam iguais. Com escala 2 ou 4, cada pixel do Caleb fica com 1
-    ou 2 pixels da tela; em telas com escala 3, fica com 1,5.
-  - **Perfis**: o perfil direito não é espelho do esquerdo.
-  - **Caminhada**: sai dessas vistas. De frente e de costas, um pé sobe de cada
-    vez e a mão do outro lado vem à frente. De perfil, as pernas abrem em "V" (a de
-    trás mais escura) e a mão balança. O cabelo e o corpo não mudam entre os
-    quadros.
+  - **Sprites do mapa**: desenhados pelo gerador de sprites, como os outros
+    moradores (1 pixel por ponto, cerca de 16 × 29): cabelo emo preto com franja
+    longa, moletom preto, calça e botas pretas, brinco de argola. O preto do
+    cabelo dele é um pouco mais claro que o dos olhos, para o rosto continuar legível.
   - **Retratos de diálogo**: 128×128 com fundo transparente, nas quatro
     expressões da ficha (neutra, sorriso, contente com uma piscadinha e
     envergonhado/surpreso). São recortados da ficha e reduzidos sem desfoque
@@ -902,14 +852,10 @@ gestos. A idade não é definida, e a relação é só de amizade (sem romance).
     no almoço, segura o prato à frente da mão; ajuda com as caixas carregando-as
     à frente do corpo.
   - **Arquivos**:
-    - `assets/caleb-sprites.png` é a folha de 96×232 (4 linhas de 3 quadros de
-      32×58), gerada por `tools/caleb_art32.py` a partir da folha aprovada das
-      quatro vistas.
     - `assets/caleb-retratos.png` reúne os retratos, que também ficam separados
       em `assets/caleb-retrato-*.png`; são gerados por `tools/caleb_portraits.py`.
-    - Os dois scripts, com `--embed`, copiam os quadros para `js/caleb-art.js`,
-      para o jogo funcionar aberto direto do arquivo.
-    - Quem desenha é `js/char-art.js`.
+    - Com `--embed`, o script copia os retratos para `js/caleb-art.js`, para o
+      jogo funcionar aberto direto do arquivo; `js/char-art.js` os registra.
   - **Preservado**: os pés, a colisão e o alcance das conversas continuam no mesmo
     lugar.
 - **Armazém**: ganhou a porta da escada para o andar de cima, na parede do fundo
@@ -1332,8 +1278,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `index.html` | Página de entrada |
 | `css/style.css` | Visual da interface |
 | `js/data.js` | Itens, cultivos, árvores, moradores, missões, loja e configuração da pesca |
-| `js/sprites.js` | Personagens em pixel art (cabelos, roupas, chapéus, 4 direções) |
-| `js/player-art.js` | Jogador em alta definição (48×66 por quadro, altura de adulto): corpo, rosto, formas dos 19 penteados, roupas, acessórios e chapéus |
+| `js/sprites.js` | Personagens em pixel art, jogador e moradores (cabelos, roupas, chapéus, 4 direções; 1 pixel por ponto do mundo) |
 | `js/portraits.js` | Retratos 64×64 dos moradores |
 | `js/iara-portrait.js` | Retratos de Iara (5 expressões, roupa normal e de inverno) |
 | `js/fishcore.js` | Física do minijogo de pesca (peixe, zona verde e progresso) |
