@@ -106,6 +106,36 @@ test('modo de desenvolvimento: chuva, horas, noites, interiores, menu e mapa', a
   expect(errs).toEqual([]);
 });
 
+/* Quadro de pedidos da praça: fechado antes das boas-vindas; depois, sortear, aceitar, conseguir os itens,
+   entregar a quem pediu e conferir as moedas. */
+test('quadro de pedidos: sortear, aceitar, entregar e receber', async ({ page }) => {
+  const errs = watch(page), wait = waiter(page, false);
+  await page.goto(URL + '?dev=1');
+  await newGame(page, wait);
+  const click = () => page.evaluate(() => { const t = window.__trilha; t.place('fora', World.SPOT.board[0], World.SPOT.board[1] + 24, 'up'); const h = t.targetAt(World.SPOT.board[0], World.SPOT.board[1] - 14); h.act(); return h.label; });
+  expect(await click(), 'o quadro é clicável na praça').toMatch(/Quadro de pedidos/);
+  await wait(300);
+  expect(await page.innerText('#dialog'), 'antes das boas-vindas: aviso curto').toMatch(/Ainda não tem nada aqui/);
+  await drain(page, wait);
+  await page.evaluate(() => window.__trilha.talk('celeste')); await wait(200); await drain(page, wait);   // boas-vindas no Armazém
+  const o = await page.evaluate(() => window.__trilha.dev.newOrder());
+  expect(o && o.qty >= 1 && o.qty <= 10 && o.coins % 5 === 0, 'pedido sorteado: quantidade de 1 a 10, moedas em múltiplo de 5').toBe(true);
+  expect(await page.evaluate(() => window.__trilha.S.board.seen), 'pedido novo ainda não lido').toBe(false);
+  await click(); await wait(300);
+  await expect(page.locator('#board-accept')).toBeVisible();
+  await page.click('#board-accept'); await wait(200);
+  const act = await page.evaluate(() => window.__trilha.S.board.active);
+  expect(act && act.item === o.item && act.due === act.accepted + 1, 'pedido aceito, com prazo até o fim do dia seguinte').toBe(true);
+  await page.evaluate(() => window.__trilha.openTab('diario')); await wait(200);
+  expect(await page.innerText('#modal-body'), 'Diário: seção própria com o progresso').toMatch(/Pedidos do quadro[\s\S]*Progresso: 0\//);
+  await page.keyboard.press('Escape'); await wait(200);
+  const coins0 = await page.evaluate(() => { window.__trilha.dev.completeOrder(); return window.__trilha.S.coins; });
+  await page.evaluate(id => window.__trilha.talk(id), o.from); await wait(200); await drain(page, wait);
+  const end = await page.evaluate(() => ({ coins: window.__trilha.S.coins, active: window.__trilha.S.board.active, done: window.__trilha.S.board.done }));
+  expect(end).toEqual({ coins: coins0 + o.coins, active: null, done: 1 });
+  expect(errs).toEqual([]);
+});
+
 /* Capturas da cena com relógio parado e sorteios fixos: mesmas a cada execução. */
 test('capturas: fazenda, vila e interior iguais às de referência', async ({ page }) => {
   const errs = watch(page), wait = waiter(page, true);
