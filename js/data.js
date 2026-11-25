@@ -258,7 +258,7 @@ const VILLAGERS = [
   { id: 'caleb', portrait: 'caleb', name: 'Caleb', routine: 'caleb', maxHearts: 8, arrives: true,
     place: 'no Armazém CELESTE (mora com a avó no andar de cima): à tarde no cantinho do notebook, no fim da tarde no bosque e, à noite, perto da lagoa; às sextas, na praça',
     bio: 'Neto da Dona Celeste, chegou para morar com a avó em cima do Armazém. Reservado e observador, gosta de computador e de música. Fala pouco no começo, mas é educado; com o tempo, aparecem o humor e o carinho nos pequenos gestos.',
-    look: mkLook('s2', 'emo', 'pretoQuente', 'moletom', '#2a2630', 'calca', '#26222a', { gender: 'm', body: 'm', shoeColor: '#141016', earring: true }),   // moletom preto, calça e botas pretas (no gerador, 1 pixel por ponto, como os outros)
+    look: mkLook('s2', 'emo', 'roxoEscuro', 'moletom', '#34303c', 'calca', '#2e2b36', { gender: 'm', body: 'm', shoeColor: '#141016', sprite: 'caleb' }),   // desenho à mão (js/hand-art.js): alto e magro, franja longa de lado, moletom com capuz
     love: [], like: [], dislike: [],
     sched: [[360, 'residencia']],                                          // a rotina de verdade vem de calebSchedule (game.js)
     talk: [
@@ -503,6 +503,7 @@ const UPDATE_NOTES = {
     'O personagem principal e o Caleb agora têm a mesma definição de pixel dos outros moradores, no padrão de Stardew Valley.',
     'Todos os adultos ficam com cerca de 14 a 16 pontos de largura e 27 a 30 de altura (um ladrilho de largura por menos de dois de altura).',
     'Iara foi redesenhada como criança, com franja, duas chuquinhas e laço amarelo no alto.',
+    'Caleb ficou mais alto e magro, com franja longa de lado e moletom com capuz.',
     'Todos os penteados, roupas, acessórios e chapéus da criação continuam disponíveis.',
     'Ferramentas, vara de pesca, fones e objetos acompanham as mãos e a cabeça; saves, rotinas e amizades continuam iguais.',
   ],
