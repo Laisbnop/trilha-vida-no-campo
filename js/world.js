@@ -2705,7 +2705,7 @@ const World = (() => {
     }
     P(x - 4, yy - 30, 8, 1, B); P(x - 5, yy - 29, 1, 2, B); P(x + 4, yy - 29, 1, 2, B);           // arco
     P(x - 6, yy - 27, 1, 3, B); P(x + 5, yy - 27, 1, 3, B);
-    P(x - 8, yy - 24, 2, 4, D); P(x + 6, yy - 24, 2, 4, D); P(x - 8, yy - 24, 1, 3, L); P(x + 7, yy - 24, 1, 3, L);   // conchas
+    P(x - 7, yy - 24, 2, 4, D); P(x + 5, yy - 24, 2, 4, D); P(x - 7, yy - 24, 1, 3, L); P(x + 6, yy - 24, 1, 3, L);   // conchas
   }
   function actFx(ctx, a, t) {
     // objetos na mão acompanham o tamanho do personagem do mundo (as mãos ficam um pouco mais baixas; na Iara, desenhada como

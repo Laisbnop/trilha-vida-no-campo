@@ -425,7 +425,7 @@ Três medidas diferentes, para cada personagem:
 | --- | --- | --- | --- |
 | Jogador (base masculina, curto liso) | 24×32 (gerador de sprites) | 1 pixel por ponto | 16 × 28 |
 | Jogadora (base feminina, longo ondulado) | 24×32 | 1 | 16 × 29 |
-| Caleb | 24×32 (desenho próprio, `js/hand-art.js`) | 1 | 12 × 30 |
+| Caleb | 24×32 (desenho próprio, `js/hand-art.js`) | 1 | 13 × 30 |
 | Celeste | 24×32 (gerador de sprites) | 1 pixel por ponto | 16 × 30 |
 | Lúcio | 24×32 | 1 | 16 × 29 |
 | Bia | 24×32 | 1 | 15 × 28 |
@@ -845,7 +845,7 @@ gestos. A idade não é definida, e a relação é só de amizade (sem romance).
 - **Visual** (ficha aprovada, com o moletom preto; substitui o visual anterior de
   camisa vinho, colar, brinco e mecha clara):
   - **Sprites do mapa**: desenhados à mão em `js/hand-art.js` (1 pixel por ponto,
-    como os outros), com arte própria: alto e magro (cerca de 12 × 30 pontos), cabelo
+    como os outros), com arte própria: alto e magro (cerca de 13 × 30 pontos), cabeça da largura dos ombros, cabelo
     preto arroxeado com franja longa e lisa caída de lado cobrindo um olho, moletom
     escuro com capuz abaixado atrás da nuca, cordões claros, calça justa e tênis
     escuros. Quatro direções (a direita é o espelho da esquerda) e caminhada.
