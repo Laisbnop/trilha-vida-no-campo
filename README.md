@@ -195,7 +195,7 @@ desenho, e o tamanho no mapa (em relação a portas, cercas e casas) não mudou.
   (perna de trás mais escura) e o antebraço balança. Cabelo, chapéu e acessórios
   não mudam de tamanho nem de lugar entre os quadros.
 - Ferramentas, pesca, pontos de apoio dos pés, colisões e alcances continuam nos
-  mesmos pontos. O Caleb também usa o gerador (só os retratos dele são arte própria).
+  mesmos pontos. O Caleb e a Iara têm sprite do mapa desenhado à mão (`js/hand-art.js`), na mesma grade.
 - Todos os canvases de pixel art são exibidos sem suavização, em escala inteira
   (2× ou 3× nos painéis), e o cenário e os personagens são desenhados em posições
   inteiras, também com a câmera em movimento.
@@ -425,13 +425,13 @@ Três medidas diferentes, para cada personagem:
 | --- | --- | --- | --- |
 | Jogador (base masculina, curto liso) | 24×32 (gerador de sprites) | 1 pixel por ponto | 16 × 28 |
 | Jogadora (base feminina, longo ondulado) | 24×32 | 1 | 16 × 29 |
-| Caleb | 24×32 | 1 | 16 × 29 |
+| Caleb | 24×32 (desenho próprio, `js/hand-art.js`) | 1 | 13 × 30 |
 | Celeste | 24×32 (gerador de sprites) | 1 pixel por ponto | 16 × 30 |
 | Lúcio | 24×32 | 1 | 16 × 29 |
 | Bia | 24×32 | 1 | 15 × 28 |
 | Tomé | 24×32 | 1 | 14 × 28 |
 | Honório | 24×32 | 1 | 14 × 27 |
-| Iara (13 anos) | 24×32 (desenho próprio, `js/iara-art.js`) | 1 | 16 × 22 (com as chuquinhas) |
+| Iara (13 anos) | 24×32 (desenho próprio, `js/hand-art.js`) | 1 | 16 × 22 (com as chuquinhas) |
 
 Na tela, cada ponto do mundo vira k×k pixels (k inteiro de 2 a 4, conforme a
 janela), sem suavização; o zoom, o mapa e as construções não mudaram.
@@ -444,7 +444,7 @@ janela), sem suavização; o zoom, o mapa e as construções não mudaram.
   por ponto do mundo, como em Stardew Valley. Antes, o jogador e o Caleb tinham o
   dobro de pixels (traço mais fino e corpo mais estreito, com 12 de largura) e
   pareciam de outro jogo ao lado dos moradores.
-- **Iara:** desenhada à mão como criança (`js/iara-art.js`), no estilo das crianças dos
+- **Iara:** desenhada à mão como criança (`js/hand-art.js`), no estilo das crianças dos
   jogos de fazenda em pixel art, como a Jas de Stardew Valley, com arte própria: cerca
   de 22 pontos de altura, cabeça um pouco maior que o corpo, sem exagero. Cabelo preto
   rente à cabeça, com franja reta e duas chuquinhas baixas (marias-chiquinhas) presas
@@ -844,10 +844,11 @@ gestos. A idade não é definida, e a relação é só de amizade (sem romance).
   chegada, não aparece na aba.
 - **Visual** (ficha aprovada, com o moletom preto; substitui o visual anterior de
   camisa vinho, colar, brinco e mecha clara):
-  - **Sprites do mapa**: desenhados pelo gerador de sprites, como os outros
-    moradores (1 pixel por ponto, cerca de 16 × 29): cabelo emo preto com franja
-    longa, moletom preto, calça e botas pretas, brinco de argola. O preto do
-    cabelo dele é um pouco mais claro que o dos olhos, para o rosto continuar legível.
+  - **Sprites do mapa**: desenhados à mão em `js/hand-art.js` (1 pixel por ponto,
+    como os outros), com arte própria: alto e magro (cerca de 13 × 30 pontos), cabeça da largura dos ombros, cabelo
+    preto arroxeado com franja longa e lisa caída de lado cobrindo um olho, moletom
+    escuro com capuz abaixado atrás da nuca, cordões claros, calça justa e tênis
+    escuros. Quatro direções (a direita é o espelho da esquerda) e caminhada.
   - **Retratos de diálogo**: 128×128 com fundo transparente, nas quatro
     expressões da ficha (neutra, sorriso, contente com uma piscadinha e
     envergonhado/surpreso). São recortados da ficha e reduzidos sem desfoque
@@ -1283,6 +1284,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `css/style.css` | Visual da interface |
 | `js/data.js` | Itens, cultivos, árvores, moradores, missões, loja e configuração da pesca |
 | `js/sprites.js` | Personagens em pixel art, jogador e moradores (cabelos, roupas, chapéus, 4 direções; 1 pixel por ponto do mundo) |
+| `js/hand-art.js` | Sprites do mapa desenhados à mão da Iara e do Caleb (mesma grade, cores vindas da aparência) |
 | `js/portraits.js` | Retratos 64×64 dos moradores |
 | `js/iara-portrait.js` | Retratos de Iara (5 expressões, roupa normal e de inverno) |
 | `js/fishcore.js` | Física do minijogo de pesca (peixe, zona verde e progresso) |

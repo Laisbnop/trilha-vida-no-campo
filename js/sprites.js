@@ -33,7 +33,7 @@ const Sprites = (() => {
   ];
   /* [base, sombra, luz] */
   /* Cores de cabelo só de moradores (não aparecem na criação). */
-  const EXTRA_HAIR = [{ id: 'cinzaQuente', name: 'Grisalho quente', c: ['#c4bab4', '#8d7f7a', '#eee8e2'] }, { id: 'pretoQuente', name: 'Preto quente', c: ['#3c3238', '#1c1418', '#625660'] }];
+  const EXTRA_HAIR = [{ id: 'cinzaQuente', name: 'Grisalho quente', c: ['#c4bab4', '#8d7f7a', '#eee8e2'] }, { id: 'pretoQuente', name: 'Preto quente', c: ['#3c3238', '#1c1418', '#625660'] }, { id: 'roxoEscuro', name: 'Preto arroxeado', c: ['#352c44', '#1e1828', '#54476a'] }];
   const HAIR_COLORS = [
     { id: 'preto',    name: 'Preto',           c: ['#2e2836', '#17131c', '#504862'] },
     { id: 'castanho', name: 'Castanho escuro', c: ['#5a3a24', '#3a2212', '#80583a'] },
@@ -634,7 +634,7 @@ const Sprites = (() => {
   function frames(look) {                   // um só desenho para mapa, prévia, painéis e menus
     const key = JSON.stringify(look);
     if (!cache.has(key)) {
-      const draw = look.sprite === 'iara' && typeof IaraArt !== 'undefined' ? IaraArt.render : render;   // Iara: desenho próprio de criança (js/iara-art.js)
+      const draw = look.sprite && typeof HandArt !== 'undefined' && HandArt.has(look.sprite) ? HandArt.render : render;   // Iara e Caleb: desenho à mão (js/hand-art.js)
       const set = dir => [0, 1, 2].map(f => draw(look, f, dir));                 // jogador e moradores: 1 pixel por ponto do mundo
       const down = set('down'), up = set('up'), left = set('side');
       cache.set(key, { down, up, left, right: left.map(flipped) });
