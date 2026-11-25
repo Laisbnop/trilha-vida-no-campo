@@ -1314,8 +1314,74 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `js/portraits.js` | Retratos 64×64 dos moradores |
 | `js/iara-portrait.js` | Retratos de Iara (5 expressões, roupa normal e de inverno) |
 | `js/fishcore.js` | Física do minijogo de pesca (peixe, zona verde e progresso) |
-| `js/world.js` | Mapa, interiores, colisão, câmera, ícones e desenho do mundo |
-| `js/game.js` | Salvamento, criação, ferramentas, fazenda, moradores, missões e painéis |
+| `js/caleb-art.js`, `js/char-art.js` | Retratos do Caleb (arte aprovada) e o carregador de arte própria de personagens |
+| **`js/world/`** | **O mundo (objeto `World`): mapa, interiores, colisão, câmera, ícones e desenho** |
+| `js/world/base.js` | Tamanhos, sorteio, cores e paletas das estações |
+| `js/world/vegetation.js` | Árvores (pinheiros, copas em cachos, frutíferas) e cercas de madeira |
+| `js/world/buildings.js` | Fachadas da vila: Armazém, casas, escola, cabana e peças comuns |
+| `js/world/ground.js` | Posições fixas do mapa externo, montagem dos mapas (colisão), pavimento, calçamento, grama e mato |
+| `js/world/outdoor.js` | Chão da fazenda, estradas, água e rio, prédios e a montagem do mapa externo; lugares do mapa (M) |
+| `js/world/interiors.js` | Interiores: Armazém por dentro e os cômodos |
+| `js/world/mountain.js` | Serra, tenda e fogueira de Lúcio |
+| `js/world/maps.js` | Acesso aos mapas (cache por estação), colisão, água, câmera e ladrilhos |
+| `js/world/figures.js` | Árvores frutíferas e do bosque, toco, boneco de treino e galinhas |
+| `js/world/icons.js` | Ícones 16×16 dos itens |
+| `js/world/crops.js` | Plantações por estágio, terra revolvida, pedras, galhos, tocos, mato e coletáveis do chão |
+| `js/world/render.js` | Desenho de cada quadro (ordem de profundidade), chuva, luz e coletáveis sazonais |
+| `js/world/actors.js` | Golpe das ferramentas, vara e linha de pesca, comer, fones, atividades, pinturas da Iara e bicho |
+| `js/world/index.js` | Monta o objeto público `World` (vem por último) |
+| **`js/game/`** | **A lógica do jogo** |
+| `js/game/core.js` | Atalhos de página, estado compartilhado, salvamento e nomes |
+| `js/game/title.js` | Título, criação de personagem e guarda-roupa |
+| `js/game/inventory.js` | Inventário |
+| `js/game/state.js` | Estado do mundo, calendário, clima, habilidades, sorte do dia e rotinas dos moradores |
+| `js/game/loop.js` | Começar/continuar, laço principal, luz e tela |
+| `js/game/input.js` | Alvos do mouse, ferramentas na terra e nas árvores, teclado e toque |
+| `js/game/dialog.js` | Diálogo |
+| `js/game/fishing.js` | Pesca |
+| `js/game/quests.js` | Missões |
+| `js/game/villagers.js` | Moradores: conversa, amizade, presentes e falas |
+| `js/game/iara.js` | Iara: pinturas da fonte e acontecimentos |
+| `js/game/animals.js` | Galinhas e bicho de estimação |
+| `js/game/forage.js` | Coletáveis sazonais |
+| `js/game/night.js` | Dormir e a passagem da noite |
+| `js/game/hud.js` | HUD e barra de itens |
+| `js/game/panels.js` | Painéis (menu), mapa (M), loja e baú |
+| `js/game/debug.js` | Ganchos `window.__trilha` e modo `?dev=1` |
+| `js/game/main.js` | Inicia o jogo (vem por último) |
+| `tests/`, `package.json`, `playwright.config.js` | Teste de fumaça (só para desenvolvimento; o jogo não usa) |
+
+**Como os arquivos se juntam.** Não há módulos (`import`/`export`), bundler nem
+build: o `index.html` carrega tudo com `<script src>` comuns, na ordem da tabela,
+e o jogo funciona aberto direto do arquivo (duplo clique no `index.html`) e no
+GitHub Pages ou Cloudflare Pages. Cada parte de `js/world/` e de `js/game/` é
+um script comum escrito no nível superior: scripts comuns compartilham as
+declarações de nível superior (`const`, `let` e `function`), então o estado do
+jogo (`S`, `P`, `map`...) é uma variável só para todos os arquivos, inclusive
+depois de `S` ser trocado ao carregar ou criar um jogo. A ordem importa só para o
+que roda na hora em que o arquivo carrega; o jogo começa em `js/game/main.js`,
+depois de tudo carregado. Um nome novo de nível superior não pode repetir um que já
+existe em outro arquivo (o navegador acusa erro ao carregar, e o teste falha).
+
+### Teste de fumaça
+
+Não é preciso nada para jogar. Para rodar o teste automático (Node.js 18 ou mais):
+
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
+
+O teste abre o `index.html` direto do arquivo (`file://`), também com `?dev=1`, e
+reprova com qualquer erro no console ou exceção da página. Ele passa pela criação
+de personagem e pela abertura, anda com as setas, usa uma ferramenta, liga a chuva,
+avança horas e três noites, entra na casa e no Armazém, abre o menu (E) e o mapa
+(M), salva, recarrega e continua (dia, moedas e posição iguais). Por fim compara
+capturas da fazenda, da vila e do Armazém, pixel a pixel, com as de `tests/ref/`
+(relógio da página parado e sorteios com semente fixa, então nada muda entre
+execuções). Se o desenho mudar de propósito, refaça as referências com
+`npm run test:ref` e confira as imagens antes de enviar.
 
 ## Visual
 
@@ -1335,3 +1401,7 @@ O arquivo `_headers` pede ao Cloudflare Pages que o navegador sempre confira se
 há versão nova (`Cache-Control: no-cache`), e o `index.html` carrega os arquivos
 com `?v=` (troque o número a cada versão). Assim, quem já jogou recebe a
 atualização sem precisar limpar o cache.
+
+Versão atual: `?v=sep1` (separação de `game.js` e `world.js` em `js/game/` e
+`js/world/`, sem mudança para quem joga). Todos os `<script>` e o CSS usam o
+mesmo número.
