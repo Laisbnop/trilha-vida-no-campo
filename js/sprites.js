@@ -20,6 +20,7 @@ const Sprites = (() => {
   WORLD.oy = dy => dy + WORLD.dropRows.filter(k => k > H - 1 + dy).length;
   WORLD.ox = dx => { const c = W / 2 + dx, pad = Math.floor(WORLD.dropCols.length / 2); return dx - WORLD.dropCols.filter(k => k < c).length + pad; };
   const OUT = '#2a1a14';
+  const LEGDUP = 26, ADULT_LIFT = 2;          // linha da canela repetida nos adultos (de saia: a linha da perna logo acima do calçado) e quanto o corpo deles sobe
 
   /* [base, sombra, luz] */
   const SKINS = [
@@ -593,9 +594,17 @@ const Sprites = (() => {
     }
     /* ---------- criança: cabeça do mesmo tamanho, tronco, braços e pernas mais curtos ---------- */
     if (look.kid) {
-      const drop = new Set([22, 23, 28]), rows = grid.filter((r, y) => !drop.has(y));
-      while (rows.length < H) rows.unshift(Array(W).fill(null));
-      for (let y = 0; y < H; y++) grid[y] = rows[y];
+      const cut = drop => { const rows = grid.filter((r, y) => !drop.has(y)); while (rows.length < H) rows.unshift(Array(W).fill(null)); for (let y = 0; y < H; y++) grid[y] = rows[y]; };
+      cut(new Set([22, 23, 28]));
+      /* menor que os adultos (cerca de 22 pontos contra 25 a 29): duas linhas do alto do volume do cabelo e uma do tronco,
+         sem tocar no rosto, nas mãos e nos pés */
+      cut(new Set([9, 11, 24]));
+    }
+    /* ---------- adultos: pernas com duas linhas a mais (linha lisa da canela repetida), pés no mesmo ponto; tudo acima
+       sobe junto. Proporção mais próxima da do jogador e do Caleb, cerca de 27 a 30 pontos de altura. ---------- */
+    if (!look.kid && !look.crisp) {
+      const rows = []; grid.forEach((r, y) => { rows.push(r); if (y === (/^saia/.test(look.bottom || '') ? 28 : LEGDUP)) { rows.push(r.slice()); rows.push(r.slice()); } });
+      rows.splice(0, rows.length - H); for (let y = 0; y < H; y++) grid[y] = rows[y];
     }
     /* ---------- contorno: escuro, levemente tingido pela cor que contorna (mais nítido e menos "carimbado") ---------- */
     const filled = grid.map(r => r.slice());
@@ -648,7 +657,7 @@ const Sprites = (() => {
   /* Pequeno canvas com o personagem, para painéis. */
   function canvas(look, dir = 'down', frame = 0) {
     const im = frames(look)[dir][frame], tall = im.width === W * 2 && im.height > H * 2, c = document.createElement('canvas'); c.className = 'pixel';
-    c.width = W * 2; c.height = tall ? 80 : H * 2;                            // painéis: 48x64 (ou 48x80 no jogador mais alto), sempre em escala inteira
+    c.width = W * 2; c.height = tall ? im.height + 2 : H * 2;                 // painéis: 48x64 (jogador: 48x68), sempre em escala inteira
     const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
     if (tall) g.drawImage(im, 0, c.height - im.height - 1); else g.drawImage(im, 0, 0, W * 2, H * 2);
     return c;
@@ -668,5 +677,5 @@ const Sprites = (() => {
 
   const hairMask = (look, dir) => render(Object.assign({}, look, { __hairProbe: true }), 0, dir);   // máscara do penteado na grade do mundo
   const hairPaletteOf = look => (Array.isArray(look.hairHsl) ? hairPalette(look.hairHsl) : byId(HAIR_COLORS.concat(EXTRA_HAIR), look.hairColor).c);
-  return { hairMask, hairPaletteOf, hairPalette, hexToHsl, hairHslOf, WORLD, drawWorld, genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
+  return { LEGDUP, ADULT_LIFT, hairMask, hairPaletteOf, hairPalette, hexToHsl, hairHslOf, WORLD, drawWorld, genderPreset, portrait, PORTRAITS, W, H, SKINS, HAIR_COLORS, HAIRS, GENDERS, TOPS, BOTTOMS, ACCESSORIES, CLOTH_COLORS, SHOE_COLORS, HATS, draw, drawAt, frames, walk, canvas, randomLook };
 })();

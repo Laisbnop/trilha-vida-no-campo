@@ -7,9 +7,10 @@
    Grade de desenho (frente; x de 0 a 47, centro entre 23 e 24):
      cabeça 12–29 (olhos 20–22), pescoço 30–31, tronco 32–43, cós 44–45,
      pernas 46–57, calçados 58–61.
-   Na saída, linhas dos trechos lisos (pescoço, meio do tronco e pernas)
-   são repetidas: o quadro final tem 48x78, mostrado em 24x39 no mundo,
-   com os pés no mesmo ponto de antes e a altura do Caleb.
+   Na saída, duas linhas lisas das pernas são repetidas: o quadro final tem
+   48x66, mostrado em 24x33 no mundo (figura de cerca de 27 a 28 pontos de
+   altura, a altura dos adultos, cerca de um ladrilho de 16 de largura por
+   menos de dois de altura), com os pés no mesmo ponto.
 
    Cabelos: cada penteado tem a sua forma desenhada aqui, em cada vista
    (frente, costas e os dois perfis; franjas assimétricas trocam de lado no
@@ -19,10 +20,10 @@
    ===================================================================== */
 const PlayerArt = (() => {
   const W = 48, H = 64, OUT = '#21151a';
-  /* o desenho é feito numa grade de 64 linhas e sai com 78: estas linhas são repetidas (trechos sem detalhe) */
-  const DUP = [31, 36, 37, 39, 40, 47, 48, 49, 50, 51, 52, 53, 54, 55];
+  /* o desenho é feito numa grade de 64 linhas e sai com 66: estas linhas são repetidas (trechos sem detalhe) */
+  const DUP = [49, 53];                                                     // duas linhas lisas das pernas
   const ROWS = []; for (let y = 0; y < H; y++) { ROWS.push(y); if (DUP.includes(y)) ROWS.push(y); }
-  const HO = ROWS.length;                                                   // 78 linhas: pés na linha 75, cabeça e cabelo do tamanho do Caleb
+  const HO = ROWS.length;                                                   // 66 linhas: pés na linha 63; no mundo, cerca de 27 a 28 pontos de altura, como os adultos
   const hx = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   const toHex = a => '#' + a.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
   const mix = (a, b, k) => { const A = hx(a), B = hx(b); return toHex(A.map((v, i) => v + (B[i] - v) * k)); };
@@ -556,7 +557,7 @@ const PlayerArt = (() => {
       const n = (filled[y + 1] && filled[y + 1][x]) || filled[y][x - 1] || filled[y][x + 1] || (filled[y - 1] && filled[y - 1][x]);
       if (n) G[y][x] = mix(OUT, n, 0.16);
     }
-    /* altura do Caleb: o desenho ganha linhas só nos trechos lisos (pescoço, meio do tronco e pernas), sem tocar no rosto */
+    /* altura adulta: o desenho ganha duas linhas só nas pernas (trecho liso), sem tocar no rosto */
     const c = document.createElement('canvas'); c.width = W; c.height = HO; const g = c.getContext('2d');
     ROWS.forEach((sy, y) => { for (let x = 0; x < W; x++) if (G[sy][x]) { g.fillStyle = G[sy][x]; g.fillRect(right ? W - 1 - x : x, y, 1, 1); } });
     return c;

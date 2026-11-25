@@ -4,6 +4,10 @@
 # quadro de 32x68 com fundo transparente (figura de 24x68, os pés na última linha).
 # A caminhada sai dessas vistas: um pé sobe e a mão do outro lado vem à frente (frente e costas); de perfil, as pernas
 # abrem em "V" (a de trás mais escura) e a mão balança. Cabelo e corpo não mudam entre os quadros.
+# Altura no mapa: o quadro de leitura tem 68 linhas (figura do tamanho da folha aprovada); no fim, 10 linhas que repetem
+# a de cima (meio do moletom e pernas, as mesmas em todos os quadros) saem, para o Caleb ficar com 58 linhas = 29 pontos
+# no mundo, a altura de um adulto (cerca de um ladrilho de largura por menos de dois de altura). Cabeça, rosto, mãos e
+# pés não perdem nada.
 # Uso: python3 tools/caleb_art32.py <folha-4-vistas.webp> assets/caleb-sprites.png [--embed] [--preview]
 import sys, json, base64, io, os
 import numpy as np
@@ -12,6 +16,7 @@ W, H = 32, 68
 GRID = dict(s=12.35, ox=4, oy=4)
 VIEWS = {'down': (9, 32), 'up': (43, 66), 'left': (79, 101), 'right': (112, 134)}   # colunas de cada vista na grade
 OUT = None
+DROP = [32, 34, 36, 38, 49, 50, 53, 55, 57, 58]                        # linhas lisas retiradas no fim (iguais à de cima)
 
 def read_sheet(path):
     im = Image.open(path).convert('RGBA'); a = np.asarray(im).astype(int); s, ox, oy = GRID['s'], GRID['ox'], GRID['oy']
@@ -71,6 +76,9 @@ if __name__ == '__main__':
               'left': [V['left'], walk_side(V['left'], True, True), walk_side(V['left'], True, False)],
               'right': [V['right'], walk_side(V['right'], False, True), walk_side(V['right'], False, False)]}
     order = ['down', 'up', 'left', 'right']
+    keep = [y for y in range(H) if y not in DROP]
+    frames = {d: [f[keep] for f in fs] for d, fs in frames.items()}
+    H = len(keep)
     sheet = Image.new('RGBA', (W * 3, H * 4), (0, 0, 0, 0))
     for r, d in enumerate(order):
         for i, f in enumerate(frames[d]): sheet.alpha_composite(Image.fromarray(f, 'RGBA'), (i * W, r * H))
@@ -80,7 +88,7 @@ if __name__ == '__main__':
         data = json.loads(text[text.index('{'):text.rindex('}') + 1])
         def b64(im):
             b = io.BytesIO(); im.save(b, 'PNG', optimize=True); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
-        data['h'] = H // 2                                                    # altura no mundo: 34 (dois pixels do desenho por pixel do mundo)
+        data['h'] = H // 2                                                    # altura no mundo: 29 (dois pixels do desenho por pixel do mundo)
         data['frames'] = {'2': {d: [b64(sheet.crop((i * W, r * H, i * W + W, r * H + H))) for i in range(3)] for r, d in enumerate(order)}}
         open(js, 'w').write(text[:text.index('const CALEB_ART')] + 'const CALEB_ART = ' + json.dumps(data) + ';\n')
     if '--preview' in sys.argv:

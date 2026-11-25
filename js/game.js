@@ -556,6 +556,7 @@
   }
   const schedCache = { key: '', E: null }, calebCache = { key: '', E: null };
   function villagerAt(v, tm) {
+    if (DEV && DEV.pose && DEV.pose[v.id]) return DEV.pose[v.id];        // só no modo de desenvolvimento: posar para comparar tamanhos
     if (v.routine === 'iara' && S) { const k = S.day + ':' + isRaining(); if (schedCache.key !== k) { schedCache.key = k; schedCache.E = iaraSchedule(); } return routineAt(schedCache.E, tm); }
     if (v.routine === 'caleb' && S) {
       if (!S.caleb || !S.caleb.arrived) return { where: 'ausente', x: 0, y: 0, dir: 'down' };                    // ainda não chegou à vila
@@ -2984,6 +2985,7 @@
       lightAt, calendar, dateText, clock,
       setRain: on => { S.weather = on ? 'chuva' : null; save(); },
       set markers(v) { DEV.markers = v; },
+      pose: p => { DEV.pose = p; },                                       // { id: { where, x, y, dir } }: moradores parados num ponto (comparação de tamanhos)
     };
   }
 
