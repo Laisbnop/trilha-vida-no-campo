@@ -444,3 +444,16 @@ function bubble(x, y, mark, t) {
   if (mark === '!') { R(x + 6, y + 2, 2, 4, '#e04a3a'); R(x + 6, y + 7, 2, 1, '#e04a3a'); }
   else for (let i = 0; i <= Math.floor(t / 220) % 3; i++) R(x + 2 + i * 4, y + 4, 2, 2, OUT);
 }
+/* Quadro de pedidos da praça (desenhado com o pé em (x, y)): dois postes, telhadinho de tábua, painel de madeira
+   e papéis presos com tachinhas. O papel novo (pedido ainda não lido) é desenhado por cima, a cada quadro. */
+function noticeBoard(x, y) {
+  R(x - 12, y - 1, 24, 3, '#4a3a2a');                                                        // sombra no chão
+  [-10, 7].forEach(px => { R(x + px - 1, y - 24, 5, 26, OUT); R(x + px, y - 23, 3, 24, '#7a5030'); R(x + px, y - 23, 1, 24, '#9a6a40'); });   // postes
+  R(x - 14, y - 32, 28, 22, OUT); R(x - 13, y - 31, 26, 20, '#8a5a2e');                       // moldura
+  R(x - 11, y - 29, 22, 16, '#c0905a'); for (let k = 0; k < 4; k++) R(x - 11, y - 25 + k * 4, 22, 1, '#a8784a');   // tábuas do painel
+  R(x - 11, y - 29, 22, 1, '#d8a870');
+  R(x - 15, y - 35, 30, 4, OUT); R(x - 14, y - 34, 28, 2, '#6a3e22'); R(x - 14, y - 34, 28, 1, '#9a6036');   // telhadinho
+  const paper = (px, py, w, h, c, pin) => { R(x + px - 1, y + py - 1, w + 2, h + 2, '#5a3a22'); R(x + px, y + py, w, h, c); for (let k = 2; k < h - 1; k += 2) R(x + px + 1, y + py + k, w - 2 - (k % 4 ? 1 : 0), 1, '#b0a080'); R(x + px + (w >> 1), y + py, 1, 1, pin); };
+  paper(-9, -27, 6, 8, '#f4ecd8', '#e04a3a'); paper(-1, -26, 5, 6, '#ece0c0', '#3f86d0'); paper(5, -28, 5, 9, '#f8f0e0', '#e0a23a');
+  R(x - 6, y - 15, 12, 1, '#7a5030');                                                         // borda de baixo do painel
+}

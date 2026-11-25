@@ -8,7 +8,7 @@
 const FORA = { w: 1600, h: 896 };              // fazenda (oeste), vila, bosque, beira-rio (sul) e bairro leste
 const GRID = { x0: 40, y0: 196, cols: 20, rows: 10, s: 16 };            // terra cultivável da fazenda
 const YARD = { x0: 156, y0: 402, x1: 290, y1: 440 };                    // onde as galinhas ciscam (cercado)
-const SPOT = { water: [336, 136], dummy: [214, 142], bench: [598, 206], hat: [1150, 470] };
+const SPOT = { water: [336, 136], dummy: [214, 142], bench: [598, 206], hat: [1150, 470], board: [586, 132] };   // board = quadro de pedidos da praça
 const NTREES = [[880, 90], [930, 70], [900, 236], [950, 276], [880, 336], [940, 388], [1000, 428], [900, 450], [1070, 96], [1130, 116], [1164, 66], [1060, 392], [1120, 440], [1172, 366]];
 const NROCKS = [[862, 206], [984, 246], [1012, 344], [872, 404], [962, 468], [1102, 350], [1152, 196], [1092, 140]];
 const FORAGE = [[916, 124], [1042, 204], [892, 296], [976, 352], [1036, 470], [1142, 404], [1186, 316], [852, 466]];

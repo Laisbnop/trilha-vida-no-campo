@@ -153,6 +153,7 @@ const TABS = {
       row.append(tr, show); li.append(row); ul.append(li);
     });
     body.append(ul);
+    boardDiary(body);                                                    // pedidos do quadro (js/game/board.js)
     const done = Object.keys(QUESTS).filter(qDone);
     body.append(el('h3', '', 'Concluídas'));
     const dl = el('ul', 'list'); if (!done.length) dl.append(el('li', 'dim', 'Nenhuma ainda.')); done.forEach(id => dl.append(el('li', 'done-task', `✔ ${QUESTS[id].title} (dia ${S.quests[id].day})`))); body.append(dl);
@@ -426,7 +427,7 @@ function renderTab(t) {
   $('modal-title').textContent = TAB_TITLE[tab] || '';
   $('modal').dataset.tab = tab;
   const body = $('modal-body'), sc = prev === tab ? body.scrollTop : 0; body.replaceChildren(); TABS[tab](body);
-  if (SPECIAL.includes(tab) && tab !== 'ajuste') body.append(closeBtn());
+  if (SPECIAL.includes(tab) && tab !== 'ajuste' && tab !== 'quadro') body.append(closeBtn());   // o quadro já tem "Agora não"
   $('modal-close').hidden = tab === 'ajuste';
   body.scrollTop = sc; renderHotbar(); renderHud();
 }
