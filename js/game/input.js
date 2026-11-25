@@ -202,6 +202,7 @@ function objAction(o) {
       : { label: 'Fogueira', act: () => run(() => say('narr', S.time >= 1020 || S.time < 360 ? 'O fogo estala baixinho. Os troncos em volta estão gastos de tanto servir de banco.' : 'Cinzas frias dentro de um círculo de pedras. À noite, aqui tem fogo.')) };
     case 'text': return { label: o.label, act: () => run(() => say('narr', o.text)) };
     case 'sign': return { label: o.label, act: () => run(() => say('narr', `Na placa, pintado à mão: "{fazenda}". Embaixo, em letras menores: terra do Vô ${AVO}. A ${VILA} fica a leste, seguindo a estrada.`)) };
+    case 'board': return { label: boardNewMark() ? 'Quadro de pedidos (novo!)' : 'Quadro de pedidos', act: openBoard };
     case 'bed': return { label: 'Dormir', act: bed };
     case 'chest': return { label: 'Abrir o baú', act: () => openModal('bau') };
     case 'wardrobe': return { label: 'Guarda-roupa e espelho', act: () => openModal('roupa') };

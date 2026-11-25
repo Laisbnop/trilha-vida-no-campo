@@ -113,6 +113,10 @@ function render(ctx, v) {
     if (a.eat) eating(ctx, a, t);
   });
   v.actors.forEach(a => { if (a.fish) fishLine(ctx, a.fish, t); });
+  if (map.id === 'fora' && v.boardNew) {                                 // quadro de pedidos: papel novo destacado e um "!" discreto
+    const [bx, by] = SPOT.board; R(bx - 3, by - 23, 7, 8, '#5a3a22'); R(bx - 2, by - 22, 5, 6, '#ffe58a'); R(bx - 1, by - 20, 3, 1, '#b09040'); R(bx, by - 22, 1, 1, '#e04a3a');
+    bubble(bx - 7, by - 50 - (Math.floor(t / 500) % 2), '!', t);
+  }
   v.actors.forEach(a => { if (a.bubble) bubble(Math.round(a.x) - 7, Math.round(a.y) + OY(-46), a.bubble === '...' ? '' : '!', t); if (a.heart) heart(ctx, Math.round(a.x) - 3, Math.round(a.y) + OY(-42) - Math.floor(t / 300) % 2); });
   if (v.cursor) { const c = v.cursor, b = Math.floor(t / 350) % 2; ctx.fillStyle = c.far ? 'rgba(255,255,255,.45)' : b ? '#ffffff' : '#ffd75e'; [[0, 0, 5, 1], [0, 0, 1, 5], [c.w - 5, 0, 5, 1], [c.w - 1, 0, 1, 5], [0, c.h - 1, 5, 1], [0, c.h - 5, 1, 5], [c.w - 5, c.h - 1, 5, 1], [c.w - 1, c.h - 5, 1, 5]].forEach(([a, e, w, h]) => ctx.fillRect(c.x + a, c.y + e, w, h)); }
   (v.bars || []).forEach(b => { const x = Math.round(b.x) - 8, y = Math.round(b.y); ctx.fillStyle = OUT; ctx.fillRect(x - 1, y - 1, 18, 4); ctx.fillStyle = '#5a1a1a'; ctx.fillRect(x, y, 16, 2); ctx.fillStyle = b.frac > 0.5 ? '#8fe88f' : b.frac > 0.25 ? '#ffd75e' : '#ff7b5a'; ctx.fillRect(x, y, Math.max(1, Math.round(16 * b.frac)), 2); });

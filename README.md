@@ -1087,6 +1087,65 @@ a festa). O **Diário** mostra quem pediu, objetivo, progresso e recompensa.
 Toda missão depende de ações no mundo; itens entregues saem da mochila e a
 recompensa é dada uma única vez.
 
+## Quadro de pedidos
+
+Um quadro de avisos de madeira fica na praça, ao lado do Armazém (fora da rua e
+dos caminhos dos moradores), com papéis presos por tachinhas. Ele aparece no Mapa
+(M) com ícone e nome. Ideia inspirada nos quadros de pedidos dos jogos de fazenda,
+com arte e textos próprios.
+
+- **Quando abre:** só depois das boas-vindas no Armazém (missão "Boas-vindas à
+  vila"). Antes disso, clicar mostra só um aviso curto.
+- **Um pedido por manhã:** sorteado na virada da noite e salvo com a partida
+  (recarregar não muda). Quando há pedido novo ainda não lido, um papel amarelo
+  aparece em destaque no quadro, com um "!" discreto em cima. Se o jogador não
+  aceitar, o pedido é trocado na manhã seguinte. Com um pedido aceito em andamento,
+  o quadro mostra "Volte quando terminar o pedido de…".
+- **O painel:** retrato pequeno de quem pediu, o texto na voz do morador, o item
+  (ícone, nome e quantidade), o prazo e a recompensa, com "Aceitar" e "Agora não".
+- **Pedido aceito:** vai para o **Diário**, na seção "Pedidos do quadro", com o
+  progresso (por exemplo "2/5 ovos"), quem pediu e o prazo ("até amanhã" ou "até
+  hoje"). Só um pedido do quadro por vez.
+- **Entrega:** fale com quem pediu tendo os itens na mochila. A pessoa agradece com
+  uma fala própria, os itens saem da mochila e a recompensa entra. Quem tem pedido
+  pronto para receber aparece com "!". Nos pedidos de pesca, basta pescar o peixe
+  pedido e entregar.
+- **Prazo:** 2 dias contando o do aceite (vence no fim do dia seguinte). Se vencer,
+  some do Diário e o resumo da manhã avisa ("O pedido de Bia venceu."), sem
+  penalidade.
+
+**O que pode ser pedido** (só o que dá para conseguir naquela estação, com o que o
+jogador já liberou):
+
+- **Entrega:**
+  - madeira e pedra;
+  - cultivos da estação que já estão plantados (ou guardados) e os de colheita
+    rápida (rabanete e tomate);
+  - ovos, só com galinhas no galinheiro;
+  - coletáveis da vila naquela estação e os do bosque (amora, cogumelo e flor).
+- **Pesca:** sardinha ou tucunaré, só com vara de pesca.
+
+**Quem pede:** só moradores que já apareceram (Lúcio depois de conhecê-lo, Caleb
+depois de chegar à vila). Cada um prefere o que gosta e nunca pede o que não gosta.
+
+**Quantidade e recompensa:**
+- A quantidade vai de 1 a 10: item barato pede mais, caro pede menos. Peixes
+  são no máximo 3, coletáveis no máximo 2 e ovos até 2 por galinha.
+- Moedas = 3 × preço de venda × quantidade, arredondado para múltiplo de 5.
+- Amizade = a de um presente de que o morador gosta.
+
+Os textos têm 2 ou 3 modelos de pedido e de agradecimento por morador e por tipo,
+na personalidade de cada um (Celeste acolhedora, Honório resmungão, Bia animada,
+Tomé de poucas palavras, Iara com 13 anos, Caleb reservado, Lúcio da serra), e
+respeitam o gênero do jogador. Ficam em `js/data-board.js`, junto com as regras
+(`BOARD`).
+
+No save, o quadro guarda `S.board` com `today`, `seen`, `active` e `done` (a
+chave do save não mudou). Jogos antigos começam com o quadro vazio, que sorteia o
+primeiro pedido na manhã seguinte. No modo de desenvolvimento (`?dev=1`),
+`__trilha.dev.newOrder()` sorteia um pedido na hora e `__trilha.dev.completeOrder()`
+põe na mochila o que falta para o pedido aceito.
+
 ## Dias, energia e loja
 
 ### Calendário
@@ -1309,6 +1368,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `index.html` | Página de entrada |
 | `css/style.css` | Visual da interface |
 | `js/data.js` | Itens, cultivos, árvores, moradores, missões, loja e configuração da pesca |
+| `js/data-board.js` | Quadro de pedidos: nomes dos itens pedidos, regras (`BOARD`) e textos de cada morador |
 | `js/sprites.js` | Personagens em pixel art, jogador e moradores (cabelos, roupas, chapéus, 4 direções; 1 pixel por ponto do mundo) |
 | `js/hand-art.js` | Sprites do mapa desenhados à mão da Iara e do Caleb (mesma grade, cores vindas da aparência) |
 | `js/portraits.js` | Retratos 64×64 dos moradores |
@@ -1347,6 +1407,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `js/game/night.js` | Dormir e a passagem da noite |
 | `js/game/hud.js` | HUD e barra de itens |
 | `js/game/panels.js` | Painéis (menu), mapa (M), loja e baú |
+| `js/game/board.js` | Quadro de pedidos: sorteio da manhã, painel, aceite, Diário, entrega e prazo |
 | `js/game/debug.js` | Ganchos `window.__trilha` e modo `?dev=1` |
 | `js/game/main.js` | Inicia o jogo (vem por último) |
 | `tests/`, `package.json`, `playwright.config.js` | Teste de fumaça (só para desenvolvimento; o jogo não usa) |
@@ -1377,7 +1438,9 @@ O teste abre o `index.html` direto do arquivo (`file://`), também com `?dev=1`,
 reprova com qualquer erro no console ou exceção da página. Ele passa pela criação
 de personagem e pela abertura, anda com as setas, usa uma ferramenta, liga a chuva,
 avança horas e três noites, entra na casa e no Armazém, abre o menu (E) e o mapa
-(M), salva, recarrega e continua (dia, moedas e posição iguais). Por fim compara
+(M), salva, recarrega e continua (dia, moedas e posição iguais). No quadro de pedidos,
+confere o aviso de antes das boas-vindas, sorteia um pedido, aceita, vê o Diário,
+junta os itens, entrega a quem pediu e confere as moedas. Por fim compara
 capturas da fazenda, da vila e do Armazém, pixel a pixel, com as de `tests/ref/`
 (relógio da página parado e sorteios com semente fixa, então nada muda entre
 execuções). Se o desenho mudar de propósito, refaça as referências com
@@ -1402,5 +1465,5 @@ há versão nova (`Cache-Control: no-cache`), e o `index.html` carrega os arquiv
 com `?v=` (troque o número a cada versão). Assim, quem já jogou recebe a
 atualização sem precisar limpar o cache.
 
-Versão atual: `?v=regador20` (regador com 20 usos por carga). Todos os
+Versão atual: `?v=quadro1` (quadro de pedidos da praça). Todos os
 `<script>` e o CSS usam o mesmo número.

@@ -30,5 +30,11 @@ if (/[?&]dev=1\b/.test(location.search)) {
     setRain: on => { S.weather = on ? 'chuva' : null; rainWater(); renderHud(); save(); },
     set markers(v) { DEV.markers = v; },
     pose: p => { DEV.pose = p; },                                       // { id: { where, x, y, dir } }: moradores parados num ponto (comparação de tamanhos)
+    newOrder: () => { boardNew(); renderHud(); return S.board.today; },          // sorteia um pedido do quadro agora
+    completeOrder: () => {                                                // põe na mochila o que falta para o pedido aceito
+      const o = S.board.active; if (!o) return null;
+      for (let k = count(o.item); k < o.qty; k++) { if (o.type === 'fish') { const i = S.inv.findIndex(x => !x); if (i >= 0) S.inv[i] = { id: o.item, n: 1, cm: FISH[o.item].cm[0] }; } else addTo(S.inv, o.item, 1); }
+      renderHotbar(); save(); return o;
+    },
   };
 }

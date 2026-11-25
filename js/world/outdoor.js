@@ -284,6 +284,9 @@ function buildFora() {
   }
   fountain(630, 136); solid(616, 126, 28, 16);
   [[566, 226], [694, 226], [566, 116], [694, 116]].forEach(([x, y]) => addLamp(x, y));
+  // quadro de pedidos: na praça, ao lado do Armazém (fora da rua e dos caminhos dos moradores)
+  tall(noticeBoard, SPOT.board[0], SPOT.board[1], 32, 40, 16, [-11, -4, 22, 5]); keep(SPOT.board[0] - 16, SPOT.board[1] - 36, 32, 44);
+  obj({ id: 'quadro', kind: 'board', x: SPOT.board[0], y: SPOT.board[1] + 8, r: 16, hit: [SPOT.board[0] - 14, SPOT.board[1] - 35, 28, 37], label: 'Quadro de pedidos' });
   keep(SPOT.bench[0] - 18, SPOT.bench[1] - 14, 36, 22); solid(SPOT.bench[0] - 13, SPOT.bench[1] - 8, 26, 8);
   obj({ id: 'bench', kind: 'bench', x: SPOT.bench[0], y: SPOT.bench[1] + 6, r: 14, hit: [SPOT.bench[0] - 14, SPOT.bench[1] - 15, 28, 17], label: 'Banco da praça' });
   // ---------- bosque ----------
@@ -408,6 +411,7 @@ const PLACES = [
   { id: 'lago', label: 'Lago', x: 336, y: 100, icon: 'agua' },
   { id: 'loja', label: 'Armazém', x: 510, y: 110, icon: 'loja' },
   { id: 'praca', label: 'Praça', x: 630, y: 170, icon: 'praca' },
+  { id: 'quadro', label: 'Quadro de pedidos', x: 586, y: 150, icon: 'quadro' },        // marcador logo abaixo do quadro (586, 132), para o nome não cobrir o do Armazém
   { id: 'honorio', label: 'Seu Honório', x: 755, y: 112, icon: 'morador' },
   { id: 'bia', label: 'Bia', x: 515, y: 266, icon: 'morador' },
   { id: 'iara', label: 'Casa de Iara', x: 725, y: 266, icon: 'morador' },

@@ -499,9 +499,11 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Regador maior',
+  title: 'Quadro de pedidos na praça',
   items: [
-    'O regador agora rega 20 vezes por carga (antes eram 10).',
-    'Encha no lago como antes: ele volta a ficar com 20 de água.',
+    'Um quadro de avisos apareceu na praça, ao lado do Armazém. Todo dia de manhã tem um pedido novo de algum morador.',
+    'Leia o pedido, aceite e leve os itens (ou o peixe pedido) até quem pediu. A recompensa é em moedas e amizade.',
+    'O pedido aceito fica no Diário, em "Pedidos do quadro", com o progresso e o prazo de dois dias.',
+    'O quadro abre depois das boas-vindas no Armazém e aparece no Mapa.',
   ],
 };

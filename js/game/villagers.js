@@ -11,6 +11,7 @@ function talkTo(v) {
     const who = speaker(v);
     if (v.id === 'lucio' && !S.lucio.met) return meetLucio(v);
     if (v.id === 'lucio' && qActive().includes('fogo') && fireWindow() === 0) return fireScene();
+    if (boardReady(v)) return boardDeliver(v, who);                       // pedido do quadro com os itens na mochila
     // 1) entrega de missão
     const turn = qActive().find(id => { const q = QUESTS[id]; return !q.selfDone && (q.to || q.giver) === v.id && qReady(id); });
     if (turn) {
@@ -57,6 +58,7 @@ function talkTo(v) {
     else await say(who, v.again);
     if (v.id === 'iara' && S.lucio.met && !S.lucio.iara) await iaraOnLucio(who);
     if (pending) await say('narr', `Missão em andamento com ${v.name}: ${QUESTS[pending].desc} (${qProgress(pending) || 'em andamento'})`);
+    if (S.board.active && S.board.active.from === v.id) await say('narr', `Pedido do quadro para ${v.name}: ${boardProgress(S.board.active)}, ${boardDue(S.board.active)}.`);
   });
 }
 /* Fala de Caleb: mistura falas do lugar/situação (almoço, notebook, bosque, lagoa, praça, noite, chuva, domingo)
