@@ -397,9 +397,25 @@
   const dateText = (d = S.day) => { const c = calendar(d); return `${WEEKDAYS_SHORT[c.wd]}, ${c.day} de ${c.season} · Ano ${c.year}`; };
 
   /* Onde cada morador está agora: segue a rotina do dia, andando pelos caminhos. */
-  /* Clima: a rotina lê o estado único da partida (S.weather === 'chuva'). O jogo ainda não
-     sorteia chuva; quando o clima existir, basta preencher S.weather. */
+  /* Clima: um estado único da partida (S.weather === 'chuva'), sorteado uma vez por noite para o dia seguinte e salvo
+     com a partida (recarregar não muda o clima). Chance de chuva por estação (primavera, verão, outono, inverno); no
+     inverno não chove (a paisagem já tem neve). Não chove nos 3 primeiros dias do jogo nem no dia 1 de cada estação.
+     Em dia de chuva, todos os canteiros da fazenda ficam regados (também os arados durante o dia), o céu escurece e
+     caem gotas nas áreas externas. */
+  const RAIN_CHANCE = [0.22, 0.14, 0.22, 0];
   const isRaining = () => !!S && S.weather === 'chuva';
+  function rollWeather() {
+    const c = calendar();
+    if (S.day <= 3 || c.day === 1 || !RAIN_CHANCE[c.si]) return null;
+    return Math.random() < RAIN_CHANCE[c.si] ? 'chuva' : null;
+  }
+  /* chuva rega todos os canteiros com terra (os já regados, os plantados e os arados agora); devolve quantos regou */
+  function rainWater() {
+    if (!isRaining()) return 0;
+    let n = 0;
+    for (const key in S.farm.tiles) { const o = S.farm.tiles[key]; if (o.k === 'soil' && !o.dead && !o.w) { o.w = 1; n++; } }
+    return n;
+  }
   /* =====================================================
      HABILIDADES: Cultivo, Pesca e Coleta
      O XP é somado na hora, junto da ação concluída. O nível novo (e o benefício) só é
@@ -788,6 +804,7 @@
       return;
     }
     if (screen !== 'game' || !S || !map) return;
+    if (isRaining() && rainWater()) save();                          // terra arada na chuva já fica molhada
     const list = actors();
     update(dt, t, list);
     draw(t, list);
@@ -843,6 +860,12 @@
     const night = Math.max(0, Math.min(1, m < 480 ? (450 - m) / 90 : (m - 1110) / 150));
     if (inside) return { r: 70, g: 46, b: 30, a: 0.10 * night, glow: 0 };            // interiores: luz própria, só um pouco mais quente à noite
     const L = { r: Math.round(mix(1)), g: Math.round(mix(2)), b: Math.round(mix(3)), a: +mix(4).toFixed(3), glow: +night.toFixed(3) };
+    if (isRaining()) {                                                 // chuva: céu cinza-azulado, mais escuro de dia; janelas e postes acendem um pouco
+      const w = 0.34 * (1 - night * 0.5), k2 = L.a / (L.a + w);
+      L.r = Math.round(L.r * k2 + 40 * (1 - k2)); L.g = Math.round(L.g * k2 + 50 * (1 - k2)); L.b = Math.round(L.b * k2 + 78 * (1 - k2)); L.a = +(L.a + w).toFixed(3);
+      L.glow = +Math.max(L.glow, 0.35).toFixed(3);
+      return L;
+    }
     if (S && calendar().si === 1 && night < 0.5) {                     // verão: luz do dia um pouco mais quente (a noite não muda)
       const w = 0.07 * (1 - night * 2), k2 = L.a / (L.a + w);
       L.r = Math.round(L.r * k2 + 255 * (1 - k2)); L.g = Math.round(L.g * k2 + 206 * (1 - k2)); L.b = Math.round(L.b * k2 + 130 * (1 - k2)); L.a = +(L.a + w).toFixed(3);
@@ -860,7 +883,7 @@
     if (fishing) { me.fish = fishView(t); me.tool = null; me.moving = false; if (me.fish.hold) me.dir = 'down'; if (fishing.phase === 'game') { drawBar(t); placeBar(t); } if (fishing.phase === 'show') $('catch').classList.toggle('at-top', screenOf(P.x, P.y)[1] > window.innerHeight * 0.52); }
     const cursor = hover && { x: Math.round(hover.rect[0]), y: Math.round(hover.rect[1]), w: Math.round(hover.rect[2]), h: Math.round(hover.rect[3]), far: !hover.ok };
     const lst = S.quests.lona, repair = lst && lst.state === 'active' && lst.mat ? Math.min(1, (lst.n.repair || 0) / 3) : 0;
-    World.render(ctx, { map, cam, t, state: S, actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
+    World.render(ctx, { map, cam, t, state: S, rain: isRaining() && outdoor(), actors: [...list, me], hens: map.id === 'fora' ? hens : [], pet: map.id === 'fora' ? pet : null, cursor, light: lightAt(S.time, !outdoor()), floats, dummyHit, impacts, shake, bars: map.id === 'fora' ? bars() : [], repair, keepsake: map.id === 'montanha' && keepsakeVisible(), seasonal: map.id === 'fora' ? S.seasonal : null, debugSpawns: DEV && DEV.markers });
   }
   /* Barras de resistência dos objetos com dano parcial (o dano fica salvo). */
   function bars() {
@@ -2363,6 +2386,7 @@
     Object.keys(S.nature.trees).forEach(k => { if (S.day >= S.nature.trees[k]) { delete S.nature.trees[k]; delete S.nature.cleared[k]; delete S.dmg['s' + k]; } });
     Object.keys(S.nature.rocks).forEach(k => { if (S.day >= S.nature.rocks[k]) delete S.nature.rocks[k]; });
     refreshForage(S);
+    S.weather = rollWeather();                                       // clima do novo dia
     const newSeason = calendar().si !== calendar(finished).si;
     let dried = 0;                                                       // troca de estação: plantas já germinadas secam se não crescem na estação nova (frutos não colhidos se perdem)
     if (newSeason) for (const key in S.farm.tiles) {                     // a que cresce nas duas estações (milho: verão e outono) continua; semente que não germinou espera
@@ -2370,6 +2394,7 @@
       o.dead = true; o.w = 0; dried++;
     }
     const spawned = spawnSeasonal();
+    const rained = rainWater();
     World.setSeason(calendar().si);
     const b = World.get('casa').objs.find(o => o.kind === 'bed');
     enterMap('casa', b.x + 20, b.y + 10, 'down');
@@ -2382,6 +2407,7 @@
     if (hungry) notes.push(`${hungry} galinha(s) ficaram sem ração e não botaram.`);
     if (newSeason) notes.push(`Chegou ${calendar().season === 'Verão' ? 'o' : 'a'} ${calendar().season}! A paisagem mudou${spawned ? ' e há coisas novas para colher na vila' : ''}.`);
     else if (spawned) notes.push(`${spawned} coisa(s) nova(s) para colher apareceram pela vila.`);
+    if (isRaining()) notes.push(`Amanheceu chovendo! ${rained ? 'A chuva já regou os canteiros: hoje não precisa usar o regador.' : 'Os canteiros que você arar hoje ficam regados pela chuva.'}`);
     if (!notes.length) notes.push('Uma noite tranquila no sítio.');
     renderTabsBadge();
     return { notes, finished, skillUps };
@@ -2418,7 +2444,8 @@
     luck.dataset.tip = `${LUCK.name[lk]}. ${luckEffect(lk)}`; luck.setAttribute('aria-label', luck.dataset.tip);
     en.append(luck);
     hud.append(top, mid, en); renderTabsBadge();
-    hud.title = `${c.weekday}, ${c.day} de ${c.season}, ano ${c.year} — ${clock()}`;
+    hud.title = `${c.weekday}, ${c.day} de ${c.season}, ano ${c.year} — ${clock()}${isRaining() ? ' — chovendo' : ''}`;
+    sky.title = isRaining() ? 'Chovendo: os canteiros estão regados' : ''; sky.setAttribute('aria-label', isRaining() ? 'Chovendo' : 'Tempo firme');
     const o = objective();
     $('objective').replaceChildren(...(o ? [el('b', '', 'MISSÃO'), el('span', '', o)] : S.time >= 1260 ? [el('span', '', 'Já é tarde. A cama espera por você em casa.')] : []));
   }
@@ -2439,6 +2466,13 @@
     g.fillStyle = `rgb(${c.map(Math.round).join(',')})`; g.fillRect(0, 0, 30, 16);
     g.fillStyle = night > 0.5 ? '#2a3a2a' : '#4a8a3a'; g.fillRect(0, 13, 30, 3);
     const sun = m < 1170, f = sun ? (m - 360) / 810 : (m - 1170) / 390, x = Math.round(3 + f * 24), y = Math.round(12 - Math.sin(Math.max(0, Math.min(1, f)) * Math.PI) * 9);
+    if (isRaining()) {                                                  // chuva: céu cinza, nuvem e gotas no lugar do sol
+      g.fillStyle = night > 0.5 ? '#2a2e44' : '#6a7486'; g.fillRect(0, 0, 30, 13);
+      g.fillStyle = night > 0.5 ? '#4a4e66' : '#c4cad4'; g.fillRect(7, 3, 14, 4); g.fillRect(10, 1, 7, 2); g.fillRect(5, 5, 3, 2);
+      g.fillStyle = night > 0.5 ? '#3a3e56' : '#9aa2b0'; g.fillRect(7, 6, 14, 1);
+      g.fillStyle = '#8ac0f0'; [[8, 9], [12, 10], [16, 8], [20, 10], [10, 12], [18, 12]].forEach(([dx, dy]) => g.fillRect(dx, dy, 1, 2));
+      return;
+    }
     if (sun) { g.fillStyle = '#ffd75e'; g.fillRect(x - 2, y - 2, 4, 4); g.fillStyle = '#fff4b0'; g.fillRect(x - 1, y - 1, 2, 2); }
     else { g.fillStyle = '#f0f0ff'; g.fillRect(x - 2, y - 2, 4, 4); g.fillStyle = `rgb(${c.map(Math.round).join(',')})`; g.fillRect(x, y - 2, 2, 2); g.fillStyle = '#ffffff'; g.fillRect(6, 3, 1, 1); g.fillRect(21, 5, 1, 1); g.fillRect(14, 2, 1, 1); }
   }
@@ -2983,7 +3017,7 @@
       setDay: d => { S.day = d; S.lastNight = d - 1; World.setSeason(calendar().si); enterMap(map.id === 'fora' || map.id === 'montanha' ? map.id : map.id, P.x, P.y, P.dir); renderHud(); },
       spawn: rnd => { S.spawnDay = 0; return spawnSeasonal(rnd); },
       lightAt, calendar, dateText, clock,
-      setRain: on => { S.weather = on ? 'chuva' : null; save(); },
+      setRain: on => { S.weather = on ? 'chuva' : null; rainWater(); renderHud(); save(); },
       set markers(v) { DEV.markers = v; },
       pose: p => { DEV.pose = p; },                                       // { id: { where, x, y, dir } }: moradores parados num ponto (comparação de tamanhos)
     };

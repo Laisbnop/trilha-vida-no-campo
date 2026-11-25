@@ -2604,6 +2604,28 @@ const World = (() => {
     if (L && L.a > 0.003) { ctx.restore(); applyLight(ctx, map, cam, L, t); ctx.save(); ctx.translate(-cam.x, -cam.y); }
     (v.floats || []).forEach(f => { const k = (t - f.t0) / 700; if (k < 0 || k > 1) return; ctx.globalAlpha = 1 - k; ctx.drawImage(icon(f.icon), Math.round(f.x) - 8, Math.round(f.y - 24 - k * 14)); ctx.globalAlpha = 1; });
     ctx.restore();
+    if (v.rain) rainFx(ctx, cam, t);
+  }
+  /* Chuva (só em áreas externas): riscos diagonais de 1 pixel que caem em velocidades um pouco diferentes, em duas
+     camadas (perto, mais clara e rápida; longe, mais apagada), e respingos no chão. Tudo sai da posição e do tempo, sem
+     estado: o padrão acompanha o mundo (não "anda" com a câmera) e não pisca entre os quadros. */
+  const RAIN_N = 230;
+  const rh = n => { n = (n ^ 61) ^ (n >>> 16); n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; };
+  function rainFx(ctx, cam, t) {
+    const W2 = VW + 40, H2 = VH + 40;
+    for (let i = 0; i < RAIN_N; i++) {
+      const far = i % 3 === 0, sp = (far ? 0.16 : 0.24) + rh(i * 7 + 3) * 0.05, len = far ? 4 : 7;
+      const x0 = rh(i * 13 + 1) * W2, y0 = rh(i * 31 + 5) * H2, dy = t * sp, dx = dy * 0.35;
+      const x = Math.round((((x0 - dx - cam.x * (far ? 0.6 : 1)) % W2) + W2) % W2) - 20, y = Math.round((((y0 + dy - cam.y * (far ? 0.6 : 1)) % H2) + H2) % H2) - 20;
+      ctx.fillStyle = far ? 'rgba(170,190,225,.4)' : 'rgba(200,218,245,.7)';
+      for (let k = 0; k < len; k++) ctx.fillRect(x - Math.round(k * 0.35), y + k, 1, 1);
+    }
+    for (let i = 0; i < 26; i++) {                                     // respingos: aparecem e somem num ponto fixo do chão
+      const per = 600 + rh(i * 17 + 9) * 500, ph = ((t + rh(i * 5 + 2) * per) % per) / per; if (ph > 0.35) continue;
+      const cycle = Math.floor((t + rh(i * 5 + 2) * per) / per), wx = rh(i * 41 + cycle * 7) * (VW + 0) + cam.x, wy = rh(i * 23 + cycle * 11) * VH + cam.y;
+      const x = Math.round(wx - cam.x), y = Math.round(wy - cam.y), r = ph < 0.15 ? 1 : 2;
+      ctx.fillStyle = 'rgba(200,220,245,.6)'; ctx.fillRect(x - r, y, 1, 1); ctx.fillRect(x + r, y, 1, 1); if (r > 1) ctx.fillRect(x, y - 1, 1, 1);
+    }
   }
   /* Camada de luz: cor do céu por cima do cenário, com "furos" de luz em volta de
      janelas, postes e fogueiras e um brilho quente aditivo. Anéis em degraus para

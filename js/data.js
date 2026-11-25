@@ -498,13 +498,11 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Todos os personagens no mesmo estilo',
+  title: 'Chegou a chuva',
   items: [
-    'O personagem principal e o Caleb agora têm a mesma definição de pixel dos outros moradores, no padrão de Stardew Valley.',
-    'Todos os adultos ficam com cerca de 14 a 16 pontos de largura e 27 a 30 de altura (um ladrilho de largura por menos de dois de altura).',
-    'Iara foi redesenhada como criança, com franja, duas chuquinhas e laço amarelo no alto.',
-    'Caleb ficou mais alto e magro, com franja longa de lado e moletom com capuz.',
-    'Todos os penteados, roupas, acessórios e chapéus da criação continuam disponíveis.',
-    'Ferramentas, vara de pesca, fones e objetos acompanham as mãos e a cabeça; saves, rotinas e amizades continuam iguais.',
+    'Alguns dias amanhecem chovendo na primavera, no verão e no outono (no inverno, não chove).',
+    'Em dia de chuva, todos os canteiros ficam regados sozinhos, até os que você arar durante o dia.',
+    'O céu fica cinza, caem gotas e respingos nas áreas externas, e o relógio mostra uma nuvem.',
+    'Iara e Caleb mudam a rotina quando chove.',
   ],
 };

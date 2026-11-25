@@ -896,8 +896,8 @@ pelos caminhos da vila, sem atravessar obstáculos nem sumir de um lugar para ou
 | 14h–18h | Fonte (até 16h30) e praça | Alterna a fonte e pontos da praça |
 | Depois das 18h | Em casa | Em casa |
 
-**Chuva.** O jogo ainda não sorteia o clima: a rotina lê um único estado da
-partida (`S.weather === 'chuva'`), pronto para quando a chuva existir. Com chuva,
+**Chuva.** A rotina lê o clima do dia (`S.weather === 'chuva'`; veja "Clima e
+chuva"). Com chuva,
 as aulas continuam e o resto do dia é em casa (pintura, leitura e chá). Ao
 carregar o jogo, Iara aparece onde a rotina manda naquele horário. Prioridade:
 cena da história, depois chuva, depois o dia de pintura e, por fim, a rotina.
@@ -1117,6 +1117,32 @@ dourado (16h–19h); anoitecer (19h–21h) e noite azulada (21h–2h), tudo em
 transições graduais. À noite, janelas, postes, o lampião da varanda e a fogueira
 do Lúcio acendem; caminhos e objetos continuam legíveis. Interiores têm luz
 própria e não escurecem como lá fora. Painel, textos e menus nunca escurecem.
+
+### Clima e chuva
+
+O clima de cada dia é sorteado uma vez, na virada da noite, e fica salvo com a
+partida (recarregar não muda o tempo).
+
+| Estação | Chance de chuva |
+| --- | --- |
+| Primavera | 22% |
+| Verão | 14% |
+| Outono | 22% |
+| Inverno | não chove (a paisagem já tem neve) |
+
+Não chove nos 3 primeiros dias do jogo nem no dia 1 de cada estação.
+
+- **Na fazenda:** em dia de chuva, todos os canteiros com terra ficam regados de
+  manhã, inclusive os que você arar ou plantar durante o dia. O regador continua
+  funcionando, mas não é preciso. O resumo da manhã avisa que está chovendo.
+- **No cenário:** nas áreas externas, o céu fica cinza-azulado e mais escuro,
+  caem gotas em duas camadas (perto e longe) e aparecem respingos no chão.
+  Janelas e postes acendem um pouco. Dentro das construções não há chuva.
+- **No painel:** o céu do relógio mostra uma nuvem com gotas no lugar do sol.
+- **Moradores:** Iara e Caleb já seguem a rotina de chuva (ficam em casa ou no
+  Armazém, com falas próprias).
+- Jogos salvos antes desta versão começam com tempo firme; o clima passa a ser
+  sorteado a partir da próxima noite.
 
 ### Estações no cenário
 
