@@ -273,4 +273,5 @@ function pier(x, y, w, h) {
   R(x, y, 1, h, '#d8a868'); R(x + w - 2, y, 2, h, '#6a4426');
   [[x - 2, y + h - 4], [x + w - 1, y + h - 4]].forEach(([px, py]) => { R(px - 1, py - 1, 4, 7, OUT); R(px, py, 2, 5, '#5a3a1e'); });
   open(x, y, w, h); keep(x - 8, y - 8, w + 16, h + 16);
+  (cur.decks || (cur.decks = [])).push([x, y, w, h]);                       // tábuas: som de madeira nos passos
 }

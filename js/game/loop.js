@@ -224,6 +224,7 @@ function update(dt, t, list) {
       if (dy && clear(P.x, P.y + dy * sp)) { P.y += dy * sp; P.moving = true; }
     }
   }
+  stepSounds(t);                                                    // som dos passos (js/game/sound.js)
   if (P.work && t > P.work) { P.work = 0; P.tool = null; }
   // o relógio só anda com o jogo livre (para em conversas, menus, mapa, cenas, pausa e aba escondida)
   if (free && S.time < DAY_END) {

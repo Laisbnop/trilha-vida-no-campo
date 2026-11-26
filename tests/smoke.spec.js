@@ -156,6 +156,25 @@ test('lixeira: jogar fora itens da mochila', async ({ page }) => {
   expect(errs).toEqual([]);
 });
 
+test('som: chão de cada passo e volume nas Configurações', async ({ page }) => {
+  const errs = watch(page), wait = waiter(page, false);
+  await page.goto(URL);
+  await newGame(page, wait);
+  const kinds = await page.evaluate(() => { const f = World.get('fora');
+    return [World.surface(f, 100, 157), World.surface(f, 600, 150), World.surface(f, 20, 480), World.surface(f, 1120, 377), World.surface(World.get('casa'), 50, 50)]; });
+  expect(kinds).toEqual(['terra', 'pedra', 'grama', 'madeira', 'madeira']);
+  await page.evaluate(() => { window.__steps = []; const o = playStep; window.playStep = k => { window.__steps.push(k); o(k); }; });
+  await page.keyboard.down('ArrowDown'); await wait(800); await page.keyboard.up('ArrowDown');
+  expect((await page.evaluate(() => window.__steps)).length, 'passos tocados ao andar').toBeGreaterThan(2);
+  await page.keyboard.press('e'); await wait(300);
+  await page.click('#tabs button[data-tab="config"]').catch(() => page.evaluate(() => renderTab('config')));
+  await page.locator('#sound-vol').fill('0'); await wait(100);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem(SOUND_KEY)).vol)).toBe(0);
+  await expect(page.locator('.vol-val')).toHaveText('mudo');
+  await page.keyboard.press('Escape'); await wait(200);
+  expect(errs).toEqual([]);
+});
+
 /* Capturas da cena com relógio parado e sorteios fixos: mesmas a cada execução. */
 test('capturas: fazenda, vila e interior iguais às de referência', async ({ page }) => {
   const errs = watch(page), wait = waiter(page, true);

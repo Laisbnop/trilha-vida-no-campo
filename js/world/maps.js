@@ -33,6 +33,22 @@ function waterZone(map, x, y) {
   }
   return null;
 }
+/* Chão sob os pés (para o som dos passos): 'grama', 'terra', 'pedra', 'areia' ou 'madeira'.
+   Interiores são de tábua; nas ruas vale a máscara de calçamento do mapa; pontes e píer são de madeira. */
+const PAVE_SOUND = ['grama', 'terra', 'pedra', 'areia', 'pedra'];
+function surface(map, x, y) {
+  if (!OUTDOOR[map.id]) return 'madeira';
+  x = Math.round(x); y = Math.round(y);
+  const inBox = ([bx, by, bw, bh]) => x >= bx - 1 && x <= bx + bw && y >= by - 3 && y <= by + bh + 1;
+  if ((map.decks || []).some(inBox) || (map.streams || []).some(st => (st.bridges || []).some(inBox))) return 'madeira';
+  const k = map.pave && x >= 0 && y >= 0 && x < map.w && y < map.h ? map.pave[y * map.w + x] : 0;
+  if (k) return PAVE_SOUND[k] || 'grama';
+  if (map.id === 'fora' && x >= FARM.x0 && x < FARM.x1 && y >= FARM.y0 && y < FARM.y1) {     // clareira de terra da fazenda
+    const pc = cur, pw = W; cur = map; W = map.w;
+    try { if (farmIsDirt(x, y)) return 'terra'; } finally { cur = pc; W = pw; }
+  }
+  return 'grama';
+}
 /* Ponto dentro de um obstáculo fixo (parede, casa, tronco, água)? */
 const solidAt = (map, x, y) => { const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL); return cx < 0 || cy < 0 || cx >= map.cols || cy >= map.rows || !!map.solid[cy * map.cols + cx]; };
 /* Câmera: segue o personagem; se o mapa for menor que a tela, fica centralizado. */

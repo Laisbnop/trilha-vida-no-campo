@@ -499,10 +499,10 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Lixeira no Inventário',
+  title: 'Som dos passos',
   items: [
-    'Agora dá para jogar fora qualquer item: no Inventário, escolha o item e clique na lixeira ao lado da mochila.',
-    'O jogo pede confirmação e mostra quanto o item valeria no Armazém. Em pilhas, dá para jogar fora tudo ou só 1.',
-    'Ferramentas e itens de missão ficam protegidos e não vão para o lixo.',
+    'O jogo agora tem som! Para começar, passos leves a cada pisada.',
+    'Cada chão soa diferente: grama, terra, pedra das ruas, areia da beira do rio e as tábuas das casas, pontes e do píer.',
+    'O volume fica em Configurações, na parte "Som". Arraste até o fim à esquerda para tirar o som.',
   ],
 };
