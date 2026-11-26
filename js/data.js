@@ -499,10 +499,10 @@ const ROD_LETTER = {
 
 /* Engrenagem do menu → "Última atualização" (o que esta versão trouxe de fato). */
 const UPDATE_NOTES = {
-  title: 'Lixeira no Inventário',
+  title: 'Sons de quebrar',
   items: [
-    'Agora dá para jogar fora qualquer item: no Inventário, escolha o item e clique na lixeira ao lado da mochila.',
-    'O jogo pede confirmação e mostra quanto o item valeria no Armazém. Em pilhas, dá para jogar fora tudo ou só 1.',
-    'Ferramentas e itens de missão ficam protegidos e não vão para o lixo.',
+    'O jogo agora tem som! Para começar, os golpes: machado na madeira, picareta na pedra e foice no mato.',
+    'Cada golpe faz um barulho, e o último, o que quebra, faz outro: a madeira racha, a pedra esfarela e o mato farfalha.',
+    'O volume fica em Configurações, na parte "Som". Arraste até o fim à esquerda para tirar o som.',
   ],
 };

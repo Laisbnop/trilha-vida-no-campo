@@ -299,7 +299,15 @@ const TABS = {
       ['Pescar (vara na mão)', 'Segure o botão esquerdo sobre a água, ou Espaço virado para ela; solte para lançar'], ['Fisgar', 'Botão esquerdo ou Espaço quando a boia afundar e aparecer o "!"'],
       ['Puxar o peixe', 'Segure botão esquerdo ou Espaço: a faixa vai para a direita; solte: volta'], ['Guardar ou soltar o peixe', 'Clique na opção, ou setas e Espaço'], ['Recolher a linha', 'Esc ou o botão "Recolher linha"']]
       .forEach(([a, b2]) => { const tr = el('tr'); tr.append(el('td', '', a), el('td', '', b2)); t.append(tr); });
-    body.append(t, el('h3', '', 'Tela'));
+    body.append(t, el('h3', '', 'Som'));
+    const vol = el('div', 'vol-row'), vr = el('input'), vl = el('span', 'vol-val');
+    vr.type = 'range'; vr.min = 0; vr.max = 100; vr.step = 5; vr.id = 'sound-vol'; vr.value = Math.round(SOUND.vol * 100);
+    const showVol = () => { vl.textContent = +vr.value ? vr.value + '%' : 'mudo'; };
+    vr.oninput = () => { setVolume(vr.value / 100); showVol(); };
+    vr.onchange = () => { audioInit(); playBreak('wood', false); };           // um golpe de amostra ao soltar
+    showVol(); vol.append(el('label', '', 'Volume dos efeitos'), vr, vl);
+    body.append(vol, el('p', 'dim', 'Por enquanto, os golpes de quebrar coisas: machado na madeira, picareta na pedra e foice no mato. Arraste até o fim à esquerda para tirar o som.'));
+    body.append(el('h3', '', 'Tela'));
     body.append(btn('btn', document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia', () => { $('btn-full').click(); setTimeout(() => renderTab('config'), 300); }));
     body.append(el('h3', '', 'Partida'));
     const msg = el('p', 'save-msg'); msg.id = 'save-msg';
@@ -313,7 +321,7 @@ const TABS = {
       save(); closeModal(); initTitle();
     }); back.id = 'btn-title';
     const row = el('div', 'li-actions'); row.append(sv, back); body.append(row, msg);
-    body.append(el('p', 'dim', 'O jogo não tem áudio por enquanto. O progresso também é salvo sozinho, de tempos em tempos.'));
+    body.append(el('p', 'dim', 'O progresso também é salvo sozinho, de tempos em tempos.'));
     const reset = btn('btn ghost', 'Apagar esta fazenda e voltar ao título', () => { if (!confirm('Apagar a fazenda salva neste navegador e voltar ao título? Isso não pode ser desfeito.')) return; store.del(SAVE_KEY); closeModal(); initTitle(); });
     reset.style.marginTop = '16px'; body.append(reset);
   },

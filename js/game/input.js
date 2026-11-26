@@ -103,7 +103,7 @@ function strike(key, R, id, [x, y], onBreak) {
   if (S.energy < toolEnergy(id, R.energy)) return tip('Sem energia para outro golpe. Coma algo ou durma para recuperar.');
   if (last && R.drop && !canAdd(R.drop[0], R.drop[1])) return tip('Mochila cheia: abra espaço antes do último golpe.');
   useTool(id, R.energy);
-  bang(x, y, R.fx); shake = { key, t0: performance.now() };
+  bang(x, y, R.fx); playBreak(R.fx, last); shake = { key, t0: performance.now() };
   if (last) { delete S.dmg[key]; onBreak(); if (R.drop) gain(R.drop[0], R.drop[1]); }
   else S.dmg[key] = d;
   save();
@@ -138,7 +138,7 @@ function tileTarget(i) {
   if (o && RESIST[o.k]) return hitTarget('f' + i, o.k, rect, rect, [cx, cy], () => { delete S.farm.tiles[i]; }, true);
   if (o && o.k === 'soil' && o.crop && o.dead) {                     // pé seco (fim da estação): só a foice limpa
     const nm = CROPS[o.crop].name.toLowerCase();
-    if (id === 'foice') return T(`Remover pé seco de ${nm}`, () => { if (!useTool('foice', 1)) return; S.farm.tiles[i] = { k: 'soil' }; bang(cx, cy, 'leaf'); toast('Pé seco removido'); save(); });
+    if (id === 'foice') return T(`Remover pé seco de ${nm}`, () => { if (!useTool('foice', 1)) return; S.farm.tiles[i] = { k: 'soil' }; bang(cx, cy, 'leaf'); playBreak('leaf', true); toast('Pé seco removido'); save(); });
     return T(`Pé seco de ${nm} — use a foice`, () => tip(`Pé seco de ${nm}: a estação acabou. Use a foice para limpar o canteiro.`));
   }
   if (o && o.k === 'soil' && dormantSeed(o) && !cropInSeason(o.crop) && id === 'foice') {   // semente fora de estação: a foice limpa (sem devolver)

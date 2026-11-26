@@ -639,3 +639,10 @@ body:has(#screen-create:not([hidden])) { background: #2e1c10 repeating-linear-gr
 .inv-trash canvas { width: 48px; height: 48px; image-rendering: pixelated; }
 .inv-trash.open { background: #f8d8c8; border-color: #c0503a; }
 .inv-trash:hover, .inv-trash:focus-visible { background: #fff0c8; }
+
+/* Configurações: volume dos efeitos */
+.vol-row { display: grid; grid-template-columns: auto minmax(120px, 260px) 52px; justify-content: start; align-items: center; gap: 12px; margin: 2px 0 4px; }
+.vol-row label { font-family: var(--px); font-size: 10px; white-space: nowrap; }
+.vol-row input[type=range] { width: 100%; accent-color: #b8642a; cursor: pointer; }
+.vol-val { font-family: var(--px); font-size: 10px; text-align: right; }
+@media (max-width: 640px) { .vol-row { grid-template-columns: 1fr 48px; } .vol-row label { grid-column: 1 / -1; } }

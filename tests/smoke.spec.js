@@ -156,6 +156,28 @@ test('lixeira: jogar fora itens da mochila', async ({ page }) => {
   expect(errs).toEqual([]);
 });
 
+test('som: golpes de quebrar e volume nas Configurações', async ({ page }) => {
+  const errs = watch(page), wait = waiter(page, false);
+  await page.goto(URL);
+  await newGame(page, wait);
+  await page.keyboard.press('ArrowDown');                                         // libera o áudio (primeira tecla)
+  const hits = await page.evaluate(() => {
+    const out = [], o = playBreak; window.playBreak = (fx, last) => { out.push([fx, last, audioOn()]); o(fx, last); };
+    const P = window.__trilha.P;
+    strike('teste-r', RESIST.rock, 'picareta', [P.x, P.y], () => {});            // golpe que não quebra
+    strike('teste-m', RESIST.weed, 'foice', [P.x, P.y], () => {});               // mato: quebra no primeiro
+    delete window.__trilha.S.dmg['teste-r']; window.playBreak = o; return out;
+  });
+  expect(hits.map(h => h.slice(0, 2))).toEqual([['stone', false], ['leaf', true]]);
+  await page.keyboard.press('e'); await wait(300);
+  await page.click('#tabs button[data-tab="config"]');
+  await page.locator('#sound-vol').fill('0'); await wait(100);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem(SOUND_KEY)).vol)).toBe(0);
+  await expect(page.locator('.vol-val')).toHaveText('mudo');
+  await page.keyboard.press('Escape'); await wait(200);
+  expect(errs).toEqual([]);
+});
+
 /* Capturas da cena com relógio parado e sorteios fixos: mesmas a cada execução. */
 test('capturas: fazenda, vila e interior iguais às de referência', async ({ page }) => {
   const errs = watch(page), wait = waiter(page, true);

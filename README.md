@@ -1315,6 +1315,18 @@ que não dá para desfazer e quanto o item valeria no Armazém, e oferece "Jogar
 tudo", "Só 1" (em pilhas) e "Cancelar". Ferramentas e itens de missão não vão para
 o lixo. Chapéu em uso que for jogado fora sai da cabeça.
 
+## Som
+
+O jogo tem sons de quebrar coisas, curtinhos como nos jogos de fazenda: o machado
+na madeira (árvores, tocos e galhos) faz um "toc" oco, a picareta na pedra (pedras
+e rochas) faz um "tim" metálico, e a foice no mato (e nos pés secos) faz um "vush".
+O último golpe, o que quebra, tem um som a mais: a madeira racha, a pedra esfarela
+e o mato farfalha. Os sons são feitos na hora pela Web Audio API (ruído filtrado e
+tons), sem arquivos de áudio, então funcionam também abrindo o `index.html` direto
+do disco. O navegador só libera o áudio depois do primeiro clique ou tecla. O
+volume fica em Configurações → Som (0 = mudo) e é lembrado neste navegador, separado
+da partida. Código em `js/game/sound.js` (`playBreak`, chamado em cada golpe).
+
 ## Salvamento
 
 O progresso fica no navegador (`localStorage`): personagem e aparência, posição,
@@ -1390,7 +1402,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `js/world/outdoor.js` | Chão da fazenda, estradas, água e rio, prédios e a montagem do mapa externo; lugares do mapa (M) |
 | `js/world/interiors.js` | Interiores: Armazém por dentro e os cômodos |
 | `js/world/mountain.js` | Serra, tenda e fogueira de Lúcio |
-| `js/world/maps.js` | Acesso aos mapas (cache por estação), colisão, água, câmera e ladrilhos |
+| `js/world/maps.js` | Acesso aos mapas (cache por estação), colisão, água, chão sob os pés (som), câmera e ladrilhos |
 | `js/world/figures.js` | Árvores frutíferas e do bosque, toco, boneco de treino e galinhas |
 | `js/world/icons.js` | Ícones 16×16 dos itens |
 | `js/world/crops.js` | Plantações por estágio, terra revolvida, pedras, galhos, tocos, mato e coletáveis do chão |
@@ -1399,6 +1411,7 @@ pasta `/ (root)`. O jogo é só HTML, CSS e JavaScript, sem etapa de build.
 | `js/world/index.js` | Monta o objeto público `World` (vem por último) |
 | **`js/game/`** | **A lógica do jogo** |
 | `js/game/core.js` | Atalhos de página, estado compartilhado, salvamento e nomes |
+| `js/game/sound.js` | Som: golpes de quebrar madeira, pedra e mato (sintetizados) e volume |
 | `js/game/title.js` | Título, criação de personagem e guarda-roupa |
 | `js/game/inventory.js` | Inventário |
 | `js/game/state.js` | Estado do mundo, calendário, clima, habilidades, sorte do dia e rotinas dos moradores |
@@ -1447,7 +1460,8 @@ de personagem e pela abertura, anda com as setas, usa uma ferramenta, liga a chu
 avança horas e três noites, entra na casa e no Armazém, abre o menu (E) e o mapa
 (M), salva, recarrega e continua (dia, moedas e posição iguais). No quadro de pedidos,
 confere o aviso de antes das boas-vindas, sorteia um pedido, aceita, vê o Diário,
-junta os itens, entrega a quem pediu e confere as moedas. Por fim compara
+junta os itens, entrega a quem pediu e confere as moedas. Testa a lixeira e o som
+(golpe de machado tocando e o volume salvo). Por fim compara
 capturas da fazenda, da vila e do Armazém, pixel a pixel, com as de `tests/ref/`
 (relógio da página parado e sorteios com semente fixa, então nada muda entre
 execuções). Se o desenho mudar de propósito, refaça as referências com
@@ -1472,5 +1486,5 @@ há versão nova (`Cache-Control: no-cache`), e o `index.html` carrega os arquiv
 com `?v=` (troque o número a cada versão). Assim, quem já jogou recebe a
 atualização sem precisar limpar o cache.
 
-Versão atual: `?v=lixeira1` (lixeira no Inventário). Todos os
+Versão atual: `?v=quebrar1` (sons de quebrar). Todos os
 `<script>` e o CSS usam o mesmo número.
